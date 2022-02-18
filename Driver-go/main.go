@@ -58,12 +58,17 @@ func main() {
 				}
 			}
 		}
-		go elevator_goTo(0)
+		go elevator_goTo(0, numFloors)
 	}
 
 }
 
-func elevator_goTo(iDestination int) {
+func elevator_goTo(iDestination int, numFloors int) {
+	if iDestination > numFloors-1 {
+		iDestination = numFloors - 1
+	} else if iDestination < 0 {
+		iDestination = 0
+	}
 	if current_floor < iDestination {
 		elevio.SetMotorDirection(elevio.MD_Up)
 	} else if current_floor > iDestination {
