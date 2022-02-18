@@ -34,13 +34,9 @@ func main() {
 
 		case a := <-drv_floors:
 			fmt.Printf("%+v\n", a)
-			/*
-				if a == numFloors-1 {
-					d = elevio.MD_Down
-				} else if a == 0 {
-					d = elevio.MD_Up
-				}
-			*/
+			if a == numFloors-1 || a == 0 {
+				elevio.SetMotorDirection(elevio.MD_Stop)
+			}
 
 			//elevio.SetMotorDirection(d)
 			current_floor = a
@@ -62,7 +58,7 @@ func main() {
 				}
 			}
 		}
-		go elevator_goTo(2)
+		go elevator_goTo(0)
 	}
 
 }
