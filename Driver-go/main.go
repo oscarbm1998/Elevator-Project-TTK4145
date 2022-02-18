@@ -63,17 +63,22 @@ func main() {
 
 }
 
-func elevator_goTo(iDestination int, numFloors int) {
+func elevator_goTo(iDestination int, numFloors int) (reached bool) {
+	//Check for illigal destination
 	if iDestination > numFloors-1 {
 		iDestination = numFloors - 1
 	} else if iDestination < 0 {
 		iDestination = 0
 	}
+	reached = false
+	//Go to the destination and stop
 	if current_floor < iDestination {
 		elevio.SetMotorDirection(elevio.MD_Up)
 	} else if current_floor > iDestination {
 		elevio.SetMotorDirection(elevio.MD_Down)
 	} else {
 		elevio.SetMotorDirection(elevio.MD_Stop)
+		reached = true
 	}
+	return reached
 }
