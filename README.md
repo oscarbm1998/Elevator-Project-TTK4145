@@ -10,7 +10,7 @@ Main requirements
 
 ### The button lights are a service guarantee
  - Once the light on a hall call button (buttons for calling an elevator to that floor; top 6 buttons on the control panel) is turned on, an elevator should arrive at that floor
- - Similarly for a cab call (for telling the elevator what floor you want to exit at; front 4 buttons on the control panel), but only the elevator at that specific workspace should take the order
+ - Similarly for a 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 call (for telling the elevator what floor you want to exit at; front 4 buttons on the control panel), but only the elevator at that specific workspace should take the order
 
 ### No calls are lost
  - Failure states are anything that prevents the elevator from communicating with other elevators or servicing calls
@@ -30,7 +30,7 @@ Main requirements
    - Normal circumstances mean when there are no active failures and no packet loss
    - Under circumstances with packet loss, at least one light must work as expected
  - The cab button lights should not be shared between workspaces
- - The cab and hall button lights should turn on as soon as is reasonable after the button has been pressed
+ - The cab and hall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 button lights should turn on as soon as is reasonable after the button has been pressed
    - Not ever turning on the button lights because "no guarantee is offered" is not a valid solution
    - You are allowed to expect the user to press the button again if it does not light up
  - The cab and hall button lights should turn off when the corresponding call has been serviced
