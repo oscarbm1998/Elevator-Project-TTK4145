@@ -71,7 +71,7 @@ En timer modul som kan holde funksjoner slik som elevator_stuck og elevator_wait
 Elevator driveren som inneholder funksjonene til å faktisk sette retning, skru på lys osv.
 Request modul som holder funksjoner for å tildele hvilken heis som skal ta hva optimalt
 En nettverksmodul som inneholder nettverksfunksjonene
-En state machine modul
+En state machine modul som inneholder informasjon om de forskjellige statesene
 
 
 
@@ -100,3 +100,11 @@ Scenario 2: En gjennomføring hvor heisen faller ut etter at panelet blir trykke
 6. Da vil en av de andre heisene også bevege seg til gitt etasje som betyr at to stykker vil dukke opp. Hvilken som går bestemmes av hvilken watchdog timer som går ut først.
 7. Begge heisene som ankommer will gå inn i state wait_for_person. Den ene vil få et input fra person og bevege seg videre, den andre vil time ut og gå tilbake til idle. 
 8. Person vil bli levert til riktig etasje av heisen han gikk inn i, heisen går til state wait_for_person og så idle. 
+
+Scenario 3: En gjennomføring hvor en heis krasjer med en aktive Cab request (indre panel trykket på)
+====================================================================================================
+
+1. Systemet booter og alle heisene får startet heartbeat systemene sine så alle kommuniserer
+2. En av heispanelene blir trykket på (eks heis 1 sitt)
+3. Da blir den heisen master (Gjelder heis 1), kjører optimal tildelingsalgoritme og broadcaster til valgt heis om at den skal ta oppgaven, men mindre seg selv er valgt
+4. Heisen finner ut av seg selv er best, og flytter seg selv da over til State Movement.
