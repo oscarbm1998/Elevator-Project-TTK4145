@@ -65,6 +65,15 @@ Inntreffer hvis den ikke for informasjon fra begge heiser, over en gitt tidsperi
 Starte single elevator mode
 Prøve å gjenopprette connection
 
+Nødvendige moduler
+==================
+En datatype modul som holder datatypene (Elevator_datatypes)
+En timer modul som kan holde funksjoner slik som elevator_stuck og elevator_waiting_for_person_timer
+Elevator driveren som inneholder funksjonene til å faktisk sette retning, skru på lys osv.
+Request modul som holder funksjoner for å tildele hvilken heis som skal ta hva optimalt
+En nettverksmodul som inneholder nettverksfunksjonene
+En state machine modul
+
 
 
 Scenario 1: En komplett gjennomføring av en ordre uten feil
