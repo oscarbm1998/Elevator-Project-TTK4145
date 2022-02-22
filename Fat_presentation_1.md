@@ -14,12 +14,11 @@ Vi ønsker en UDP-nettverkstopologi som benytter en UDP-hjerterytme for å sjekk
 Vi ønsker at heisen skal kjøre en slags single elevator mode ettersom hvis en heis faller ut vil ikke knappepanelet til den heisen klare å sende info til resten om at det eksisterer en ordre der. Det er derfor greit at den heisen kan respondere på Calls som den får trykket inn. Denne single elevator mode kan for eksempel aktiveres når heisen har registrert at den har falt ut. 
 
 ### Hva skal heisen gjøre når den kommer tilbake?
+Heisen vil selv registrere at den har kommet tilbake ettersom den vil motta "hjerterytmen" til de andre heisene. Ettersom at hjerterytmen vil bli brukt til å sende informasjon trenger heisen kun å sitte og vente en liten stund til den har fått nok informasjon fra "hjerterytmene" til de to andre heisene til at den kan begynne å operere igjen.
 
 
 ### Hvordan skal vi implementere at den heisen som får trykket på knappen ikke kommer frem?
 Barnevaktsystem: Heisen som tar orderen sender et par UDP-broadcast om at «jeg tar den», dette skal aktivere en watchdog timer hos de to andre heisene. Hvis denne går ut, skal en av de andre heisene basert på optimal tildelingsalgorimte, sende en til. 
-
-Hvordan skal vi implementere at den he
 
 Forslag til statemachine
 ========================
