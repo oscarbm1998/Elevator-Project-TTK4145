@@ -1,6 +1,7 @@
 package singleElevator
 
 import (
+	"Driver-go/elevio"
 	"elevio"
 	"fmt"
 )
@@ -30,6 +31,9 @@ func singleElevatorFSM(
 		case a := <-ch_order:
 			// Får varsel på at nye instruksjoner foreligger i struct så sjekk denne og gå dit
 			elevio.SetMotorDirection(elevator_Info.direction)
+			// Skru på lyset for at den er på vei dit
+			elevio.SetButtonLamp(b, elevator_info.floor, true)
+			//Sett heis i state movement
 			// Basert på det
 
 		case a := <-ch_elevator_has_arrived:
@@ -37,12 +41,14 @@ func singleElevatorFSM(
 			elevio.SetMotorDirection(elevio.MD_Stop)
 			// Skru av etasje lys
 			elevio.SetButtonLamp(b, elevator_Info.floor, false)
+			elevio.SetDoorOpenLamp(true)
 			// Åpne dør
 			ch_door_timer_reset <- true
 
 		case a := <-ch_door_timer_out:
 			// Lukk dør
 			fmt.Printf("Closing door")
+			elevio.SetDoorOpenLamp(false)
 			// sett heis tilbake til idle
 			elevator_state = "idle"
 
