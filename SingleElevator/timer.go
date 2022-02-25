@@ -15,10 +15,8 @@ func OpenAndCloseDoorsTimer(ch_door_timer_out chan<- bool, ch_door_timer_reset <
 	for {
 		select {
 		case <-timer.C:
-			fmt.Println("Elevator: Doors closed")
 			ch_door_timer_out <- true
 		case <-ch_door_timer_reset:
-			fmt.Println("Elevator: Opening doors")
 			timer.Stop()
 			timer.Reset(config.ELEVATOR_DOOR_OPEN_TIME)
 		}
