@@ -1,7 +1,7 @@
-package main
+package singleElevator
 
 import (
-	"Driver-go/elevio"
+	"elevio"
 	"fmt"
 )
 
