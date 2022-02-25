@@ -1,6 +1,7 @@
 package singleElevator
 
 import (
+	"fmt"
 	"time"
 
 	"../config"
@@ -14,8 +15,10 @@ func OpenAndCloseDoorsTimer(door_timer_out_channel chan<- bool, door_timer_reset
 	for {
 		select {
 		case <-timer.C:
+			fmt.Println("Elevator: Doors closed")
 			door_timer_out_channel <- true
 		case <-door_timer_reset_channel:
+			fmt.Println("Elevator: Opening doors")
 			timer.Stop()
 			timer.Reset(config.ELEVATOR_DOOR_OPEN_TIME)
 		}
@@ -29,6 +32,7 @@ func ElevatorStuckTimer(elev_stuck_timer_out_ch chan<- bool, elev_stuck_timer_st
 	for {
 		select {
 		case <-timer.C:
+			fmt.Println("Elevator: I'm stuck, please call Vakt & Service")
 			elev_stuck_timer_out_ch <- true
 		case <-elev_stuck_timer_start_ch:
 			timer.Stop()
