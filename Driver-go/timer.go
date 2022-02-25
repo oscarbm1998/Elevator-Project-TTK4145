@@ -15,10 +15,8 @@ func OpenAndCloseDoorsTimer(ch_door_timer_out chan<- bool, ch_door_timer_reset <
 	for {
 		select {
 		case <-timer.C:
-			fmt.Println("Elevator: Doors closed")
 			ch_door_timer_out <- true
 		case <-ch_door_timer_reset:
-			fmt.Println("Elevator: Opening doors")
 			timer.Stop()
 			timer.Reset(config.ELEVATOR_DOOR_OPEN_TIME)
 		}
@@ -41,4 +39,11 @@ func ElevatorStuckTimer(ch_elev_stuck_timer_out chan<- bool, ch_elev_stuck_timer
 			timer.Stop()
 		}
 	}
+}
+
+func array_leftshift(in [7]int, size int) (out [7]int) {
+	for i := 0; i < 7; i++ {
+		out[i] = in[i+1]
+	}
+	return out
 }
