@@ -9,6 +9,7 @@ Local functions : fsmOnFloorArival (small starting letter, then regular camel ca
 Classes: Order (Capital letter and only one word)
 Points: p_elevator_config (small p first, divide by underscore)
 Enumerations/Const: en_elevator_behaviour (small en first, divide by underscore)
+Channels: ch_order (small ch first, divide by underscore)
 
 Includes in go
 ==============
