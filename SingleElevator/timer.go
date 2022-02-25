@@ -40,3 +40,10 @@ func ElevatorStuckTimer(ch_elev_stuck_timer_out chan<- bool, ch_elev_stuck_timer
 		}
 	}
 }
+
+func array_leftshift(in [7]int, size int) (out [7]int) {
+	for i := 0; i < 7; i++ {
+		out[i] = in[i+1]
+	}
+	return out
+}
