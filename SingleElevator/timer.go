@@ -7,7 +7,7 @@ import (
 	"../config"
 )
 
-func OpenAndCloseDoorsTimer(door_timer_out_channel chan<- bool, door_timer_reset_channel <-chan bool) {
+func OpenAndCloseDoorsTimer(ch_door_timer_out chan<- bool, ch_door_timer_reset <-chan bool) {
 	//Initiatie the timer
 	timer := time.NewTimer(config.ELEVATOR_DOOR_OPEN_TIME)
 	timer.Stop()
@@ -16,8 +16,8 @@ func OpenAndCloseDoorsTimer(door_timer_out_channel chan<- bool, door_timer_reset
 		select {
 		case <-timer.C:
 			fmt.Println("Elevator: Doors closed")
-			door_timer_out_channel <- true
-		case <-door_timer_reset_channel:
+			ch_door_timer_out <- true
+		case <-ch_door_timer_reset:
 			fmt.Println("Elevator: Opening doors")
 			timer.Stop()
 			timer.Reset(config.ELEVATOR_DOOR_OPEN_TIME)
@@ -25,7 +25,7 @@ func OpenAndCloseDoorsTimer(door_timer_out_channel chan<- bool, door_timer_reset
 	}
 }
 
-func ElevatorStuckTimer(elev_stuck_timer_out_ch chan<- bool, elev_stuck_timer_start_ch <-chan bool, elev_stuck_timer_stop_ch <-chan bool) {
+func ElevatorStuckTimer(ch_elev_stuck_timer_out chan<- bool, ch_elev_stuck_timer_start <-chan bool, ch_elev_stuck_timer_stop <-chan bool) {
 	timer := time.NewTimer(config.ELEVATOR_STUCK_TIMOUT)
 	timer.Stop()
 
@@ -33,11 +33,11 @@ func ElevatorStuckTimer(elev_stuck_timer_out_ch chan<- bool, elev_stuck_timer_st
 		select {
 		case <-timer.C:
 			fmt.Println("Elevator: I'm stuck, please call Vakt & Service")
-			elev_stuck_timer_out_ch <- true
-		case <-elev_stuck_timer_start_ch:
+			ch_elev_stuck_timer_out <- true
+		case <-ch_elev_stuck_timer_start:
 			timer.Stop()
 			timer.Reset(config.ELEVATOR_STUCK_TIMOUT)
-		case <-elev_stuck_timer_stop_ch:
+		case <-ch_elev_stuck_timer_stop:
 			timer.Stop()
 		}
 	}
