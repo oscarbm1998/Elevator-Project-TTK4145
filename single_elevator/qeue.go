@@ -2,7 +2,7 @@ package singleElevator
 
 const queue_length int = 7
 
-type elevator_Info struct {
+type elevator_info struct {
 	floor     int //where the elevator should go
 	direction int //1 up -1 down
 }
@@ -12,7 +12,7 @@ type elevator_event struct {
 	direction int //1 up -1 down
 }
 
-var elevator elevator_Info
+var elevator elevator_info
 var queue [queue_length]elevator_event
 
 func queue_AddEvent(new_event elevator_event) {
