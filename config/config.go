@@ -18,6 +18,8 @@ const (
 	REMOVE_OLD_ORDER_TIME = time.Second * 2
 
 	//Newtowrking
-	HEARTBEAT_TIME      = time.Second
-	NUMBER_OF_ELEVATORS = 3
+	HEARTBEAT_TIME       = time.Second
+	HEARTBEAT_TRANS_PORT = 100
+	HEARTBEAT_REC_PORT   = 101
+	NUMBER_OF_ELEVATORS  = 3
 )
