@@ -67,6 +67,11 @@ func fsm_newOrder() {
 		fmt.Printf("Moving to floor " + string(elevator_command.floor))
 	case doorOpen:
 		//Vent til dørene lukkes eller personen inni trykker på noe. Hvis doortimer går ut sjekker heisen om det
+		if Cab_calls() {
+			elevio.SetDoorOpenLamp(false)
+			elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
+			current_state = moving
+		}
 		//finnes noen nye utvendige calls den skal ta
 	}
 }
@@ -98,10 +103,6 @@ func fsm_doorTimeOut() {
 	switch current_state {
 	case doorOpen:
 		elevio.SetDoorOpenLamp(false)
-		// Lukk dør
-		// Check if there are any other orders it needs to complete
-
-		// sett heis tilbake til idle
 		current_state = idle
 	}
 }
