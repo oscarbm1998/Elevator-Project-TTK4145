@@ -2,7 +2,6 @@ package singleElevator
 
 import (
 	"PROJECT-GROUP-10/elevio"
-	"fmt"
 )
 
 const floor_ammount int = 4
@@ -22,31 +21,35 @@ var floor [floor_ammount]floor_info
 var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
-func Hall_order(
-	ch_drv_buttons chan elevio.ButtonEvent, 
-	ch_new_order chan bool,
-){
-	for{
-		select{
-			case a := <-ch_drv_buttons: {
-				switch a.Button{
-				case 0: //opp
-					floor[a.Floor].hall_call = 1
-					floor[a.Floor].direction = 1
-					hall_calls()
-				case 1: //ned
-					floor[a.Floor].hall_call = 1
-					floor[a.Floor].direction = -1
-					hall_calls()
-				case 2: //cab call
-					floor[a.Floor].cab_call = 1
-					cab_calls()
-					}
-					ch_new_order <- true
-				}
-				
-			}
+func Remove_order(level int) {
+	floor[level].hall_call = 0
+	floor[level].cab_call = 0
+	floor[level].direction = 0
+}
 
+func Hall_order(
+	ch_drv_buttons chan elevio.ButtonEvent,
+	ch_new_order chan bool,
+	ch_clear_order chan bool,
+	ch_drv_floors chan int,
+) {
+	for {
+		select {
+		case a := <-ch_drv_buttons:
+			switch a.Button {
+			case 0: //opp
+				floor[a.Floor].hall_call = 1
+				floor[a.Floor].direction = 1
+				hall_calls()
+			case 1: //ned
+				floor[a.Floor].hall_call = 1
+				floor[a.Floor].direction = -1
+				hall_calls()
+			case 2: //cab call
+				floor[a.Floor].cab_call = 1
+				cab_calls()
+				ch_new_order <- true
+			}
 		}
 	}
 }
