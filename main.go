@@ -35,9 +35,6 @@ func main() {
 
 	for {
 		select {
-		case a := <-ch_drv_buttons:
-			fmt.Printf("%+v\n", a)
-			elevio.SetButtonLamp(a.Button, a.Floor, true) //Works for single elevator
 		case a := <-ch_drv_floors:
 			fmt.Printf("Current floor is %+v\n", a)
 		case <-ch_drv_obstr:
