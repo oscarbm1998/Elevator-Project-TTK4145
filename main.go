@@ -29,29 +29,14 @@ func main() {
 	go elevio.PollFloorSensor(ch_drv_floors)
 	go elevio.PollObstructionSwitch(ch_drv_obstr)
 	go elevio.PollStopButton(ch_drv_stop)
-	go singleElevator.SingleElevatorFSM(ch_drv_floors, ch_elevator_has_arrived, ch_drv_obstr)
+	go singleElevator.SingleElevatorFSM(ch_drv_floors, ch_elevator_has_arrived, ch_drv_obstr, ch_new_order)
+	go singleElevator.Hall_order(ch_drv_buttons, ch_new_order)
 
 	for {
 		select {
 		case a := <-ch_drv_buttons:
 			fmt.Printf("%+v\n", a)
 			elevio.SetButtonLamp(a.Button, a.Floor, true) //Works for single elevator
-			if (hallcall)
-			Hall_func()
-			else 
-			Cab_calls()
-			int floor = elevio.ButtonEvent
-			ch_new_order <- true
-			//Should store somewhere wheter it is a cab or hall call
-			switch a.Button {
-			case 0: //up
-				hall call(1)
-			case 1: //down
-				singleElevator.Elevator_command.floor = -1
-			case 2: //cab
-
-			}
-
 		case a := <-ch_drv_floors:
 
 		case a := <-ch_drv_obstr:
