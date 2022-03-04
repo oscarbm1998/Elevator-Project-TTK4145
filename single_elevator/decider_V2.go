@@ -49,17 +49,18 @@ func Hall_order(
 			switch a.Button {
 			case 0: //opp
 				floor[a.Floor].hall_call = 1
-				floor[a.Floor].direction = 1
+				floor[a.Floor].direction.up = true
 				hall_calls()
 			case 1: //ned
 				floor[a.Floor].hall_call = 1
-				floor[a.Floor].direction = -1
+				floor[a.Floor].direction.up = false
 				hall_calls()
 			case 2: //cab call
 				floor[a.Floor].cab_call = 1
-				cab_calls()
-				ch_new_order <- true
+				if Cab_calls() {
+				}
 			}
+			ch_new_order <- true //forteller at en ny order er tilgjengelig
 		}
 	}
 }
@@ -96,11 +97,18 @@ func hall_calls() {
 	}
 }
 
-func cab_calls() {
+func Cab_calls() (found_call bool) {
 	for i := 0; i <= floor_ammount; i++ {
 		if floor[i].cab_call == 1 {
-			elevator_command.direction = i
+			elevator_command.floor = i
+			if floor[i].cab_call > elevator.floor {
+				elevator_command.direction = 1
+			} else {
+				elevator_command.direction = -1
+			}
+			return true
 			break
 		}
 	}
+	return false
 }
