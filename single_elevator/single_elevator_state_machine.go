@@ -1,16 +1,25 @@
 package singleElevator
 
 import (
-	elevio "PROJECT-GROUP-10/elevio"
+	"PROJECT-GROUP-10/elevio"
 	"fmt"
 )
 
-var elevator_state string
+type elevator_state int
 
-// Channel
+const (
+	idle elevator_state = iota
+	moving
+	doorOpen
+)
 
-func singleElevatorFSM(
-	drv_floors <-chan int,
+var current_state elevator_state
+
+func SingleElevatorFSM(
+	ch_drv_floors <-chan int,
+	ch_elevator_has_arrived chan bool,
+	ch_drv_obstr chan bool,
+
 	// Channel koblet til orders
 	// Channel koblet til door time out
 	// Channel koblet til elevator_obstrukjson time out
@@ -19,15 +28,10 @@ func singleElevatorFSM(
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
-	ch_elevator_has_arrived := make(chan bool)
-	elevator_info := elevator_info{ //Bytt dette navnet
-		floor:     1,
-		direction: 0,
-	}
 
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
-	go CheckIfElevatorHasArrived(drv_floors, ch_elevator_has_arrived, elevator_info)
-	elevator_state = "idle"
+	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, elevator_info.floor)
+	current_state = idle
 
 	for {
 		select {
@@ -39,37 +43,50 @@ func singleElevatorFSM(
 			//Sett heis i state movement
 			// Basert på det
 
-		case a := <-ch_elevator_has_arrived:
-			// Stop heis
-			elevio.SetMotorDirection(elevio.MD_Stop)
-			// Skru av etasje lys
-			elevio.SetButtonLamp(b, elevator_info.floor, false)
-			elevio.SetDoorOpenLamp(true)
-			// Åpne dør
-			ch_door_timer_reset <- true
-
-		case a := <-ch_door_timer_out:
-			// Lukk dør
-			fmt.Printf("Closing door")
-			elevio.SetDoorOpenLamp(false)
-			// sett heis tilbake til idle
-			elevator_state = "idle"
-
-		case a := <-drv_obstr:
-			fmt.Printf("%+v\n", a)
-			/*
-				if a {
-					elevio.SetMotorDirection(elevio.MD_Stop)
-				} else {
-					elevio.SetMotorDirection(d)
-				}
-			*/
+		case <-ch_elevator_has_arrived:
+			fsm_onFloorArival(ch_door_timer_reset)
+		case <-ch_door_timer_out:
+			fsm_doorTimeOut()
+			// Lag en case her for hva som skjer hvis heisen er stuck for lenge
 		}
 	}
 }
 
-func CheckIfElevatorHasArrived(drv_floors chan int, ch_elevator_has_arrived chan bool, lolxd elevator_info) {
-	if lolxd.floor == drv_floors {
+func CheckIfElevatorHasArrived(ch_drv_floors <-chan int, ch_elevator_has_arrived chan bool, lolxd elevator_info_struct) {
+	if lolxd.floor == drv_floors { //Legg inn hvilken etasje heisen skal til fra et struct
 		ch_elevator_has_arrived <- true
 	}
+}
+
+func fsm_onFloorArival(ch_door_timer_reset chan bool) {
+	fmt.Printf("Arrived at floor" + elevator_info.floor)
+	// Write to a struct somewhere that elevator has arrived on correct floor
+	// Send UDP that elevator has arrived so the others can shut of timmer (Don't need for single)
+	// Stop heis
+	// Skru av etasje lys
+	// Åpne dør
+	switch current_state {
+	case moving:
+		elevio.SetMotorDirection(elevio.MD_Stop)
+		elevio.SetButtonLamp(b, elevator_info.floor, false)
+		elevio.SetDoorOpenLamp(true)
+		ch_door_timer_reset <- true
+		current_state = doorOpen
+	}
+
+}
+
+func fsm_doorTimeOut() {
+	fmt.Printf("Door time out detected")
+	switch current_state {
+	case doorOpen:
+		elevio.SetDoorOpenLamp(false)
+		// Lukk dør
+		// sett heis tilbake til idle
+		current_state = idle
+	}
+}
+
+func fsm_newOrder() {
+
 }

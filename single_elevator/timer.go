@@ -1,9 +1,9 @@
 package singleElevator
 
 import (
+	config "PROJECT-GROUP-10/config"
 	"fmt"
 	"time"
-	config "PROJECT-GROUP-10/config"
 )
 
 func OpenAndCloseDoorsTimer(ch_door_timer_out chan<- bool, ch_door_timer_reset <-chan bool) {
