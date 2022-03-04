@@ -39,8 +39,8 @@ func main() {
 			fmt.Printf("%+v\n", a)
 			elevio.SetButtonLamp(a.Button, a.Floor, true) //Works for single elevator
 		case a := <-ch_drv_floors:
-
-		case a := <-ch_drv_obstr:
+			fmt.Printf("Current floor is %+v\n", a)
+		case <-ch_drv_obstr:
 			//Lag noe her som sier at hvis den er trykket inn, stop
 			//Når knappen ikke er trykket inn lenger, resume direction
 		case a := <-ch_drv_stop:

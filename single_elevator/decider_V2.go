@@ -53,7 +53,7 @@ func Hall_order(
 				hall_calls()
 			case 1: //ned
 				floor[a.Floor].hall_call = 1
-				floor[a.Floor].direction.up = false
+				floor[a.Floor].direction.down = true
 				hall_calls()
 			case 2: //cab call
 				floor[a.Floor].cab_call = 1
