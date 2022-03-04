@@ -16,4 +16,8 @@ const (
 	ELEVATOR_DOOR_OPEN_TIME = time.Second * 10
 
 	REMOVE_OLD_ORDER_TIME = time.Second * 2
+
+	//Newtowrking
+	HEARTBEAT_TIME      = time.Second
+	NUMBER_OF_ELEVATORS = 3
 )
