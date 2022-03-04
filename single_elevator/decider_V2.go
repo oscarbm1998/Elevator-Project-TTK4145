@@ -28,9 +28,9 @@ var elevator_command elevator_status //where elevator should go
 func Remove_order(level int, direction int) {
 	floor[level].hall_call = 0
 	floor[level].cab_call = 0
-	if direction == 1 {
+	if direction == 0 {
 		floor[level].direction.up = false
-	} else if direction == -1 {
+	} else if direction == 1 {
 		floor[level].direction.down = false
 	}
 }
