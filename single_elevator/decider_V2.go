@@ -30,8 +30,10 @@ func Remove_order(level int, direction int) {
 	floor[level].cab_call = 0
 	if direction == 0 {
 		floor[level].direction.up = false
+		elevio.SetButtonLamp(0, level, false)
 	} else if direction == 1 {
 		floor[level].direction.down = false
+		elevio.SetButtonLamp(1, level, false)
 	}
 }
 
