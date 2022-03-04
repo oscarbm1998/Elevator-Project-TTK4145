@@ -22,7 +22,7 @@ var floor [floor_ammount]floor_info
 var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
-func hall_order(
+func Hall_order(
 	ch_drv_buttons chan elevio.ButtonEvent, 
 	ch_new_order chan bool,
 ){
