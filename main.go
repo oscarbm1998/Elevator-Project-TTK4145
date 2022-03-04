@@ -23,6 +23,7 @@ func main() {
 	ch_drv_obstr := make(chan bool)
 	ch_drv_stop := make(chan bool)
 	ch_elevator_has_arrived := make(chan bool)
+	ch_new_order := make(chan bool)
 
 	go elevio.PollButtons(ch_drv_buttons)
 	go elevio.PollFloorSensor(ch_drv_floors)
@@ -35,16 +36,15 @@ func main() {
 		case a := <-ch_drv_buttons:
 			fmt.Printf("%+v\n", a)
 			elevio.SetButtonLamp(a.Button, a.Floor, true) //Works for single elevator
+			if (hallcall)
+			Hall_func()
+			else 
+			Cab_calls()
+			int floor = elevio.ButtonEvent
+			ch_new_order <- true
 			//Should store somewhere wheter it is a cab or hall call
 
 		case a := <-ch_drv_floors:
-			fmt.Printf("%+v\n", a)
-			if a == numFloors-1 || a == 0 {
-				elevio.SetMotorDirection(elevio.MD_Stop)
-			}
-
-			//elevio.SetMotorDirection(d)
-			current_floor = a
 
 		case a := <-ch_drv_obstr:
 			//Lag noe her som sier at hvis den er trykket inn, stop
