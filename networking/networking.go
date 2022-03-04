@@ -41,10 +41,10 @@ func heartBeatTransmitter() (err error) {
 			timer.Reset(config.HEARTBEAT_TIME)
 			//Sampling date and time, and making it nice european style
 			year, month, day := time.Now().Date()
-			date = strconv.Itoa(day)+"/"+month.String()+"/"+strconv.Itoa(year)
-			hour,minute,second := time.Now().Clock()
-			clock = strconv.Itoa(hour)+":"+strconv.Itoa(minute)+":"+strconv.Itoa(second)
-			msg = date +" " + clock + "_"
+			date = strconv.Itoa(day) + "/" + month.String() + "/" + strconv.Itoa(year)
+			hour, minute, second := time.Now().Clock()
+			clock = strconv.Itoa(hour) + ":" + strconv.Itoa(minute) + ":" + strconv.Itoa(second)
+			msg = date + " " + clock + "_"
 			msg = msg + strconv.Itoa(config.ELEVATOR_ID) + "_"
 			msg = msg + strconv.Itoa(myDirection) + "_"
 			msg = msg + strconv.Itoa(myFloor) + "_"
@@ -72,33 +72,32 @@ func resolveHBConn() (err error) {
 	return err
 }
 
-
-func heartBeathandler(){
+func heartBeathandler() {
 	//Initiate connections
 	err := resolveHBConn()
-	if err != nil{
+	if err != nil {
 		panic(err)
 	}
 
 	//Initiate the UDP heartbeat listener
-	ch_heartbeatmsg := make(chan int)
+	ch_heartbeatmsg := make(chan string)
 
 	go heartbeat_UDPListener(ch_heartbeatmsg)
-	
+
 	//Initiate heartbeat timers as go routines for each elevator
 	var ch_foundDead chan int
-	var ch_timerStop, ch_TimerReset [config.NUMBER_OF_ELEVATORS-1]chan bool
+	var ch_timerStop, ch_timerReset [config.NUMBER_OF_ELEVATORS - 1]chan bool
 
-	for i:= 0; i<config.NUMBER_OF_ELEVATORS-1;i++{
-		go heartbeatTimer(ch_foundDead[i],ch_timerReset[i], ch_timerStop[i])
+	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
+		go heartbeatTimer(i+1, ch_foundDead, ch_timerReset[i], ch_timerStop[i])
 	}
 	//Kill its own timer
 	ch_timerStop[config.ELEVATOR_ID-1] <- true
 
-	for{
-		select{
+	for {
+		select {
 		case <-ch_heartbeatmsg:
-			device_time, ID, direction, floor, status := HB_parsMessage(ch_heartbeatmsg<-)
+			device_time, ID, direction, floor, status := HB_parsMessage(<-ch_heartbeatmsg)
 			ch_timerReset[ID-1] <- true //Reset the appropriate timer
 			//**ADD CODE FOR DATA REPORTING
 
@@ -108,11 +107,12 @@ func heartBeathandler(){
 		}
 	}
 }
+
 //Timer, waiting for something to timeout. Run as a go routine, accessed through channels
-func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timer_stop chan bool){
+func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timer_stop chan bool) {
 	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	for {
-		select{
+		select {
 		case <-timer.C:
 			ch_foundDead <- ID
 		case <-ch_timerReset:
@@ -123,20 +123,18 @@ func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timer_stop 
 	}
 }
 
-
-func heartbeat_UDPListener(ch_heartbeatmsg chan<- string)error{
-	buf := make([]byte,1024)
+func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) error {
+	buf := make([]byte, 1024)
 	var msg string
+	adr, _ := net.ResolveUDPAddr("udp", strconv.Itoa(config.HEARTBEAT_REC_PORT))
+	con, _ := net.ListenUDP("udp", adr)
 	for {
-		n, addr, err := HB_con_In[ID].ReadFromUDP(buf)
+		n, addr, err := con.ReadFromUDP(buf)
 		msg = string(buf[0:n])
-		<-ch_heartbeatmsg msg
+		ch_heartbeatmsg <- msg
 		return err
 	}
 }
-
-
-
 
 func printError(str string, err error) {
 	if err != nil {
