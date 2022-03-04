@@ -19,6 +19,7 @@ func SingleElevatorFSM(
 	ch_drv_floors <-chan int,
 	ch_elevator_has_arrived chan bool,
 	ch_drv_obstr chan bool,
+	ch_new_order chan bool,
 
 	// Channel koblet til orders
 	// Channel koblet til door time out
@@ -47,7 +48,7 @@ func SingleElevatorFSM(
 }
 
 func CheckIfElevatorHasArrived(ch_drv_floors <-chan int, ch_elevator_has_arrived chan bool) {
-	if elevator.floor == ch_drv_floors { //Legg inn hvilken etasje heisen skal til fra et struct
+	if elevator_command.floor == ch_drv_floors { //Legg inn hvilken etasje heisen skal til fra et struct
 		ch_elevator_has_arrived <- true //Kan være denne vil fortsette å kjøre så kan hende vi må fikse
 	}
 }
@@ -56,8 +57,8 @@ func fsm_newOrder() {
 	switch current_state {
 	case idle:
 		//Beveg heis til ønsket etasje (hente dette fra en struct som inneholder direction og floor den skal til?)
-		elevio.SetMotorDirection(elevio.MotorDirection(elevator.direction))
-		fmt.Printf("Moving to floor " + elevator.floor)
+		elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
+		fmt.Printf("Moving to floor " + elevator_command.floor)
 		current_state = moving
 	case moving:
 		//Velger egentlig stop etasje basert på hva som ligger i struct men tror det gjøres hos joel?
