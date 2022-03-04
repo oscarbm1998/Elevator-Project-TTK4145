@@ -10,21 +10,29 @@ type elevator_status struct {
 	floor     int
 	direction int //1 up -1 down 0 idle
 }
+type dir struct {
+	up   bool
+	down bool
+}
 
 type floor_info struct {
 	hall_call int
 	cab_call  int
-	direction int
+	direction dir
 }
 
 var floor [floor_ammount]floor_info
 var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
-func Remove_order(level int) {
+func Remove_order(level int, direction int) {
 	floor[level].hall_call = 0
 	floor[level].cab_call = 0
-	floor[level].direction = 0
+	if direction == 1 {
+		floor[level].direction.up = false
+	} else if direction == -1 {
+		floor[level].direction.down = false
+	}
 }
 
 func Hall_order(
