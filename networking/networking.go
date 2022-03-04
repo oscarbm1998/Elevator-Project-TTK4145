@@ -4,12 +4,12 @@ import (
 	config "PROJECT-GROUP-10/config"
 	"fmt"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var HB_con_Out [config.NUMBER_OF_ELEVATORS - 1]*net.UDPConn
-var HB_con_In [config.NUMBER_OF_ELEVATORS - 1]*net.UDPConn
 var elevatorsIPs [config.NUMBER_OF_ELEVATORS - 1]string
 
 var myFloor int
@@ -33,15 +33,23 @@ func getLocalIp() (string, error) {
 func heartBeatTransmitter() (err error) {
 	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	var msg string
+	var date string
+	var clock string
 	for {
 		select {
 		case <-timer.C:
 			timer.Reset(config.HEARTBEAT_TIME)
-			msg = "S_" + time.Now().String() + "_"
-			msg = msg + string(config.ELEVATOR_ID) + "_"
-			msg = msg + string(myDirection) + "_"
-			msg = msg + string(myFloor) + "_"
-			msg = msg + string(myStatus) + "_E"
+			//Sampling date and time, and making it nice european style
+			year, month, day := time.Now().Date()
+			date = strconv.Itoa(day)+"/"+month.String()+"/"+strconv.Itoa(year)
+			hour,minute,second := time.Now().Clock()
+			clock = strconv.Itoa(hour)+":"+strconv.Itoa(minute)+":"+strconv.Itoa(second)
+			msg = date +" " + clock + "_"
+			msg = msg + strconv.Itoa(config.ELEVATOR_ID) + "_"
+			msg = msg + strconv.Itoa(myDirection) + "_"
+			msg = msg + strconv.Itoa(myFloor) + "_"
+			msg = msg + strconv.Itoa(myStatus)
+			//Sending to all nodes
 			for ID := 0; ID < config.NUMBER_OF_ELEVATORS-1; ID++ {
 				_, err := HB_con_Out[ID].Write([]byte(msg))
 				return err
@@ -60,19 +68,89 @@ func resolveHBConn() (err error) {
 		HB_con_Out[i] = con
 		printError("resolveHBconn dial error: ", err)
 
-		//Incomming
-		networkIn, err := net.ResolveUDPAddr("udp", elevatorsIPs[i]+string(config.HEARTBEAT_REC_PORT))
-		printError("resolveHBconn setup error: ", err)
-		conIn, err := net.DialUDP("udp", nil, networkIn)
-		HB_con_In[i] = conIn
-		printError("resolveHBconn dial error: ", err)
 	}
 	return err
 }
+
+
+func heartBeathandler(){
+	//Initiate connections
+	err := resolveHBConn()
+	if err != nil{
+		panic(err)
+	}
+
+	//Initiate the UDP heartbeat listener
+	ch_heartbeatmsg := make(chan int)
+
+	go heartbeat_UDPListener(ch_heartbeatmsg)
+	
+	//Initiate heartbeat timers as go routines for each elevator
+	var ch_foundDead chan int
+	var ch_timerStop, ch_TimerReset [config.NUMBER_OF_ELEVATORS-1]chan bool
+
+	for i:= 0; i<config.NUMBER_OF_ELEVATORS-1;i++{
+		go heartbeatTimer(ch_foundDead[i],ch_timerReset[i], ch_timerStop[i])
+	}
+	//Kill its own timer
+	ch_timerStop[config.ELEVATOR_ID-1] <- true
+
+	for{
+		select{
+		case <-ch_heartbeatmsg:
+			device_time, ID, direction, floor, status := HB_parsMessage(ch_heartbeatmsg<-)
+			ch_timerReset[ID-1] <- true //Reset the appropriate timer
+			//**ADD CODE FOR DATA REPORTING
+
+		case <-ch_foundDead:
+			fmt.Println("found %d dead", <-ch_foundDead)
+			//**ADD CODE FOR REPORTING A HOMECIDE
+		}
+	}
+}
+//Timer, waiting for something to timeout. Run as a go routine, accessed through channels
+func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timer_stop chan bool){
+	timer := time.NewTimer(config.HEARTBEAT_TIME)
+	for {
+		select{
+		case <-timer.C:
+			ch_foundDead <- ID
+		case <-ch_timerReset:
+			timer.Reset(config.HEARTBEAT_TIME)
+		case <-ch_timer_stop:
+			timer.Stop()
+		}
+	}
+}
+
+
+func heartbeat_UDPListener(ch_heartbeatmsg chan<- string)error{
+	buf := make([]byte,1024)
+	var msg string
+	for {
+		n, addr, err := HB_con_In[ID].ReadFromUDP(buf)
+		msg = string(buf[0:n])
+		<-ch_heartbeatmsg msg
+		return err
+	}
+}
+
+
+
 
 func printError(str string, err error) {
 	if err != nil {
 		fmt.Print(str)
 		fmt.Println(err)
 	}
+}
+
+func HB_parsMessage(msg string) (device_time string, ID int, direction int, floor int, status int) {
+	data := strings.Split(msg, "_")
+	device_time = data[0]
+	ID, _ = strconv.Atoi(data[1])
+	direction, _ = strconv.Atoi(data[2])
+	floor, _ = strconv.Atoi(data[3])
+	status, _ = strconv.Atoi(data[4])
+	return device_time, ID, floor, direction, status
 }
