@@ -36,6 +36,14 @@ func main() {
 			fmt.Printf("%+v\n", a)
 			elevio.SetButtonLamp(a.Button, a.Floor, true) //Works for single elevator
 			//Should store somewhere wheter it is a cab or hall call
+			switch a.Button {
+			case 0: //up
+				hall call(1)
+			case 1: //down
+				singleElevator.Elevator_command.floor = -1
+			case 2: //cab
+
+			}
 
 		case a := <-ch_drv_floors:
 			fmt.Printf("%+v\n", a)
@@ -60,4 +68,3 @@ func main() {
 	}
 
 }
-
