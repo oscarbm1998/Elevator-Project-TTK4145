@@ -14,7 +14,7 @@ type floor_info struct {
 
 var floor [floor_ammount]floor_info
 var elevator elevator_status         //where elevator is
-var elevator_command elevator_status //where elevator should go
+var Elevator_command elevator_status //where elevator should go
 
 //algo for utside
 func hall_calls() {

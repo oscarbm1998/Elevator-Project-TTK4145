@@ -12,7 +12,7 @@ type elevator_event struct {
 	direction int //1 up -1 down
 }
 
-var elevator elevator_info
+var elevatorss elevator_info
 var queue [queue_length]elevator_event
 
 func queue_AddEvent(new_event elevator_event) {
