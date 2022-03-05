@@ -4,7 +4,7 @@ import (
 	"PROJECT-GROUP-10/elevio"
 )
 
-const floor_ammount int = 4
+const floor_ammount int = 3
 
 type elevator_status struct {
 	floor     int
@@ -28,10 +28,10 @@ var elevator_command elevator_status //where elevator should go
 func Remove_order(level int, direction int) {
 	floor[level].hall_call = 0
 	floor[level].cab_call = 0
-	if direction == 0 {
+	if direction == 1 {
 		floor[level].direction.up = false
 		elevio.SetButtonLamp(0, level, false)
-	} else if direction == 1 {
+	} else if direction == -1 {
 		floor[level].direction.down = false
 		elevio.SetButtonLamp(1, level, false)
 	}
@@ -51,14 +51,15 @@ func Hall_order(
 				floor[a.Floor].hall_call = 1
 				floor[a.Floor].direction.up = true
 				hall_calls()
+				break
 			case 1: //ned
 				floor[a.Floor].hall_call = 1
 				floor[a.Floor].direction.down = true
 				hall_calls()
+				break
 			case 2: //cab call
 				floor[a.Floor].cab_call = 1
-				if Cab_calls() {
-				}
+				Cab_calls()
 			}
 			ch_new_order <- true //forteller at en ny order er tilgjengelig
 		}
