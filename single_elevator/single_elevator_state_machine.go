@@ -103,6 +103,11 @@ func fsm_doorTimeOut() {
 	switch current_state {
 	case doorOpen:
 		elevio.SetDoorOpenLamp(false)
+		if call_qeuer(elevator.direction) {
+			elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
+			fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
+			current_state = moving
+		}
 		current_state = idle
 	}
 }
