@@ -30,10 +30,10 @@ var elevator_command elevator_status //where elevator should go
 func Remove_order(level int, direction int) {
 	floor[level].hall_call = 0
 	floor[level].cab_call = 0
-	if direction == 0 {
+	if direction == 1 {
 		floor[level].direction.up = true
 		elevio.SetButtonLamp(0, level, false)
-	} else if direction == 1 {
+	} else if direction == -1 {
 		floor[level].direction.down = true
 		elevio.SetButtonLamp(1, level, false)
 	}
@@ -49,16 +49,16 @@ func Hall_order(
 		select {
 		case a := <-ch_drv_buttons:
 			switch a.Button {
-			case 0: //opp
+			case 1: //opp
 				floor[a.Floor].hall_call = 1
 				floor[a.Floor].direction.up = true
 				break
-			case 1: //ned
+			case -1: //ned
 				floor[a.Floor].hall_call = 1
 				floor[a.Floor].direction.down = true
 				hall_calls()
 				break
-			case 2: //cab call
+			case 0: //cab call
 				floor[a.Floor].cab_call = 1
 				Cab_calls()
 			}
@@ -71,6 +71,11 @@ func request_above() bool {
 	for i := elevator.floor; i <= floor_ammount; i++ {
 		if floor[i].hall_call == 1 {
 			elevator_command.floor = i
+			if floor[i].hall_call > elevator.floor {
+				elevator_command.direction = 1
+			} else {
+				elevator_command.direction = -1
+			}
 			return true
 		}
 	}
@@ -81,6 +86,11 @@ func request_below() bool {
 	for i := elevator.floor; i <= 0; i-- {
 		if floor[i].hall_call == 1 {
 			elevator_command.floor = i
+			if floor[i].hall_call > elevator.floor {
+				elevator_command.direction = 1
+			} else {
+				elevator_command.direction = -1
+			}
 			return true
 		}
 	}
@@ -92,9 +102,9 @@ func request_here() bool {
 		if floor[i].hall_call == 1 {
 			elevator_command.floor = i
 			if floor[i].hall_call > elevator.floor {
-				elevator_command.direction = 0
-			} else {
 				elevator_command.direction = 1
+			} else {
+				elevator_command.direction = -1
 			}
 			return true
 		}
@@ -102,32 +112,34 @@ func request_here() bool {
 	return false
 }
 
-func call_qeuer(direction int){
+func Call_qeuer(direction int) bool{
 	switch direction {
-	case 0: //up
+	case 1 //up
 		if request_above(){
 		} else if request_here() {
 		} else if request_below() {
 		} else {
 			//sett den i idle
 		}
-	case 1: //down
+	case -1: //down
 		if request_below(){
 		} else if request_here() {
 		} else if  request_above(){
 		} else {
 			//sett den i idle
 		}
-	case 2 //
+	case 0 //
 		if request_here(){
 		} else if request_above() {
 		} else if request_below() {
 		} else {
 			//sett den i idle
 		}
+	case
 	}
-
-
+	return true
+ //vite når det kommer en new order
+ //
 }
 
 /*
