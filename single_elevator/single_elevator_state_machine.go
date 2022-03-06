@@ -77,7 +77,7 @@ func fsm_newOrder() {
 }
 
 func fsm_onFloorArival(ch_door_timer_reset chan bool) {
-	fmt.Printf("Arrived at floor" + string(elevator_command.floor))
+	fmt.Printf("Arrived at floor %+v\n", elevator.floor)
 	// Write to a struct somewhere that elevator has arrived on correct floor
 	// Send UDP that elevator has arrived so the others can shut of timmer (Don't need for single)
 	// Stop heis
