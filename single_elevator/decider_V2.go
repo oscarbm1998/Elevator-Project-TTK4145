@@ -91,11 +91,16 @@ func request_here() bool { //tad unshure if this is needed or not but its used f
 			if i > elevator.floor {    //set direction
 				elevator_command.direction = 1
 			} else {
-				elevator_	for i := elevator.floor; i < floor_ammount; i++ { //c
+				elevator_command.direction = -1
+			}
+			return true
+		}
+	}
 	return false
 }
 
 func Call_qeuer(direction int) bool {
+	fmt.Printf("call qeuer case here %+v\n", direction)
 	switch direction {
 	case 1: //up
 		fmt.Printf("call qeuer case up\n")
