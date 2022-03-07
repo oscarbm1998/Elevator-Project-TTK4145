@@ -53,6 +53,7 @@ func fsm_newOrder() {
 	case idle:
 		//Beveg heis til ønsket etasje (hente dette fra en struct som inneholder direction og floor den skal til?)
 		Call_qeuer(elevator.direction)
+		fmt.Printf("Shamalamadingdong %+v\n", elevator_command.direction)
 		elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 		fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 		current_state = moving
@@ -70,7 +71,7 @@ func fsm_newOrder() {
 }
 
 func fsm_onFloorArival(ch_door_timer_reset chan bool) {
-	fmt.Printf("Arrived at floor %+v\n", elevator.floor)
+	fmt.Printf("Arrived at floor %+v\n", elevator_command.floor)
 	// Write to a struct somewhere that elevator has arrived on correct floor
 	// Send UDP that elevator has arrived so the others can shut of timmer (Don't need for single)
 	// Stop heis
