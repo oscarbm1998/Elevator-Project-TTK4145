@@ -90,11 +90,7 @@ func request_here() bool { //tad unshure if this is needed or not but its used f
 			if i > elevator.floor {    //set direction
 				elevator_command.direction = 1
 			} else {
-				elevator_command.direction = -1
-			}
-			return true
-		}
-	}
+				elevator_	for i := elevator.floor; i < floor_ammount; i++ { //c
 	return false
 }
 

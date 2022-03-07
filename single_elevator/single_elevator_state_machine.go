@@ -34,7 +34,6 @@ func SingleElevatorFSM(
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived)
 	elevator.direction = 1
 	current_state = idle
-
 	for {
 		select {
 		case <-ch_new_order:
@@ -50,7 +49,6 @@ func SingleElevatorFSM(
 
 func fsm_newOrder() {
 
-	var translated int
 	switch current_state {
 	case idle:
 		//Beveg heis til ønsket etasje (hente dette fra en struct som inneholder direction og floor den skal til?)
