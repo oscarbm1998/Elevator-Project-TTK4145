@@ -72,7 +72,7 @@ func request_above() bool { //checks if there are any active calls above the ele
 }
 
 func request_below() bool { //checks if there are any active calls below the elevator and updates the "command struct"
-	for i := elevator.floor; i > floor_ammount; i++ { //checks from the last known floor of the elevator to the botton
+	for i := elevator.floor; i > 0; i-- { //checks from the last known floor of the elevator to the botton
 		if floor[i].down { //if a floor with call down is found
 			fmt.Printf("found request below\n")
 			elevator_command.floor = i      //updates the command value
@@ -100,7 +100,7 @@ func request_here() bool { //tad unshure if this is needed or not but its used f
 }
 
 func Call_qeuer(direction int) bool {
-	fmt.Printf("call qeuer case here %+v\n", direction)
+	fmt.Printf("call qeuer button direction %d\n", direction)
 	switch direction {
 	case 1: //up
 		fmt.Printf("call qeuer case up\n")

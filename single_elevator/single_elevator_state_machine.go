@@ -32,7 +32,8 @@ func SingleElevatorFSM(
 
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived)
-	elevator.direction = 1
+	elevator.direction = -1
+	elevator.floor = 3
 	current_state = idle
 	for {
 		select {
