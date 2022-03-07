@@ -36,8 +36,6 @@ func Remove_order(level int, direction int) { //removes an order
 func Hall_order(
 	ch_drv_buttons chan elevio.ButtonEvent,
 	ch_new_order chan bool,
-	ch_clear_order chan bool,
-	ch_drv_floors chan int,
 ) {
 	for {
 		select {
