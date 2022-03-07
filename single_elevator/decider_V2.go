@@ -50,10 +50,13 @@ func Hall_order(
 			switch a.Button {
 			case 0: //opp
 				floor[a.Floor].up = true
+				elevio.SetButtonLamp(0, a.Floor, false) //turns off light
 			case 1: //ned
 				floor[a.Floor].down = true
+				elevio.SetButtonLamp(1, a.Floor, false) //turns off light
 			case 2: //cab call
 				floor[a.Floor].here = true
+				elevio.SetButtonLamp(2, a.Floor, false) //turns off light
 			}
 			ch_new_order <- true //forteller at en ny order er tilgjengelig
 		}
