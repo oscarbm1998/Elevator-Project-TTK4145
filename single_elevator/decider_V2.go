@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-const floor_ammount int = 3
+const floor_ammount int = 4
 
 type elevator_status struct {
 	floor     int
