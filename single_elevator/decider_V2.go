@@ -14,8 +14,8 @@ type dir struct {
 }
 
 type elevator_status struct {
-	floor     int
-	direction int //1 up -1 down 0 idle
+	floor     int8
+	direction int8 //1 up -1 down 0 idle
 }
 
 type floor_info struct {
