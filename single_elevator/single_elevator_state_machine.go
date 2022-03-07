@@ -55,16 +55,8 @@ func fsm_newOrder() {
 	case idle:
 		//Beveg heis til ønsket etasje (hente dette fra en struct som inneholder direction og floor den skal til?)
 		Call_qeuer(elevator.direction)
-		switch elevator_command.direction {
-		case 0:
-			translated = 1
-		case 1:
-			translated = -1
-		case 2:
-			translated = 0
-		}
-		fmt.Printf("Shamalamadingdong %+v\n", translated)
-		elevio.SetMotorDirection(elevio.MotorDirection(translated))
+		fmt.Printf("Shamalamadingdong %+v\n", elevator_command.direction)
+		elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 		fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 		current_state = moving
 	case moving:
@@ -73,7 +65,7 @@ func fsm_newOrder() {
 		//Vent til dørene lukkes eller personen inni trykker på noe. Hvis doortimer går ut sjekker heisen om det
 		if request_here() {
 			elevio.SetDoorOpenLamp(false)
-			elevio.SetMotorDirection(elevio.MotorDirection(translated))
+			elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 			current_state = moving
 		}
 		//finnes noen nye utvendige calls den skal ta
