@@ -62,6 +62,7 @@ func Hall_order(
 func request_above() bool { //checks if there are any active calls above the elevator and updates the "command struct"
 	for i := elevator.floor; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
 		if floor[i].up { //if a floor with call up is found
+			fmt.Printf("found request above\n")
 			elevator_command.floor = i     //updates the command value
 			elevator_command.direction = 1 //sets the direction up just in case
 			return true
@@ -73,6 +74,7 @@ func request_above() bool { //checks if there are any active calls above the ele
 func request_below() bool { //checks if there are any active calls below the elevator and updates the "command struct"
 	for i := elevator.floor; i > floor_ammount; i++ { //checks from the last known floor of the elevator to the botton
 		if floor[i].down { //if a floor with call down is found
+			fmt.Printf("found request below\n")
 			elevator_command.floor = i      //updates the command value
 			elevator_command.direction = -1 //sets the direction down just in case
 			return true
