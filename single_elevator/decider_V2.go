@@ -40,12 +40,14 @@ func Hall_order(
 	for {
 		select {
 		case a := <-ch_drv_buttons:
-			fmt.Printf("pressed %+v\n", a.Button)
+			fmt.Printf("pressed %d\n", a.Button)
+			fmt.Printf("read floor %d\n", a.Floor)
 			switch a.Button {
 			case 0: //opp
 				floor[a.Floor].up = true
 				elevio.SetButtonLamp(0, a.Floor, true) //turns off light
 			case 1: //ned
+				fmt.Printf("a.floor is %d\n", a.Floor)
 				floor[a.Floor].down = true
 				elevio.SetButtonLamp(1, a.Floor, true) //turns off light
 			case 2: //cab call
@@ -59,19 +61,20 @@ func Hall_order(
 
 func request_above() bool { //checks if there are any active calls above the elevator and updates the "command struct"
 	for i := elevator.floor; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
-		if floor[i].up { //if a floor with call up is found
+		if floor[i].up || floor[i].down { //if a floor with call up is found
 			fmt.Printf("found request above\n")
 			elevator_command.floor = i     //updates the command value
 			elevator_command.direction = 1 //sets the direction up just in case
 			return true
 		}
 	}
+	fmt.Printf("no request above\n")
 	return false
 }
 
 func request_below() bool { //checks if there are any active calls below the elevator and updates the "command struct"
-	for i := elevator.floor; i > 0; i-- { //checks from the last known floor of the elevator to the botton
-		if floor[i].down { //if a floor with call down is found
+	for i := 0; i < elevator.floor; i++ { //checks from the last known floor of the elevator to the botton
+		if floor[i].down || floor[i].up { //if a floor with call down is found
 			fmt.Printf("found request below\n")
 			elevator_command.floor = i      //updates the command value
 			elevator_command.direction = -1 //sets the direction down just in case
