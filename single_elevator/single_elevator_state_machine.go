@@ -32,6 +32,7 @@ func SingleElevatorFSM(
 
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived)
+	elevator.direction = 1
 	current_state = idle
 
 	for {
@@ -51,6 +52,7 @@ func fsm_newOrder() {
 	switch current_state {
 	case idle:
 		//Beveg heis til ønsket etasje (hente dette fra en struct som inneholder direction og floor den skal til?)
+		Call_qeuer(elevator.direction)
 		elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 		fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 		current_state = moving
@@ -90,7 +92,7 @@ func fsm_onFloorArival(ch_door_timer_reset chan bool) {
 }
 
 func fsm_doorTimeOut() {
-	fmt.Printf("Door time out detected")
+	fmt.Printf("Door time out detected\n")
 	switch current_state {
 	case doorOpen:
 		elevio.SetDoorOpenLamp(false)
