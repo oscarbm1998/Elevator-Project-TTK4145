@@ -14,6 +14,7 @@ const (
 )
 
 var current_state elevator_state
+var last_floor int
 
 func SingleElevatorFSM(
 	ch_drv_floors <-chan int,
@@ -29,11 +30,11 @@ func SingleElevatorFSM(
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
-
+	last_floor = -1
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived)
-	elevator.direction = -1
-	elevator.floor = 3
+	elevator.direction = 1
+	elevator.floor = 0
 	current_state = idle
 	for {
 		select {
@@ -110,7 +111,8 @@ func fsm_doorTimeOut() {
 func CheckIfElevatorHasArrived(ch_drv_floors <-chan int, ch_elevator_has_arrived chan bool) {
 	select {
 	case msg := <-ch_drv_floors:
-		if elevator_command.floor == msg {
+		fmt.Printf("Recieved floor message\n")
+		if elevator_command.floor == msg && last_floor != -1 {
 			ch_elevator_has_arrived <- true //Kan være denne vil fortsette å kjøre så kan hende vi må fikse
 		}
 	}
