@@ -61,7 +61,7 @@ func Hall_order(
 }
 
 func request_above() bool { //checks if there are any active calls above the elevator and updates the "command struct"
-	for i := elevator.floor; i <= floor_ammount; i++ { //checks from the last known floor of the elevator to the top
+	for i := elevator.floor; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
 		if floor[i].up { //if a floor with call up is found
 			elevator_command.floor = i     //updates the command value
 			elevator_command.direction = 1 //sets the direction up just in case
@@ -72,7 +72,7 @@ func request_above() bool { //checks if there are any active calls above the ele
 }
 
 func request_below() bool { //checks if there are any active calls below the elevator and updates the "command struct"
-	for i := elevator.floor; i >= floor_ammount; i++ { //checks from the last known floor of the elevator to the botton
+	for i := elevator.floor; i > floor_ammount; i++ { //checks from the last known floor of the elevator to the botton
 		if floor[i].down { //if a floor with call down is found
 			elevator_command.floor = i      //updates the command value
 			elevator_command.direction = -1 //sets the direction down just in case
@@ -83,7 +83,7 @@ func request_below() bool { //checks if there are any active calls below the ele
 }
 
 func request_here() bool { //tad unshure if this is needed or not but its used for internal calls
-	for i := 0; i <= floor_ammount; i++ { //checks the entire struct for calls
+	for i := 0; i < floor_ammount; i++ { //checks the entire struct for calls
 		if floor[i].here { //if a call is found
 			elevator_command.floor = i //update command struct
 			if i > elevator.floor {    //set direction
