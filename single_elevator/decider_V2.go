@@ -2,6 +2,7 @@ package singleElevator
 
 import (
 	"PROJECT-GROUP-10/elevio"
+	"fmt"
 )
 
 const floor_ammount int = 3
@@ -47,16 +48,17 @@ func Hall_order(
 	for {
 		select {
 		case a := <-ch_drv_buttons:
+			fmt.Printf("pressed %+v\n", a.Button)
 			switch a.Button {
 			case 0: //opp
 				floor[a.Floor].up = true
-				elevio.SetButtonLamp(0, a.Floor, false) //turns off light
+				elevio.SetButtonLamp(0, a.Floor, true) //turns off light
 			case 1: //ned
 				floor[a.Floor].down = true
-				elevio.SetButtonLamp(1, a.Floor, false) //turns off light
+				elevio.SetButtonLamp(1, a.Floor, true) //turns off light
 			case 2: //cab call
 				floor[a.Floor].here = true
-				elevio.SetButtonLamp(2, a.Floor, false) //turns off light
+				elevio.SetButtonLamp(2, a.Floor, true) //turns off light
 			}
 			ch_new_order <- true //forteller at en ny order er tilgjengelig
 		}
