@@ -104,7 +104,7 @@ func request_here() bool { //tad unshure if this is needed or not but its used f
 
 func Call_qeuer(direction int) bool {
 	switch direction {
-	case 1: //up
+	case 0: //up
 		if request_above() {
 			return true
 		} else if request_here() {
@@ -113,7 +113,7 @@ func Call_qeuer(direction int) bool {
 			return true
 		}
 
-	case -1: //down
+	case 1: //down
 		if request_below() {
 			return true
 		} else if request_here() {
@@ -122,7 +122,7 @@ func Call_qeuer(direction int) bool {
 			return true
 		}
 
-	case 0: // here
+	case 2: // here
 		if request_here() {
 			return true
 		} else if request_above() {
