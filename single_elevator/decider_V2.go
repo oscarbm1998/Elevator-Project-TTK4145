@@ -80,6 +80,8 @@ func request_below() bool { //checks if there are any active calls below the ele
 			return true
 		}
 	}
+	fmt.Printf("no request below\n")
+
 	return false
 }
 
