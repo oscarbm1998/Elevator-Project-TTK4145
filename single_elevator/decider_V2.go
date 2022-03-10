@@ -44,6 +44,7 @@ func Hall_order(
 			fmt.Printf("read floor %d\n", a.Floor)
 			if floor[a.Floor].up || floor[a.Floor].down || floor[a.Floor].here {
 				//do nuffin as the order already exists
+				fmt.Printf("orders already exists\n")
 			} else { //do shit
 				switch a.Button {
 				case 0: //opp
