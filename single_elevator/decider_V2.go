@@ -42,19 +42,23 @@ func Hall_order(
 		case a := <-ch_drv_buttons:
 			fmt.Printf("pressed %d\n", a.Button)
 			fmt.Printf("read floor %d\n", a.Floor)
-			switch a.Button {
-			case 0: //opp
-				floor[a.Floor].up = true
-				elevio.SetButtonLamp(0, a.Floor, true) //turns off light
-			case 1: //ned
-				fmt.Printf("a.floor is %d\n", a.Floor)
-				floor[a.Floor].down = true
-				elevio.SetButtonLamp(1, a.Floor, true) //turns off light
-			case 2: //cab call
-				floor[a.Floor].here = true
-				elevio.SetButtonLamp(2, a.Floor, true) //turns off light
+			if floor[a.Floor].up || floor[a.Floor].down || floor[a.Floor].here {
+				//do nuffin as the order already exists
+			} else { //do shit
+				switch a.Button {
+				case 0: //opp
+					floor[a.Floor].up = true
+					elevio.SetButtonLamp(0, a.Floor, true) //turns off light
+				case 1: //ned
+					fmt.Printf("a.floor is %d\n", a.Floor)
+					floor[a.Floor].down = true
+					elevio.SetButtonLamp(1, a.Floor, true) //turns off light
+				case 2: //cab call
+					floor[a.Floor].here = true
+					elevio.SetButtonLamp(2, a.Floor, true) //turns off light
+				}
+				ch_new_order <- true //forteller at en ny order er tilgjengelig
 			}
-			ch_new_order <- true //forteller at en ny order er tilgjengelig
 		}
 	}
 }
