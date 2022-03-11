@@ -34,7 +34,7 @@ func SingleElevatorFSM(
 	last_floor = -1
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived)
-	elevator.direction = 1
+	elevator.direction = 0
 	elevator.floor = 0
 	last_floor = 0
 	current_floor = -1
@@ -58,7 +58,6 @@ func fsm_newOrder() {
 	case idle:
 		//Beveg heis til ønsket etasje (hente dette fra en struct som inneholder direction og floor den skal til?)
 		Call_qeuer(elevator.direction)
-		fmt.Printf("Shamalamadingdong %+v\n", elevator_command.direction)
 		elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 		fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 		current_state = moving
