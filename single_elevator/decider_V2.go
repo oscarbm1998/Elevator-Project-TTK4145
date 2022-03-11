@@ -26,9 +26,7 @@ var elevator_command elevator_status //where elevator should go
 func Remove_order(level int, direction int) { //removes an order
 	floor[level].cab = false              //removes here call as the elevator has arrived there
 	elevio.SetButtonLamp(2, level, false) //turns off light
-	fmt.Printf("Arrived at remove order\n")
-	fmt.Printf("Direction is now %d", direction)
-	if direction == 1 { //if the direction is up or there are no orders below and orders above
+	if direction == 1 {                   //if the direction is up or there are no orders below and orders above
 		if !floor[level].up {
 			floor[level].down = false
 			elevio.SetButtonLamp(1, level, false) //turns off light
@@ -73,7 +71,6 @@ func Hall_order(
 					floor[a.Floor].up = true
 					elevio.SetButtonLamp(0, a.Floor, true) //turns off light
 				case 1: //ned
-					fmt.Printf("a.floor is %d\n", a.Floor)
 					floor[a.Floor].down = true
 					elevio.SetButtonLamp(1, a.Floor, true) //turns off light
 				case 2: //cab call
