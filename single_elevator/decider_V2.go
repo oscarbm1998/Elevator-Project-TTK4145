@@ -70,7 +70,7 @@ func Hall_order(
 *				This shit may not be needed			 *
 *****************************************************/
 func check_above() bool {
-	for i := elevator.floor + 1; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
+	for i := elevator.floor; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
 		if floor[i].up || floor[i].down { //if a floor with call up is found
 			fmt.Printf("found request above\n")
 			return true
@@ -79,7 +79,7 @@ func check_above() bool {
 	return false
 }
 func check_below() bool {
-	for i := 0; i < elevator.floor-1; i++ { //checks from the last known floor of the elevator to the top
+	for i := 0; i < elevator.floor; i++ { //checks from the last known floor of the elevator to the top
 		if floor[i].up || floor[i].down { //if a floor with call up is found
 			fmt.Printf("found request below\n")
 			return true
