@@ -14,7 +14,7 @@ var elevatorsIPs [config.NUMBER_OF_ELEVATORS - 1]string
 
 var localIP string
 
-func getLocalIp() (string, error) {
+func GetLocalIp() (string, error) {
 	if localIP == "" {
 		conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53})
 		if err != nil {
@@ -30,12 +30,10 @@ func heartBeatTransmitter() (err error) {
 	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	var msg, date, clock string
 	var ID int = config.ELEVATOR_ID
-
+	fmt.Println("Heartbeat: starting transmit")
 	for {
 		select {
 		case <-timer.C:
-			timer.Reset(config.HEARTBEAT_TIME)
-
 			//Sampling date and time, and making it nice european style
 			year, month, day := time.Now().Date()
 			date = strconv.Itoa(day) + "/" + month.String() + "/" + strconv.Itoa(year)
@@ -45,40 +43,44 @@ func heartBeatTransmitter() (err error) {
 
 			//Adding elevator data
 			msg = msg + strconv.Itoa(ID) + "_"
-			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].direction) + "_"
-			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].destination) + "_"
-			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].floor) + "_"
-			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].status)
-
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Direction) + "_"
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Destination) + "_"
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Floor) + "_"
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Status)
+			fmt.Println("Sending: " + msg)
 			//Sending to all nodes
+			//network, _ := net.ResolveUDPAddr("udp", "10.100.23.179:6969")
+			//con, _ := net.DialUDP("udp", nil, network)
 			for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
-				_, err := HB_con_Out[i].Write([]byte(msg))
-				return err
+				if i != ID-1 {
+					fmt.Println("sending")
+					HB_con_Out[i].Write([]byte(msg))
+				}
+
 			}
-			msg = ""
+			fmt.Println("restarting timer")
+			timer.Reset(config.HEARTBEAT_TIME)
 		}
+
 	}
 }
 
 func resolveHBConn() (err error) {
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		//Outgoing
-		network, err := net.ResolveUDPAddr("udp", string(config.HEARTBEAT_TRANS_PORT))
-		printError("resolveHBconn setup error: ", err)
-		con, err := net.DialUDP("udp", nil, network)
-		HB_con_Out[i] = con
-		printError("resolveHBconn dial error: ", err)
-
+	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
+		if i != config.ELEVATOR_ID-1 {
+			//Outgoing
+			network, err := net.ResolveUDPAddr("udp", Elevator_nodes[i].IP+":"+strconv.Itoa(config.HEARTBEAT_TRANS_PORT))
+			printError("resolveHBconn setup error: ", err)
+			con, err := net.DialUDP("udp", nil, network)
+			HB_con_Out[i] = con
+			printError("resolveHBconn dial error: ", err)
+		}
 	}
 	return err
 }
 
 func heartBeathandler() {
 	//Initiate connections
-	err := resolveHBConn()
-	if err != nil {
-		panic(err)
-	}
 
 	//Initiate the UDP heartbeat listener
 	ch_heartbeatmsg := make(chan string)
@@ -87,7 +89,7 @@ func heartBeathandler() {
 
 	//Initiate heartbeat timers as go routines for each elevator
 	var ch_foundDead chan int
-	var ch_timerStop, ch_timerReset [config.NUMBER_OF_ELEVATORS - 1]chan bool
+	var ch_timerStop, ch_timerReset [config.NUMBER_OF_ELEVATORS]chan bool
 	var ID int
 
 	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
@@ -102,20 +104,20 @@ func heartBeathandler() {
 			//Parsing the received heartbeat message
 			data := strings.Split(<-ch_heartbeatmsg, "_")
 			ID, _ = strconv.Atoi(data[1])
-			Elevator_nodes[ID-1].last_seen = data[0]
+			Elevator_nodes[ID-1].Last_seen = data[0]
 			Elevator_nodes[ID-1].ID = ID
-			Elevator_nodes[ID-1].direction, _ = strconv.Atoi(data[2])
-			Elevator_nodes[ID-1].destination, _ = strconv.Atoi(data[3])
-			Elevator_nodes[ID-1].floor, _ = strconv.Atoi(data[4])
-			Elevator_nodes[ID-1].status, _ = strconv.Atoi(data[5])
+			Elevator_nodes[ID-1].Direction, _ = strconv.Atoi(data[2])
+			Elevator_nodes[ID-1].Destination, _ = strconv.Atoi(data[3])
+			Elevator_nodes[ID-1].Floor, _ = strconv.Atoi(data[4])
+			Elevator_nodes[ID-1].Status, _ = strconv.Atoi(data[5])
 
 			//Reset the appropriate timer
 			ch_timerReset[ID-1] <- true
-
+			fmt.Println("Got heartbeat msg from elevator " + strconv.Itoa(ID))
 		case <-ch_foundDead:
 			//Timer has run out,
 			fmt.Printf("found %d dead", <-ch_foundDead)
-			Elevator_nodes[<-ch_foundDead-1].status = 404
+			Elevator_nodes[<-ch_foundDead-1].Status = 404
 		}
 	}
 }
