@@ -14,6 +14,8 @@ const (
 )
 
 var current_state elevator_state
+var last_floor int
+var current_floor int
 
 func SingleElevatorFSM(
 	ch_drv_floors <-chan int,
@@ -29,11 +31,14 @@ func SingleElevatorFSM(
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
-
+	last_floor = -1
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived)
+	elevator.direction = 1
+	elevator.floor = 0
+	last_floor = 0
+	current_floor = -1
 	current_state = idle
-
 	for {
 		select {
 		case <-ch_new_order:
@@ -47,19 +52,13 @@ func SingleElevatorFSM(
 	}
 }
 
-func CheckIfElevatorHasArrived(ch_drv_floors <-chan int, ch_elevator_has_arrived chan bool) {
-	select {
-	case msg := <-ch_drv_floors:
-		if elevator_command.floor == msg {
-			ch_elevator_has_arrived <- true //Kan være denne vil fortsette å kjøre så kan hende vi må fikse
-		}
-	}
-}
-
 func fsm_newOrder() {
+
 	switch current_state {
 	case idle:
 		//Beveg heis til ønsket etasje (hente dette fra en struct som inneholder direction og floor den skal til?)
+		Call_qeuer(elevator.direction)
+		fmt.Printf("Shamalamadingdong %+v\n", elevator_command.direction)
 		elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 		fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 		current_state = moving
@@ -67,7 +66,7 @@ func fsm_newOrder() {
 		fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 	case doorOpen:
 		//Vent til dørene lukkes eller personen inni trykker på noe. Hvis doortimer går ut sjekker heisen om det
-		if Cab_calls() {
+		if request_here() {
 			elevio.SetDoorOpenLamp(false)
 			elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 			current_state = moving
@@ -77,7 +76,7 @@ func fsm_newOrder() {
 }
 
 func fsm_onFloorArival(ch_door_timer_reset chan bool) {
-	fmt.Printf("Arrived at floor" + string(elevator_command.floor))
+	fmt.Printf("Arrived at floor %+v\n", elevator_command.floor)
 	// Write to a struct somewhere that elevator has arrived on correct floor
 	// Send UDP that elevator has arrived so the others can shut of timmer (Don't need for single)
 	// Stop heis
@@ -90,7 +89,7 @@ func fsm_onFloorArival(ch_door_timer_reset chan bool) {
 		elevio.SetMotorDirection(elevio.MD_Stop)
 		elevio.SetDoorOpenLamp(true)
 		ch_door_timer_reset <- true
-		Remove_order(elevator_command.floor, elevator_command.direction)
+		Update_position(elevator_command.floor, elevator_command.direction)
 		current_state = doorOpen
 		//Clear call that it has arrived
 	default:
@@ -99,10 +98,29 @@ func fsm_onFloorArival(ch_door_timer_reset chan bool) {
 }
 
 func fsm_doorTimeOut() {
-	fmt.Printf("Door time out detected")
+	fmt.Printf("Door time out detected\n")
 	switch current_state {
 	case doorOpen:
 		elevio.SetDoorOpenLamp(false)
-		current_state = idle
+		if Call_qeuer(elevator_command.direction) {
+			elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
+			fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
+			current_state = moving
+		} else {
+			current_state = idle
+		}
+	}
+}
+
+func CheckIfElevatorHasArrived(ch_drv_floors <-chan int, ch_elevator_has_arrived chan bool) {
+	for {
+		select {
+		case msg := <-ch_drv_floors:
+			fmt.Printf("%d\n", msg)
+			if elevator_command.floor == msg && last_floor != elevator_command.floor {
+				last_floor = elevator_command.floor
+				ch_elevator_has_arrived <- true //Kan være denne vil fortsette å kjøre så kan hende vi må fikse
+			}
+		}
 	}
 }
