@@ -1,52 +1,65 @@
 package ordering
 
 import (
+	elevio "PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
+	"math"
 )
 
-const floor_ammount = 4
 const shaft_ammount = 3
 
-type floor_info struct {
-	up   bool
-	down bool
-	here bool
-}
-
-type complete_system struct {
-	shaft     [shaft_ammount]floor_info
-	placement [shaft_ammount]int
-	active    [shaft_ammount]bool
-}
-
 type scoreboard struct {
-	elevator []int
-	winner   int
+	elevator [shaft_ammount]int
+	podium   [shaft_ammount]int
 }
 
-var elevators complete_system //the complete elevator system
 var score scoreboard
 
-func master_tournament(floor int, direction int) { //fonds the most lucrative elevator
+//meldigen som infoer victors modul om hva som skal sendes
+func pass_to_network(
+	ch_drv_buttons chan elevio.ButtonEvent,
+	ch_new_order chan scoreboard,
+) {
+	for {
+		select {
+		case a := <-ch_drv_buttons:
+			switch a.Button {
+			case 0: //up
+				master_tournament(a.Floor, 1)
+			case 1: //down
+				master_tournament(a.Floor, -1)
+			case 2: //cab
+				master_tournament(a.Floor, 0)
+			}
+			ch_new_order <- score
+		}
+	}
+}
+
+func master_tournament(floor int, direction int) { //finds the most lucrative elevator
 	//resets scoring
 	for i := 0; i < shaft_ammount; i++ {
 		score.elevator[i] = 0
+		score.podium[i] = 0
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < shaft_ammount; i++ { //cycles shafts
-		if networking.Elevator_nodes[i].ID == 404 {
+		if !(networking.Elevator_nodes[i].Status == 404) {
 			//direction scoring
-			if direction == networking.Elevator_nodes[i].direction {
+			if direction == networking.Elevator_nodes[i].Direction {
 				score.elevator[i] += 5
 			}
-			//placement scoring
-			score.elevator[i] += 10 - abs(floor-networking.Elevator_nodes[i].floor)
+			//placement scoring (with alot of conversion)
+			score.elevator[i] += int(math.Abs(float64(networking.Elevator_nodes[i].Floor) - float64(floor)))
 		}
 	}
-
-	//decides wich one is the best suited
-	for i := 0; i < shaft_ammount; i++ {
-
+	//decides wich one is the best suited through simple sorting algo
+	for i := 0; i < 1; i++ { //runs twice to ensure proper sorting
+		for i := 0; i < shaft_ammount-1; i++ {
+			if score.elevator[i] < score.elevator[i+1] {
+				score.podium[i] = i + 1
+				score.podium[i+1] = i
+			}
+		}
 	}
-
 }
