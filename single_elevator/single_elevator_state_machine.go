@@ -57,10 +57,13 @@ func fsm_newOrder() {
 	switch current_state {
 	case idle:
 		//Beveg heis til ønsket etasje (hente dette fra en struct som inneholder direction og floor den skal til?)
-		Call_qeuer(elevator.direction)
-		elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
-		fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
-		current_state = moving
+		if Call_qeuer(elevator.direction) {
+			elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
+			fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
+			current_state = moving
+		} else {
+			elevio.SetMotorDirection(elevio.MotorDirection(0))
+		}
 	case moving:
 		fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 	case doorOpen:
@@ -115,6 +118,12 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int, ch_elevator_has_arrived
 	for {
 		select {
 		case msg := <-ch_drv_floors:
+			elevator.floor = msg
+			if msg == 3 {
+				elevator_command.direction = -1
+			} else if msg == 0 {
+				elevator_command.direction = 1
+			}
 			fmt.Printf("%d\n", msg)
 			if elevator_command.floor == msg && last_floor != elevator_command.floor {
 				last_floor = elevator_command.floor
