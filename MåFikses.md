@@ -1,4 +1,7 @@
-Problem med at når heisen har gått til top etasjen, og har nedover call på ned 2, ned 1 og et kall på opp 0. Så går den til opp 0
-Dette kommer mest sannsynlig av at heisen har direction 1 som gjør at den kjører case up og derfor prioriterer up calls
+Heisen kan stoppe på en etasje som blir lagt til etter den er i bevegelse så lenge det stemmer over rens med nåværende retning
+Eks heisen kan stå i 4. få bedskjed om 2.ned og stoppe på 3.ned hvis den blir lagt til i mellomtiden
+Den kan likevel ikke begynne i 1. etasje, 2, 3 og 4 etajse og så gå rett til 4 etasje som ville vært logisk
 
-Kan ikke sende heisen til første etasje at boot up
+Problem at hvis vi har to calls i samme etasje kan den svare ene, sjekke om det finnes flere, finne en i samme etasjem ta den men får ikke kommet ut grunnet at
+den ikke får til å få melding om at den har kommet frem.
+

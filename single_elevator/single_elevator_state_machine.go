@@ -54,9 +54,10 @@ func SingleElevatorFSM(
 				}
 			case moving:
 				fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
+				Call_qeuer(elevator.direction)
 			case doorOpen:
 				//Vent til dørene lukkes eller personen inni trykker på noe. Hvis doortimer går ut sjekker heisen om det
-				if request_here() {
+				if request_cab() {
 					elevio.SetDoorOpenLamp(false)
 					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 					current_state = moving
@@ -89,9 +90,17 @@ func SingleElevatorFSM(
 					if Call_qeuer(elevator_command.direction) {
 						elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 						fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
-						current_state = moving
+						if elevator_command.floor == elevator.floor {
+							fmt.Printf("Arrived here\n")
+							current_state = doorOpen
+							elevio.SetDoorOpenLamp(true)
+							Update_position(elevator_command.floor, (elevator_command.direction))
+							ch_door_timer_reset <- true
+						} else {
+							current_state = moving
+						}
 					} else {
-						fmt.Printf("No new orders, returning to idle")
+						fmt.Printf("No new orders, returning to idle\n")
 						current_state = idle
 					}
 				}
