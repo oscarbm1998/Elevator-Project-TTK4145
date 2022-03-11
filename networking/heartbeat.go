@@ -12,10 +12,6 @@ import (
 var HB_con_Out [config.NUMBER_OF_ELEVATORS - 1]*net.UDPConn
 var elevatorsIPs [config.NUMBER_OF_ELEVATORS - 1]string
 
-var myFloor int
-var myDirection int
-var myStatus int
-
 var localIP string
 
 func getLocalIp() (string, error) {
@@ -35,20 +31,25 @@ func heartBeatTransmitter() (err error) {
 	var msg string
 	var date string
 	var clock string
+	var ID int = config.ELEVATOR_ID
 	for {
 		select {
 		case <-timer.C:
 			timer.Reset(config.HEARTBEAT_TIME)
+
 			//Sampling date and time, and making it nice european style
 			year, month, day := time.Now().Date()
 			date = strconv.Itoa(day) + "/" + month.String() + "/" + strconv.Itoa(year)
 			hour, minute, second := time.Now().Clock()
 			clock = strconv.Itoa(hour) + ":" + strconv.Itoa(minute) + ":" + strconv.Itoa(second)
 			msg = date + " " + clock + "_"
-			msg = msg + strconv.Itoa(config.ELEVATOR_ID) + "_"
-			msg = msg + strconv.Itoa(myDirection) + "_"
-			msg = msg + strconv.Itoa(myFloor) + "_"
-			msg = msg + strconv.Itoa(myStatus)
+
+			//Adding elevator data
+			msg = msg + strconv.Itoa(ID) + "_"
+			msg = msg + strconv.Itoa(elevator_nodes[ID-1].direction) + "_"
+			msg = msg + strconv.Itoa(elevator_nodes[ID-1].floor) + "_"
+			msg = msg + strconv.Itoa(elevator_nodes[ID-1].status)
+
 			//Sending to all nodes
 			for ID := 0; ID < config.NUMBER_OF_ELEVATORS-1; ID++ {
 				_, err := HB_con_Out[ID].Write([]byte(msg))
@@ -134,6 +135,7 @@ func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timer_stop 
 }
 
 func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) error {
+	fmt.Println("Heartbead UDP listener thread starting")
 	buf := make([]byte, 1024)
 	var msg string
 	adr, _ := net.ResolveUDPAddr("udp", strconv.Itoa(config.HEARTBEAT_REC_PORT))

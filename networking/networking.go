@@ -13,3 +13,17 @@ type elevator_node struct {
 }
 
 var elevator_nodes [config.NUMBER_OF_ELEVATORS]elevator_node
+
+func networking_main() {
+	//Initialize heartbeat
+	go heartBeatTransmitter()
+	go heartBeathandler()
+}
+
+func send_command() {
+
+}
+
+func command_listener() {
+
+}
