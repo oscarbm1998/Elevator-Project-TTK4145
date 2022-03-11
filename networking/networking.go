@@ -16,6 +16,7 @@ type Elevator_node struct {
 	Direction   int
 	Floor       int
 	Status      int
+	IP          string
 }
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
@@ -24,8 +25,18 @@ var readback_con *net.UDPConn
 
 func Networking_main() {
 	//Initialize heartbeat
+	/*
+		err := resolveHBConn()
+		if err != nil {
+			panic(err)
+		}
+	*/
+	//go heartBeathandler()
+	Elevator_nodes[0].IP = config.IP_15
+	Elevator_nodes[1].IP = config.IP_16
+
 	go heartBeatTransmitter()
-	go heartBeathandler()
+
 	/*
 				//initiate command transmit connections
 				for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
