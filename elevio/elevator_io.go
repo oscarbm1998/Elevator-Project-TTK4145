@@ -51,7 +51,6 @@ func Init(addr string, numFloors int) {
 }
 
 func SetMotorDirection(dir MotorDirection) {
-	fmt.Printf("Setting direction %+v\n", dir)
 	_mtx.Lock()
 	defer _mtx.Unlock()
 	_conn.Write([]byte{1, byte(dir), 0, 0})

@@ -23,14 +23,22 @@ var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
 func Remove_order(level int, direction int) { //removes an order
-	floor[level].here = false             //removes here call as the elevator has arrived there
-	elevio.SetButtonLamp(2, level, false) //turns off light
-	if direction == 1 {                   //if the direction is up
+	floor[level].here = false                                //removes here call as the elevator has arrived there
+	elevio.SetButtonLamp(2, level, false)                    //turns off light
+	if direction == 1 || (check_above() && !check_below()) { //if the direction is up or there are no orders below and orders above
 		floor[level].up = false               //disables the up direction
 		elevio.SetButtonLamp(0, level, false) //turns off light
-	} else if direction == -1 { //if the direction is down
+	} else if direction == -1 || (check_below()) && !check_above() { //if the direction is down or there are no orders above and orders below
 		floor[level].down = false             //disables the down direction
 		elevio.SetButtonLamp(1, level, false) //turns off light
+	} else {
+		if floor[level].up {
+			floor[level].up = false               //disables the up direction
+			elevio.SetButtonLamp(0, level, false) //turns off light
+		} else if floor[level].down {
+			floor[level].down = false             //disables the down direction
+			elevio.SetButtonLamp(1, level, false) //turns off light
+		}
 	}
 }
 
@@ -43,9 +51,10 @@ func Hall_order(
 		case a := <-ch_drv_buttons:
 			fmt.Printf("pressed %d\n", a.Button)
 			fmt.Printf("read floor %d\n", a.Floor)
-			if floor[a.Floor].up || floor[a.Floor].down || floor[a.Floor].here {
+			if (floor[a.Floor].up && a.Button == 1) || (floor[a.Floor].down && a.Button == -1) || floor[a.Floor].here || (a.Floor == elevator.floor) {
 				//do nuffin as the order already exists
 				fmt.Printf("orders already exists\n")
+				//Remove_order(a.Floor, a.Floor)
 			} else { //do shit
 				switch a.Button {
 				case 0: //opp
@@ -64,6 +73,32 @@ func Hall_order(
 		}
 	}
 }
+
+/*****************************************************
+*				This shit may not be needed			 *
+*****************************************************/
+func check_above() bool {
+	for i := elevator.floor; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
+		if floor[i].up || floor[i].down { //if a floor with call up is found
+			fmt.Printf("found request above\n")
+			return true
+		}
+	}
+	return false
+}
+func check_below() bool {
+	for i := 0; i < elevator.floor; i++ { //checks from the last known floor of the elevator to the top
+		if floor[i].up || floor[i].down { //if a floor with call up is found
+			fmt.Printf("found request below\n")
+			return true
+		}
+	}
+	return false
+}
+
+/*****************************************************
+*		end of "this shit may not be needed"		 *
+*****************************************************/
 
 func request_above() bool { //checks if there are any active calls above the elevator and updates the "command struct"
 	for i := elevator.floor; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
@@ -107,40 +142,32 @@ func request_here() bool { //tad unshure if this is needed or not but its used f
 }
 
 func Call_qeuer(direction int) bool {
-	if (direction == 1 && elevator.floor == 3) || (direction == -1 && elevator.floor == 0) {
-		fmt.Printf("you cannot go that direction\n")
-	} else {
-		fmt.Printf("call qeuer button direction %d\n", direction)
-		switch direction {
-		case 1: //up
-			fmt.Printf("call qeuer case up\n")
-			if request_above() {
-				return true
-			} else if request_here() {
-				return true
-			} else if request_below() {
-				return true
-			}
+	switch direction {
+	case 1: //up
+		if request_above() {
+			return true
+		} else if request_here() {
+			return true
+		} else if request_below() {
+			return true
+		}
 
-		case -1: //down
-			fmt.Printf("call qeuer case down\n")
-			if request_below() {
-				return true
-			} else if request_here() {
-				return true
-			} else if request_above() {
-				return true
-			}
+	case -1: //down
+		if request_below() {
+			return true
+		} else if request_here() {
+			return true
+		} else if request_above() {
+			return true
+		}
 
-		case 0: // here
-			fmt.Printf("call qeuer case here\n")
-			if request_here() {
-				return true
-			} else if request_above() {
-				return true
-			} else if request_below() {
-				return true
-			}
+	case 0: // here
+		if request_here() {
+			return true
+		} else if request_above() {
+			return true
+		} else if request_below() {
+			return true
 		}
 	}
 	return false
