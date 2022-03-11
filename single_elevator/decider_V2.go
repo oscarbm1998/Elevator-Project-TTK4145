@@ -8,8 +8,9 @@ import (
 const floor_ammount int = 4
 
 type elevator_status struct {
-	floor     int
-	direction int //1 up -1 down 0 idle
+	floor      int
+	direction  int //1 up -1 down 0 idle
+	up_or_down bool
 }
 
 type floor_info struct {
@@ -23,22 +24,29 @@ var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
 func Remove_order(level int, direction int) { //removes an order
-	floor[level].here = false                                //removes here call as the elevator has arrived there
-	elevio.SetButtonLamp(2, level, false)                    //turns off light
-	if direction == 1 || (check_above() && !check_below()) { //if the direction is up or there are no orders below and orders above
-		floor[level].up = false               //disables the up direction
-		elevio.SetButtonLamp(0, level, false) //turns off light
-	} else if direction == -1 || (check_below()) && !check_above() { //if the direction is down or there are no orders above and orders below
-		floor[level].down = false             //disables the down direction
-		elevio.SetButtonLamp(1, level, false) //turns off light
-	} else {
-		if floor[level].up {
-			floor[level].up = false               //disables the up direction
+	floor[level].here = false             //removes here call as the elevator has arrived there
+	elevio.SetButtonLamp(2, level, false) //turns off light
+	if direction == 1 {                   //if the direction is up or there are no orders below and orders above
+		fmt.Printf("Entered the first if")
+		if !floor[level].up {
+			floor[level].down = false
+			elevio.SetButtonLamp(1, level, false) //turns off light
+		} else {
+			floor[level].up = false
 			elevio.SetButtonLamp(0, level, false) //turns off light
-		} else if floor[level].down {
-			floor[level].down = false             //disables the down direction
+		}
+		//disables the up direction
+	} else if direction == -1 { //if the direction is down or there are no orders above and orders below
+		fmt.Printf("Entered the second if")
+		floor[level].down = false //disables the down direction
+		if !floor[level].down {
+			floor[level].up = false
+			elevio.SetButtonLamp(0, level, false) //turns off light
+		} else {
+			floor[level].down = false
 			elevio.SetButtonLamp(1, level, false) //turns off light
 		}
+		elevio.SetButtonLamp(1, level, false) //turns off light
 	}
 }
 
@@ -78,7 +86,7 @@ func Hall_order(
 *				This shit may not be needed			 *
 *****************************************************/
 func check_above() bool {
-	for i := elevator.floor; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
+	for i := elevator.floor + 1; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
 		if floor[i].up || floor[i].down { //if a floor with call up is found
 			fmt.Printf("found request above\n")
 			return true
@@ -87,7 +95,7 @@ func check_above() bool {
 	return false
 }
 func check_below() bool {
-	for i := 0; i < elevator.floor; i++ { //checks from the last known floor of the elevator to the top
+	for i := 0; i < elevator.floor-1; i++ { //checks from the last known floor of the elevator to the top
 		if floor[i].up || floor[i].down { //if a floor with call up is found
 			fmt.Printf("found request below\n")
 			return true
@@ -144,6 +152,7 @@ func request_here() bool { //tad unshure if this is needed or not but its used f
 func Call_qeuer(direction int) bool {
 	switch direction {
 	case 1: //up
+		fmt.Printf("Running case for direction up\n")
 		if request_above() {
 			return true
 		} else if request_here() {
@@ -180,9 +189,7 @@ func Update_position(level int, direction int) {
 }
 
 /*
-func Cab_calls() (found_call bool) {
-	for i := 0; i <= floor_ammount; i++ {
-		if floor[i].cab_call == 1 {
+2
 			elevator_command.floor = i
 			if floor[i].cab_call > elevator.floor {
 				elevator_command.direction = 1
