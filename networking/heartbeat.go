@@ -45,10 +45,10 @@ func heartBeatTransmitter() (err error) {
 
 			//Adding elevator data
 			msg = msg + strconv.Itoa(ID) + "_"
-			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].direction) + "_"
-			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].destination) + "_"
-			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].floor) + "_"
-			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].status)
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Direction) + "_"
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Destination) + "_"
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Floor) + "_"
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Status)
 
 			//Sending to all nodes
 			for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
@@ -102,12 +102,12 @@ func heartBeathandler() {
 			//Parsing the received heartbeat message
 			data := strings.Split(<-ch_heartbeatmsg, "_")
 			ID, _ = strconv.Atoi(data[1])
-			Elevator_nodes[ID-1].last_seen = data[0]
+			Elevator_nodes[ID-1].Last_seen = data[0]
 			Elevator_nodes[ID-1].ID = ID
-			Elevator_nodes[ID-1].direction, _ = strconv.Atoi(data[2])
-			Elevator_nodes[ID-1].destination, _ = strconv.Atoi(data[3])
-			Elevator_nodes[ID-1].floor, _ = strconv.Atoi(data[4])
-			Elevator_nodes[ID-1].status, _ = strconv.Atoi(data[5])
+			Elevator_nodes[ID-1].Direction, _ = strconv.Atoi(data[2])
+			Elevator_nodes[ID-1].Destination, _ = strconv.Atoi(data[3])
+			Elevator_nodes[ID-1].Floor, _ = strconv.Atoi(data[4])
+			Elevator_nodes[ID-1].Status, _ = strconv.Atoi(data[5])
 
 			//Reset the appropriate timer
 			ch_timerReset[ID-1] <- true
@@ -115,7 +115,7 @@ func heartBeathandler() {
 		case <-ch_foundDead:
 			//Timer has run out,
 			fmt.Printf("found %d dead", <-ch_foundDead)
-			Elevator_nodes[<-ch_foundDead-1].status = 404
+			Elevator_nodes[<-ch_foundDead-1].Status = 404
 		}
 	}
 }

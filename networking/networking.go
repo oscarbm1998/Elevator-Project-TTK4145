@@ -10,12 +10,12 @@ import (
 )
 
 type Elevator_node struct {
-	last_seen   string
+	Last_seen   string
 	ID          int
-	destination int
-	direction   int
-	floor       int
-	status      int
+	Destination int
+	Direction   int
+	Floor       int
+	Status      int
 }
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
@@ -144,7 +144,7 @@ func command_listener(ch_netcommand chan string) {
 }
 
 func reject_command(direction, floor int) (reject bool) {
-	if Elevator_nodes[config.ELEVATOR_ID-1].status == 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS {
+	if Elevator_nodes[config.ELEVATOR_ID-1].Status == 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS {
 		return true
 	} else {
 		return false
@@ -161,7 +161,7 @@ func network_main_observer(ch_main_observer chan string) {
 		for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
 			select {
 			case <-ch_observers[i]:
-				ch_main_observer <- i
+				ch_main_observer <- strconv.Itoa()
 			}
 		}
 	}
