@@ -148,3 +148,8 @@ func reject_command(direction, floor int) (reject bool) {
 		return false
 	}
 }
+
+func network_main_observer(ch_observer chan string) {
+	//Initiate threads that listenes to messages on all ports
+
+}
