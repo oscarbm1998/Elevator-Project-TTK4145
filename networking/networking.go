@@ -6,17 +6,19 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"time"
 )
 
-type elevator_node struct {
-	last_seen string
-	ID        int
-	direction int
-	floor     int
-	status    int
+type Elevator_node struct {
+	last_seen   string
+	ID          int
+	destination int
+	direction   int
+	floor       int
+	status      int
 }
 
-var Elevator_nodes [config.NUMBER_OF_ELEVATORS]elevator_node
+var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 var command_cons, readback_cons [config.NUMBER_OF_ELEVATORS - 1]*net.UDPConn
 var readback_con *net.UDPConn
 
@@ -149,7 +151,36 @@ func reject_command(direction, floor int) (reject bool) {
 	}
 }
 
-func network_main_observer(ch_observer chan string) {
+func network_main_observer(ch_main_observer chan string) {
 	//Initiate threads that listenes to messages on all ports
+	var ch_observers [config.NUMBER_OF_ELEVATORS]chan int
+	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
+		go observer(ch_observers[i], i+1)
+	}
+	for {
+		for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
+			select {
+			case <-ch_observers[i]:
+				ch_main_observer <- i
+			}
+		}
+	}
+}
 
+func observer(ch_observer chan int, ID int) {
+
+}
+
+func stuck_timer(ch_stuck, ch_reset, ch_stop chan bool) {
+	timer := time.NewTimer(config.ELEVATOR_STUCK_TIMOUT)
+	for {
+		select {
+		case <-timer.C:
+			ch_stuck <- true
+		case <-ch_reset:
+			timer.Reset(config.ELEVATOR_STUCK_TIMOUT)
+		case <-ch_stop:
+			timer.Stop()
+		}
+	}
 }
