@@ -45,9 +45,9 @@ func heartBeatTransmitter() (err error) {
 
 			//Adding elevator data
 			msg = msg + strconv.Itoa(ID) + "_"
-			msg = msg + strconv.Itoa(elevator_nodes[ID-1].direction) + "_"
-			msg = msg + strconv.Itoa(elevator_nodes[ID-1].floor) + "_"
-			msg = msg + strconv.Itoa(elevator_nodes[ID-1].status)
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].direction) + "_"
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].floor) + "_"
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].status)
 
 			//Sending to all nodes
 			for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
