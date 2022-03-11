@@ -87,6 +87,7 @@ func heartBeathandler() {
 	//Initiate heartbeat timers as go routines for each elevator
 	var ch_foundDead chan int
 	var ch_timerStop, ch_timerReset [config.NUMBER_OF_ELEVATORS - 1]chan bool
+	var ID int
 
 	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
 		go heartbeatTimer(i+1, ch_foundDead, ch_timerReset[i], ch_timerStop[i])
@@ -97,13 +98,22 @@ func heartBeathandler() {
 	for {
 		select {
 		case <-ch_heartbeatmsg:
-			device_time, ID, direction, floor, status := HB_parsMessage(<-ch_heartbeatmsg)
-			ch_timerReset[ID-1] <- true //Reset the appropriate timer
-			//**ADD CODE FOR DATA REPORTING
+			//Parsing the received heartbeat message
+			data := strings.Split(<-ch_heartbeatmsg, "_")
+			ID, _ = strconv.Atoi(data[1])
+			elevator_nodes[ID-1].last_seen = data[0]
+			elevator_nodes[ID-1].ID = ID
+			elevator_nodes[ID-1].direction, _ = strconv.Atoi(data[2])
+			elevator_nodes[ID-1].floor, _ = strconv.Atoi(data[3])
+			elevator_nodes[ID-1].status, _ = strconv.Atoi(data[4])
+
+			//Reset the appropriate timer
+			ch_timerReset[ID-1] <- true
 
 		case <-ch_foundDead:
-			fmt.Println("found %d dead", <-ch_foundDead)
-			//**ADD CODE FOR REPORTING A HOMECIDE
+			//Timer has run out,
+			fmt.Printf("found %d dead", <-ch_foundDead)
+			elevator_nodes[<-ch_foundDead-1].status = 404
 		}
 	}
 }
@@ -129,7 +139,7 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) error {
 	adr, _ := net.ResolveUDPAddr("udp", strconv.Itoa(config.HEARTBEAT_REC_PORT))
 	con, _ := net.ListenUDP("udp", adr)
 	for {
-		n, addr, err := con.ReadFromUDP(buf)
+		n, _, err := con.ReadFromUDP(buf)
 		msg = string(buf[0:n])
 		ch_heartbeatmsg <- msg
 		return err
@@ -141,14 +151,4 @@ func printError(str string, err error) {
 		fmt.Print(str)
 		fmt.Println(err)
 	}
-}
-
-func HB_parsMessage(msg string) (device_time string, ID int, direction int, floor int, status int) {
-	data := strings.Split(msg, "_")
-	device_time = data[0]
-	ID, _ = strconv.Atoi(data[1])
-	direction, _ = strconv.Atoi(data[2])
-	floor, _ = strconv.Atoi(data[3])
-	status, _ = strconv.Atoi(data[4])
-	return device_time, ID, floor, direction, status
 }
