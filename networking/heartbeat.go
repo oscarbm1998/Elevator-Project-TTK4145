@@ -28,10 +28,9 @@ func getLocalIp() (string, error) {
 
 func heartBeatTransmitter() (err error) {
 	timer := time.NewTimer(config.HEARTBEAT_TIME)
-	var msg string
-	var date string
-	var clock string
+	var msg, date, clock string
 	var ID int = config.ELEVATOR_ID
+
 	for {
 		select {
 		case <-timer.C:
@@ -51,8 +50,8 @@ func heartBeatTransmitter() (err error) {
 			msg = msg + strconv.Itoa(elevator_nodes[ID-1].status)
 
 			//Sending to all nodes
-			for ID := 0; ID < config.NUMBER_OF_ELEVATORS-1; ID++ {
-				_, err := HB_con_Out[ID].Write([]byte(msg))
+			for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
+				_, err := HB_con_Out[i].Write([]byte(msg))
 				return err
 			}
 			msg = ""
@@ -63,7 +62,7 @@ func heartBeatTransmitter() (err error) {
 func resolveHBConn() (err error) {
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 		//Outgoing
-		network, err := net.ResolveUDPAddr("udp", elevatorsIPs[i]+string(config.HEARTBEAT_TRANS_PORT))
+		network, err := net.ResolveUDPAddr("udp", string(config.HEARTBEAT_TRANS_PORT))
 		printError("resolveHBconn setup error: ", err)
 		con, err := net.DialUDP("udp", nil, network)
 		HB_con_Out[i] = con
