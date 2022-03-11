@@ -43,7 +43,7 @@ func Hall_order(
 		case a := <-ch_drv_buttons:
 			fmt.Printf("pressed %d\n", a.Button)
 			fmt.Printf("read floor %d\n", a.Floor)
-			if floor[a.Floor].up || floor[a.Floor].down || floor[a.Floor].here {
+			if (floor[a.Floor].up && a.Button == 1) || (floor[a.Floor].down && a.Button == -1) || floor[a.Floor].here {
 				//do nuffin as the order already exists
 				fmt.Printf("orders already exists\n")
 			} else { //do shit
