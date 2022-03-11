@@ -14,7 +14,7 @@ var elevatorsIPs [config.NUMBER_OF_ELEVATORS - 1]string
 
 var localIP string
 
-func getLocalIp() (string, error) {
+func GetLocalIp() (string, error) {
 	if localIP == "" {
 		conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53})
 		if err != nil {
@@ -34,8 +34,6 @@ func heartBeatTransmitter() (err error) {
 	for {
 		select {
 		case <-timer.C:
-			timer.Reset(config.HEARTBEAT_TIME)
-
 			//Sampling date and time, and making it nice european style
 			year, month, day := time.Now().Date()
 			date = strconv.Itoa(day) + "/" + month.String() + "/" + strconv.Itoa(year)
@@ -49,36 +47,40 @@ func heartBeatTransmitter() (err error) {
 			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Destination) + "_"
 			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Floor) + "_"
 			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].Status)
-
+			fmt.Println("Sending: " + msg)
 			//Sending to all nodes
+			//network, _ := net.ResolveUDPAddr("udp", "10.100.23.179:6969")
+			//con, _ := net.DialUDP("udp", nil, network)
 			for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
-				_, err := HB_con_Out[i].Write([]byte(msg))
-				return err
+				if i != ID-1 {
+					fmt.Println("sending")
+					HB_con_Out[i].Write([]byte(msg))
+				}
+
 			}
-			msg = ""
+			fmt.Println("restarting timer")
+			timer.Reset(config.HEARTBEAT_TIME)
 		}
+
 	}
 }
 
 func resolveHBConn() (err error) {
 	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
-		//Outgoing
-		network, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.HEARTBEAT_TRANS_PORT))
-		printError("resolveHBconn setup error: ", err)
-		con, err := net.DialUDP("udp", nil, network)
-		HB_con_Out[i] = con
-		printError("resolveHBconn dial error: ", err)
-
+		if i != config.ELEVATOR_ID-1 {
+			//Outgoing
+			network, err := net.ResolveUDPAddr("udp", Elevator_nodes[i].IP+":"+strconv.Itoa(config.HEARTBEAT_TRANS_PORT))
+			printError("resolveHBconn setup error: ", err)
+			con, err := net.DialUDP("udp", nil, network)
+			HB_con_Out[i] = con
+			printError("resolveHBconn dial error: ", err)
+		}
 	}
 	return err
 }
 
 func heartBeathandler() {
 	//Initiate connections
-	err := resolveHBConn()
-	if err != nil {
-		panic(err)
-	}
 
 	//Initiate the UDP heartbeat listener
 	ch_heartbeatmsg := make(chan string)
