@@ -31,6 +31,14 @@ func Remove_order(level int, direction int) { //removes an order
 	} else if direction == -1 || (check_below()) && !check_above() { //if the direction is down or there are no orders above and orders below
 		floor[level].down = false             //disables the down direction
 		elevio.SetButtonLamp(1, level, false) //turns off light
+	} else {
+		if floor[level].up {
+			floor[level].up = false               //disables the up direction
+			elevio.SetButtonLamp(0, level, false) //turns off light
+		} else if floor[level].down {
+			floor[level].down = false             //disables the down direction
+			elevio.SetButtonLamp(1, level, false) //turns off light
+		}
 	}
 }
 
