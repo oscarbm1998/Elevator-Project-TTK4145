@@ -35,8 +35,8 @@ func Networking_main() {
 	Elevator_nodes[0].IP = config.IP_15
 	Elevator_nodes[1].IP = config.IP_16
 
-	go heartBeatTransmitter()
-
+	//go heartBeatTransmitter()
+	go heartBeathandler()
 	/*
 				//initiate command transmit connections
 				for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
