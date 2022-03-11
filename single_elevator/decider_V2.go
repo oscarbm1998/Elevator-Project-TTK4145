@@ -27,7 +27,6 @@ func Remove_order(level int, direction int) { //removes an order
 	floor[level].here = false             //removes here call as the elevator has arrived there
 	elevio.SetButtonLamp(2, level, false) //turns off light
 	if direction == 1 {                   //if the direction is up or there are no orders below and orders above
-		fmt.Printf("Entered the first if")
 		if !floor[level].up {
 			floor[level].down = false
 			elevio.SetButtonLamp(1, level, false) //turns off light
@@ -37,7 +36,6 @@ func Remove_order(level int, direction int) { //removes an order
 		}
 		//disables the up direction
 	} else if direction == -1 { //if the direction is down or there are no orders above and orders below
-		fmt.Printf("Entered the second if")
 		floor[level].down = false //disables the down direction
 		if !floor[level].down {
 			floor[level].up = false
@@ -57,8 +55,6 @@ func Hall_order(
 	for {
 		select {
 		case a := <-ch_drv_buttons:
-			fmt.Printf("pressed %d\n", a.Button)
-			fmt.Printf("read floor %d\n", a.Floor)
 			if (floor[a.Floor].up && a.Button == 1) || (floor[a.Floor].down && a.Button == -1) || floor[a.Floor].here || (a.Floor == elevator.floor) {
 				//do nuffin as the order already exists
 				fmt.Printf("orders already exists\n")

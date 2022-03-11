@@ -20,8 +20,9 @@ var current_floor int
 func SingleElevatorFSM(
 	ch_drv_floors <-chan int,
 	ch_elevator_has_arrived chan bool,
-	ch_drv_obstr chan bool,
+	ch_obstr_detected <-chan bool,
 	ch_new_order <-chan bool,
+	ch_drv_stop <-chan bool,
 
 	// Channel koblet til orders
 	// Channel koblet til door time out
@@ -90,6 +91,12 @@ func SingleElevatorFSM(
 					current_state = idle
 				}
 			}
+		case msg := <-ch_drv_stop: //Maybe change the name on channel to make it more clear
+			if msg {
+				elevio.SetMotorDirection(0)
+			} else {
+				elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
+			}
 		}
 	}
 }
@@ -99,6 +106,7 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int, ch_elevator_has_arrived
 		select {
 		case msg := <-ch_drv_floors:
 			elevator.floor = msg
+			elevio.SetFloorIndicator(msg)
 			if msg == 3 {
 				elevator_command.direction = -1
 			} else if msg == 0 {
@@ -120,4 +128,3 @@ func RemoveAllLights() { //Move this when time
 		elevio.SetButtonLamp(2, i, false)
 	}
 }
-
