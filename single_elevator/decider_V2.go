@@ -107,10 +107,8 @@ func request_here() bool { //tad unshure if this is needed or not but its used f
 }
 
 func Call_qeuer(direction int) bool {
-	fmt.Printf("call qeuer button direction %d\n", direction)
 	switch direction {
 	case 1: //up
-		fmt.Printf("call qeuer case up\n")
 		if request_above() {
 			return true
 		} else if request_here() {
@@ -120,7 +118,6 @@ func Call_qeuer(direction int) bool {
 		}
 
 	case -1: //down
-		fmt.Printf("call qeuer case down\n")
 		if request_below() {
 			return true
 		} else if request_here() {
@@ -130,7 +127,6 @@ func Call_qeuer(direction int) bool {
 		}
 
 	case 0: // here
-		fmt.Printf("call qeuer case here\n")
 		if request_here() {
 			return true
 		} else if request_above() {
