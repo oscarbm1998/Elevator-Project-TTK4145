@@ -59,6 +59,7 @@ func networking_main() {
 			cmd := strings.Split(<-ch_command, "_")
 			floor, _ := strconv.Atoi(cmd[1])
 			direction, _ := strconv.Atoi(cmd[2])
+			
 		}
 	}
 }
@@ -153,34 +154,38 @@ func reject_command(direction, floor int) (reject bool) {
 
 func network_main_observer(ch_main_observer chan string) {
 	//Initiate threads that listenes to messages on all ports
-	var ch_observers [config.NUMBER_OF_ELEVATORS]chan int
-	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
-		go observer(ch_observers[i], i+1)
+	var ch_observers chan string
+	var ch_stuck, ch_reset, ch_stop chan int
+	for i := 1; i < config.NUMBER_OF_ELEVATORS; i++ {
+		go stuck_timer(i, ch_stuck, ch_reset, ch_stop)
 	}
+	ch_stop <- config.ELEVATOR_ID
 	for {
-		for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
-			select {
-			case <-ch_observers[i]:
-				ch_main_observer <- strconv.Itoa()
+		select {
+			case <-ch_stuck:
+				ch_main_observer <- strconv.Itoa(i)+ "_" +strconv.Itoa()
 			}
 		}
 	}
 }
 
-func observer(ch_observer chan int, ID int) {
 
-}
-
-func stuck_timer(ch_stuck, ch_reset, ch_stop chan bool) {
+func stuck_timer(ID int, ch_stuck, ch_reset, ch_stop chan int) {
 	timer := time.NewTimer(config.ELEVATOR_STUCK_TIMOUT)
 	for {
 		select {
 		case <-timer.C:
-			ch_stuck <- true
+			ch_stuck <- ID
 		case <-ch_reset:
-			timer.Reset(config.ELEVATOR_STUCK_TIMOUT)
+			if <-ch_reset == ID{
+				timer.Reset(config.ELEVATOR_STUCK_TIMOUT)
+			}
 		case <-ch_stop:
-			timer.Stop()
+			if <-ch_stop == ID{
+				timer.Stop()
+			}
 		}
+		
+
 	}
 }

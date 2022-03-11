@@ -111,7 +111,7 @@ func heartBeathandler() {
 
 			//Reset the appropriate timer
 			ch_timerReset[ID-1] <- true
-
+			fmt.Println("Got heartbeat msg from elevator " + strconv.Itoa(ID))
 		case <-ch_foundDead:
 			//Timer has run out,
 			fmt.Printf("found %d dead", <-ch_foundDead)
