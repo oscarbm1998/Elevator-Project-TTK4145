@@ -23,8 +23,9 @@ var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
 func Remove_order(level int, direction int) { //removes an order
-	floor[level].here = false //removes here call as the elevator has arrived there
-	if direction == 1 {       //if the direction is up
+	floor[level].here = false             //removes here call as the elevator has arrived there
+	elevio.SetButtonLamp(2, level, false) //turns off light
+	if direction == 1 {                   //if the direction is up
 		floor[level].up = false               //disables the up direction
 		elevio.SetButtonLamp(0, level, false) //turns off light
 	} else if direction == -1 { //if the direction is down
