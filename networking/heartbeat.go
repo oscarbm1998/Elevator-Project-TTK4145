@@ -46,6 +46,7 @@ func heartBeatTransmitter() (err error) {
 			//Adding elevator data
 			msg = msg + strconv.Itoa(ID) + "_"
 			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].direction) + "_"
+			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].destination) + "_"
 			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].floor) + "_"
 			msg = msg + strconv.Itoa(Elevator_nodes[ID-1].status)
 
@@ -104,8 +105,9 @@ func heartBeathandler() {
 			Elevator_nodes[ID-1].last_seen = data[0]
 			Elevator_nodes[ID-1].ID = ID
 			Elevator_nodes[ID-1].direction, _ = strconv.Atoi(data[2])
-			Elevator_nodes[ID-1].floor, _ = strconv.Atoi(data[3])
-			Elevator_nodes[ID-1].status, _ = strconv.Atoi(data[4])
+			Elevator_nodes[ID-1].destination, _ = strconv.Atoi(data[3])
+			Elevator_nodes[ID-1].floor, _ = strconv.Atoi(data[4])
+			Elevator_nodes[ID-1].status, _ = strconv.Atoi(data[5])
 
 			//Reset the appropriate timer
 			ch_timerReset[ID-1] <- true
