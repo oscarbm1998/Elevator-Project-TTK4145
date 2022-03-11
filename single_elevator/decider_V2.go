@@ -107,7 +107,7 @@ func request_here() bool { //tad unshure if this is needed or not but its used f
 }
 
 func Call_qeuer(direction int) bool {
-	if (direction == 1 && elevator.floor == 3) || (direction == 0 && elevator.floor == 0) {
+	if (direction == 1 && elevator.floor == 3) || (direction == -1 && elevator.floor == 0) {
 		fmt.Printf("you cannot go that direction\n")
 	} else {
 		fmt.Printf("call qeuer button direction %d\n", direction)
