@@ -50,11 +50,14 @@ func networking_main() {
 
 	go command_listener(ch_command)
 	//Listen for commands
+	var floor, direction int
 	for {
 		select {
 		case <-ch_command:
 			fmt.Println("Networking: command received")
-
+			cmd := strings.Split(<-ch_command, "_")
+			floor = cmd[1]
+			direction = cmd[2]
 		}
 	}
 }
