@@ -113,7 +113,6 @@ func request_above() bool { //checks if there are any active calls above the ele
 			return true
 		}
 	}
-	fmt.Printf("no request above\n")
 	return false
 }
 
@@ -126,7 +125,6 @@ func request_below() bool { //checks if there are any active calls below the ele
 			return true
 		}
 	}
-	fmt.Printf("no request below\n")
 	return false
 }
 
@@ -148,7 +146,6 @@ func request_here() bool { //tad unshure if this is needed or not but its used f
 func Call_qeuer(direction int) bool {
 	switch direction {
 	case 1: //up
-		fmt.Printf("Running case for direction up\n")
 		if request_above() {
 			return true
 		} else if request_here() {

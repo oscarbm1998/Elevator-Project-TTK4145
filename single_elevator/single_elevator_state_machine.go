@@ -15,7 +15,7 @@ const (
 
 var current_state elevator_state
 var last_floor int
-var current_floor int
+var elevator_door_blocked bool
 
 func SingleElevatorFSM(
 	ch_drv_floors <-chan int,
@@ -32,15 +32,13 @@ func SingleElevatorFSM(
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
-	last_floor = -1
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived)
 	RemoveAllLights()
 	elevator.direction = 0
 	elevator.floor = 0
-	last_floor = 0
-	current_floor = -1
 	current_state = idle
+	last_floor = -1
 	for {
 		select {
 		case <-ch_new_order:
@@ -82,20 +80,35 @@ func SingleElevatorFSM(
 			fmt.Printf("Door time out detected\n")
 			switch current_state {
 			case doorOpen:
-				elevio.SetDoorOpenLamp(false)
-				if Call_qeuer(elevator_command.direction) {
-					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
-					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
-					current_state = moving
+				if elevator_door_blocked {
+					fmt.Printf("Door blocked by obstruction, can't close door\n")
+					fmt.Printf("Waiting 3 more seconds\n")
+					ch_door_timer_reset <- true
 				} else {
-					current_state = idle
+					elevio.SetDoorOpenLamp(false)
+					if Call_qeuer(elevator_command.direction) {
+						elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
+						fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
+						current_state = moving
+					} else {
+						fmt.Printf("No new orders, returning to idle")
+						current_state = idle
+					}
 				}
 			}
 		case msg := <-ch_drv_stop: //Maybe change the name on channel to make it more clear
 			if msg {
 				elevio.SetMotorDirection(0)
+				fmt.Printf("Elevator stopped")
 			} else {
 				elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
+				fmt.Printf("Elevator running")
+			}
+		case msg := <-ch_obstr_detected:
+			if msg {
+				elevator_door_blocked = true
+			} else {
+				elevator_door_blocked = false
 			}
 		}
 	}
@@ -106,6 +119,10 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int, ch_elevator_has_arrived
 		select {
 		case msg := <-ch_drv_floors:
 			elevator.floor = msg
+			if last_floor == -1 {
+				last_floor = elevator.floor
+			}
+			//networking.Elevator_nodes[config.ELEVATOR_ID-1].floor = msg
 			elevio.SetFloorIndicator(msg)
 			if msg == 3 {
 				elevator_command.direction = -1
