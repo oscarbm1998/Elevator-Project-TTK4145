@@ -16,7 +16,7 @@ type elevator_node struct {
 	status    int
 }
 
-var elevator_nodes [config.NUMBER_OF_ELEVATORS]elevator_node
+var Elevator_nodes [config.NUMBER_OF_ELEVATORS]elevator_node
 var command_cons, readback_cons [config.NUMBER_OF_ELEVATORS - 1]*net.UDPConn
 var readback_con *net.UDPConn
 
@@ -50,14 +50,13 @@ func networking_main() {
 
 	go command_listener(ch_command)
 	//Listen for commands
-	var floor, direction int
 	for {
 		select {
 		case <-ch_command:
 			fmt.Println("Networking: command received")
 			cmd := strings.Split(<-ch_command, "_")
-			floor = cmd[1]
-			direction = cmd[2]
+			floor, _ := strconv.Atoi(cmd[1])
+			direction, _ := strconv.Atoi(cmd[2])
 		}
 	}
 }
@@ -128,6 +127,7 @@ func command_listener(ch_netcommand chan string) {
 		direction, _ := strconv.Atoi(data[2])
 
 		if reject_command(floor, direction) { //Check if i can perfrom the task
+			fmt.Println("Network: incomming command rejected")
 			_, err = readback_cons[ID-1].Write([]byte("CMD_REJECT"))
 		} else { //Accept the command by reading it back
 			_, err = readback_cons[ID-1].Write([]byte(msg))
@@ -142,7 +142,7 @@ func command_listener(ch_netcommand chan string) {
 }
 
 func reject_command(direction, floor int) (reject bool) {
-	if elevator_nodes[config.ELEVATOR_ID-1].status == 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS {
+	if Elevator_nodes[config.ELEVATOR_ID-1].status == 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS {
 		return true
 	} else {
 		return false
