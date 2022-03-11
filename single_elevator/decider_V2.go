@@ -23,12 +23,12 @@ var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
 func Remove_order(level int, direction int) { //removes an order
-	floor[level].here = false             //removes here call as the elevator has arrived there
-	elevio.SetButtonLamp(2, level, false) //turns off light
-	if direction == 1 || (check_above() && !check_below()){ //if the direction is up or there are no orders below and orders above
+	floor[level].here = false                                //removes here call as the elevator has arrived there
+	elevio.SetButtonLamp(2, level, false)                    //turns off light
+	if direction == 1 || (check_above() && !check_below()) { //if the direction is up or there are no orders below and orders above
 		floor[level].up = false               //disables the up direction
 		elevio.SetButtonLamp(0, level, false) //turns off light
-	} else if direction == -1 || (!check_above() && check_below()){ //if the direction is down or there are no orders above and orders below
+	} else if direction == -1 || (check_below()) && !check_above() { //if the direction is down or there are no orders above and orders below
 		floor[level].down = false             //disables the down direction
 		elevio.SetButtonLamp(1, level, false) //turns off light
 	}
@@ -69,20 +69,23 @@ func Hall_order(
 /*****************************************************
 *				This shit may not be needed			 *
 *****************************************************/
-func check_above() bool{
+func check_above() bool {
 	for i := elevator.floor; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
 		if floor[i].up || floor[i].down { //if a floor with call up is found
-		return true
+			return true
+		}
 	}
 	return false
 }
-func check_below() bool{
+func check_below() bool {
 	for i := 0; i < elevator.floor; i++ { //checks from the last known floor of the elevator to the top
 		if floor[i].up || floor[i].down { //if a floor with call up is found
-		return true
+			return true
+		}
 	}
 	return false
 }
+
 /*****************************************************
 *		end of "this shit may not be needed"		 *
 *****************************************************/
