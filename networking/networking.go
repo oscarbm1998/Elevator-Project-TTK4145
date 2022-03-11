@@ -22,46 +22,43 @@ var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 var command_cons, readback_cons [config.NUMBER_OF_ELEVATORS - 1]*net.UDPConn
 var readback_con *net.UDPConn
 
-func networking_main() {
+func Networking_main() {
 	//Initialize heartbeat
 	go heartBeatTransmitter()
 	go heartBeathandler()
+	/*
+				//initiate command transmit connections
+				for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
+					if i != config.ELEVATOR_ID+1 {
+						network, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_SEND_PORT+i))
+						printError("Command transmit network resolve error: ", err)
+						conn, err := net.DialUDP("udp", nil, network)
+						printError("Command transmit network dial error: ", err)
+						command_cons[i] = conn
+						//Readback cons
+						network, err = net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_READBACK_PORT+i))
+						printError("Command transmit network resolve error: ", err)
+						conn, err = net.DialUDP("udp", nil, network)
+						printError("Command transmit network dial error: ", err)
+						readback_cons[i] = conn
+					}
+				}
+				//Initiate command readback port connection
+				adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_READBACK_PORT+config.ELEVATOR_ID-1))
+				readback_con, _ = net.ListenUDP("udp", adr)
 
-	//initiate command transmit connections
-	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
-		if i != config.ELEVATOR_ID+1 {
-			network, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_SEND_PORT+i))
-			printError("Command transmit network resolve error: ", err)
-			conn, err := net.DialUDP("udp", nil, network)
-			printError("Command transmit network dial error: ", err)
-			command_cons[i] = conn
-			//Readback cons
-			network, err = net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_READBACK_PORT+i))
-			printError("Command transmit network resolve error: ", err)
-			conn, err = net.DialUDP("udp", nil, network)
-			printError("Command transmit network dial error: ", err)
-			readback_cons[i] = conn
+				//Initiate command listener
+				ch_command := make(chan string)
+
+				go command_listener(ch_command)
+				//Listen for commands
+				for {
+					select {
+					case <-ch_comma
 		}
-	}
-	//Initiate command readback port connection
-	adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_READBACK_PORT+config.ELEVATOR_ID-1))
-	readback_con, _ = net.ListenUDP("udp", adr)
-
-	//Initiate command listener
-	ch_command := make(chan string)
-
-	go command_listener(ch_command)
-	//Listen for commands
-	for {
-		select {
-		case <-ch_command:
-			fmt.Println("Networking: command received")
-			cmd := strings.Split(<-ch_command, "_")
-			floor, _ := strconv.Atoi(cmd[1])
-			direction, _ := strconv.Atoi(cmd[2])
-			
-		}
-	}
+					}
+				}
+	*/
 }
 
 func send_command(ID, floor, direction int) (success bool) {
@@ -152,6 +149,7 @@ func reject_command(direction, floor int) (reject bool) {
 	}
 }
 
+/*
 func network_main_observer(ch_main_observer chan string) {
 	//Initiate threads that listenes to messages on all ports
 	var ch_observers chan string
@@ -168,7 +166,7 @@ func network_main_observer(ch_main_observer chan string) {
 		}
 	}
 }
-
+*/
 
 func stuck_timer(ID int, ch_stuck, ch_reset, ch_stop chan int) {
 	timer := time.NewTimer(config.ELEVATOR_STUCK_TIMOUT)
@@ -177,15 +175,14 @@ func stuck_timer(ID int, ch_stuck, ch_reset, ch_stop chan int) {
 		case <-timer.C:
 			ch_stuck <- ID
 		case <-ch_reset:
-			if <-ch_reset == ID{
+			if <-ch_reset == ID {
 				timer.Reset(config.ELEVATOR_STUCK_TIMOUT)
 			}
 		case <-ch_stop:
-			if <-ch_stop == ID{
+			if <-ch_stop == ID {
 				timer.Stop()
 			}
 		}
-		
 
 	}
 }

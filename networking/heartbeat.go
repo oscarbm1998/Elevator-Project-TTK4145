@@ -30,7 +30,7 @@ func heartBeatTransmitter() (err error) {
 	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	var msg, date, clock string
 	var ID int = config.ELEVATOR_ID
-
+	fmt.Println("Heartbeat: starting transmit")
 	for {
 		select {
 		case <-timer.C:
@@ -61,9 +61,9 @@ func heartBeatTransmitter() (err error) {
 }
 
 func resolveHBConn() (err error) {
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
+	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
 		//Outgoing
-		network, err := net.ResolveUDPAddr("udp", string(config.HEARTBEAT_TRANS_PORT))
+		network, err := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.HEARTBEAT_TRANS_PORT))
 		printError("resolveHBconn setup error: ", err)
 		con, err := net.DialUDP("udp", nil, network)
 		HB_con_Out[i] = con
@@ -87,7 +87,7 @@ func heartBeathandler() {
 
 	//Initiate heartbeat timers as go routines for each elevator
 	var ch_foundDead chan int
-	var ch_timerStop, ch_timerReset [config.NUMBER_OF_ELEVATORS - 1]chan bool
+	var ch_timerStop, ch_timerReset [config.NUMBER_OF_ELEVATORS]chan bool
 	var ID int
 
 	for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
