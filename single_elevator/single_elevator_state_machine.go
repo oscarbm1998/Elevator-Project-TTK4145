@@ -91,7 +91,6 @@ func SingleElevatorFSM(
 						elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 						fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 						if elevator_command.floor == elevator.floor {
-							fmt.Printf("Arrived here\n")
 							current_state = doorOpen
 							elevio.SetDoorOpenLamp(true)
 							Update_position(elevator_command.floor, (elevator_command.direction))
