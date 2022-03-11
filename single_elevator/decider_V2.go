@@ -46,6 +46,7 @@ func Hall_order(
 			if (floor[a.Floor].up && a.Button == 1) || (floor[a.Floor].down && a.Button == -1) || floor[a.Floor].here || (a.Floor == elevator.floor) {
 				//do nuffin as the order already exists
 				fmt.Printf("orders already exists\n")
+				Remove_order(a.Floor, a.Floor)
 			} else { //do shit
 				switch a.Button {
 				case 0: //opp
