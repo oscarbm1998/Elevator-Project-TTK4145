@@ -13,7 +13,7 @@ const (
 	UDP_PEERS_PORT = 30007
 
 	ELEVATOR_STUCK_TIMOUT   = time.Second * 10
-	ELEVATOR_DOOR_OPEN_TIME = time.Second * 10
+	ELEVATOR_DOOR_OPEN_TIME = time.Second * 3
 
 	REMOVE_OLD_ORDER_TIME = time.Second * 2
 
