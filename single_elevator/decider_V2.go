@@ -106,7 +106,7 @@ func request_above() bool { //checks if there are any active calls above the ele
 }
 
 func request_below() bool { //checks if there are any active calls below the elevator and updates the "command struct"
-	for i := 0; i < elevator.floor; i++ { //checks from the last known floor of the elevator to the botton
+	for i := 0; i <= elevator.floor; i++ { //checks from the last known floor of the elevator to the botton
 		if floor[i].down || floor[i].up { //if a floor with call down is found
 			fmt.Printf("found request below\n")
 			elevator_command.floor = i      //updates the command value
