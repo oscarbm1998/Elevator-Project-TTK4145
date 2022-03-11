@@ -23,7 +23,14 @@ func pass_to_network(
 	for {
 		select {
 		case a := <-ch_drv_buttons:
-			master_tournament(a.Floor, int(a.Button))
+			switch a.Button {
+			case 0: //up
+				master_tournament(a.Floor, 1)
+			case 1: //down
+				master_tournament(a.Floor, -1)
+			case 2: //cab
+				master_tournament(a.Floor, 0)
+			}
 			ch_new_order <- score
 		}
 	}
