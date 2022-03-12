@@ -35,8 +35,13 @@ func Networking_main() {
 	Elevator_nodes[0].IP = config.IP_15
 	Elevator_nodes[1].IP = config.IP_16
 
+	//ch_req_ID := make(chan int)
+	//ch_req_data := make(chan Elevator_node)
+	ch_write_data := make(chan Elevator_node)
+	//go Node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
+	go heartBeathandler(ch_write_data)
 	//go heartBeatTransmitter()
-	go heartBeathandler()
+
 	/*
 				//initiate command transmit connections
 				for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
@@ -70,6 +75,21 @@ func Networking_main() {
 					}
 				}
 	*/
+}
+
+//Function responsible for node data
+func Node_data_handler(
+	ch_req_ID chan int,
+	ch_req_data, ch_write_data chan Elevator_node) {
+	for {
+		select {
+		case ID := <-ch_req_ID: //Sending node data
+			ch_req_data <- Elevator_nodes[ID-1]
+		case data := <-ch_write_data: //Writing node data
+			ID := data.ID
+			Elevator_nodes[ID-1] = data
+		}
+	}
 }
 
 func send_command(ID, floor, direction int) (success bool) {
