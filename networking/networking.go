@@ -32,8 +32,6 @@ func Networking_main() {
 		}
 	*/
 	//go heartBeathandler()
-	Elevator_nodes[0].IP = config.IP_15
-	Elevator_nodes[1].IP = config.IP_16
 
 	//ch_req_ID := make(chan int)
 	//ch_req_data := make(chan Elevator_node)
