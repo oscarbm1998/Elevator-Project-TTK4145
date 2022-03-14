@@ -9,9 +9,6 @@ import (
 	"time"
 )
 
-var HB_con_Out [config.NUMBER_OF_ELEVATORS - 1]*net.UDPConn
-var elevatorsIPs [config.NUMBER_OF_ELEVATORS - 1]string
-
 var localIP string
 
 func GetLocalIp() (string, error) {
@@ -26,7 +23,7 @@ func GetLocalIp() (string, error) {
 	return localIP, nil
 }
 
-func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (err error) {
+func heartBeatTransmitter() (err error) {
 	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	var msg, date, clock string
 	var ID int = config.ELEVATOR_ID
@@ -46,14 +43,14 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 			clock = strconv.Itoa(hour) + ":" + strconv.Itoa(minute) + ":" + strconv.Itoa(second)
 			msg = date + " " + clock + "_"
 			//Requesting and getting elevator data
-			ch_req_ID <- ID
-			node = <-ch_req_data
-
-			for node.ID != ID { //If i somehow get the wrong data
-				ch_req_ID <- config.ELEVATOR_ID
-				node = <-ch_req_data
-			}
-
+			//ch_req_ID <- ID
+			node = Elevator_nodes[ID-1]
+			/*
+				for node.ID != ID { //If i somehow get the wrong data
+					ch_req_ID <- config.ELEVATOR_ID
+					node = <-ch_req_data
+				}
+			*/
 			//Compressing the elevator data to a message
 			msg = msg + strconv.Itoa(ID) + "_"
 			msg = msg + strconv.Itoa(node.Direction) + "_"
@@ -76,9 +73,10 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 	}
 }
 
-func heartBeathandler(ch_write_data chan Elevator_node) {
-	ch_heartbeatmsg := make(chan string)
+func heartBeathandler() {
+	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
+	ch_heartbeatmsg := make(chan string)
 	go heartbeat_UDPListener(ch_heartbeatmsg)
 	//Initiate heartbeat timers as go routines for each elevator
 	ch_timerReset := make(chan int)
@@ -90,6 +88,7 @@ func heartBeathandler(ch_write_data chan Elevator_node) {
 			go heartbeatTimer(i, ch_foundDead, ch_timerReset, ch_timerStop)
 		}
 	}
+
 	var node_data Elevator_node
 	for {
 		select {
@@ -105,6 +104,7 @@ func heartBeathandler(ch_write_data chan Elevator_node) {
 			node_data.Status, _ = strconv.Atoi(data[5])
 			fmt.Println("Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
 
+			Elevator_nodes[ID-1] = node_data
 			//Reset the appropriate timer
 			ch_timerReset <- ID
 

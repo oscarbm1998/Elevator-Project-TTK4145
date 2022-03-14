@@ -2,10 +2,8 @@ package networking
 
 import (
 	config "PROJECT-GROUP-10/config"
-	"fmt"
-	"net"
-	"strconv"
-	"strings"
+	//"fmt"
+	//"strconv"
 	"time"
 )
 
@@ -20,8 +18,6 @@ type Elevator_node struct {
 }
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
-var command_cons, readback_cons [config.NUMBER_OF_ELEVATORS - 1]*net.UDPConn
-var readback_con *net.UDPConn
 
 func Networking_main() {
 	//Initialize heartbeat
@@ -35,9 +31,9 @@ func Networking_main() {
 
 	//ch_req_ID := make(chan int)
 	//ch_req_data := make(chan Elevator_node)
-	ch_write_data := make(chan Elevator_node)
+	//ch_write_data := make(chan Elevator_node)
 	//go Node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
-	go heartBeathandler(ch_write_data)
+	go heartBeathandler()
 	//go heartBeatTransmitter()
 
 	/*
@@ -90,6 +86,7 @@ func Node_data_handler(
 	}
 }
 
+/*
 func send_command(ID, floor, direction int) (success bool) {
 	var attempts int = 1
 	var cmd string
@@ -140,7 +137,8 @@ func send_command(ID, floor, direction int) (success bool) {
 
 	return success
 }
-
+*/
+/*
 func command_listener(ch_netcommand chan string) {
 	adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_REC_PORT+config.ELEVATOR_ID-1))
 	con, _ := net.ListenUDP("udp", adr)
@@ -169,6 +167,7 @@ func command_listener(ch_netcommand chan string) {
 		}
 	}
 }
+*/
 
 func reject_command(direction, floor int) (reject bool) {
 	if Elevator_nodes[config.ELEVATOR_ID-1].Status == 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS {
