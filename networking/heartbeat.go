@@ -32,7 +32,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 	network, _ := net.ResolveUDPAddr("udp", broadcast)
 	con, _ := net.DialUDP("udp", nil, network)
 
-	fmt.Println("Heartbeat: starting transmit")
+	fmt.Println("Networking: starting heartbeat transmision")
 	//Timer to define when to broadcast heartbeat data
 	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	//Routine
@@ -55,8 +55,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 			msg = msg + strconv.Itoa(node.Destination) + "_"
 			msg = msg + strconv.Itoa(node.Floor) + "_"
 			msg = msg + strconv.Itoa(node.Status)
-			fmt.Println("Sending: " + msg)
-			//Sending to all nodes
+			//fmt.Println("Sending: " + msg)
 
 			con.Write([]byte(msg))
 			timer.Reset(config.HEARTBEAT_TIME)
@@ -94,7 +93,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			node_data.Destination, _ = strconv.Atoi(data[3])
 			node_data.Floor, _ = strconv.Atoi(data[4])
 			node_data.Status, _ = strconv.Atoi(data[5])
-			fmt.Println("Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
+			//fmt.Println("Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
 			//Write the node data
 			ch_write_data <- node_data
 			//Reset the appropriate timer
@@ -102,7 +101,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 
 		case msg_ID := <-ch_foundDead:
 			//Timer has run out,
-			fmt.Println("Elevator " + strconv.Itoa(msg_ID) + " is dead")
+			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead")
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
 			node_data.Status = 404
 			ch_write_data <- node_data
