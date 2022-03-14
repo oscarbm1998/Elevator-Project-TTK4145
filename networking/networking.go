@@ -3,6 +3,7 @@ package networking
 import (
 	config "PROJECT-GROUP-10/config"
 	"fmt"
+	"net"
 	"strconv"
 	"time"
 )
@@ -14,7 +15,7 @@ type Elevator_node struct {
 	Direction   int
 	Floor       int
 	Status      int
-	Calls       [8]int
+	HallCalls   [8]int
 }
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
@@ -27,8 +28,9 @@ func Networking_main() {
 	ch_req_ID := make(chan int)
 	ch_req_data := make(chan Elevator_node)
 	ch_write_data := make(chan Elevator_node)
+	ch_ext_dead := make(chan int)
 	go Node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
-	go heartBeathandler(ch_req_ID, ch_req_data, ch_write_data)
+	go heartBeathandler(ch_req_ID, ch_ext_dead, ch_req_data, ch_write_data)
 	go heartBeatTransmitter(ch_req_ID, ch_req_data)
 
 }
@@ -94,4 +96,14 @@ func stuck_timer(ID int, ch_stuck, ch_reset, ch_stop chan int) {
 		}
 
 	}
+}
+
+func revive_calls(ID int) {
+	var msg, broadcast string
+	fmt.Println("Networking: Reviving elevator " + strconv.Itoa(ID) + ", taking his/her hall calls")
+	msg = "98_" + strconv.Itoa(ID) + "_DEAD_" + strconv.Itoa(config.ELEVATOR_ID)
+	broadcast = "255.255.255.255:" + strconv.Itoa(config.COMMAND_PORT)
+	network, _ := net.ResolveUDPAddr("udp", broadcast)
+	con, _ := net.DialUDP("udp", nil, network)
+	con.Write([]byte(msg))
 }

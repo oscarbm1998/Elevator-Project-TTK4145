@@ -110,36 +110,49 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 	}
 }
 
-/*
 func command_listener(ch_netcommand chan string) {
-	adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_REC_PORT+config.ELEVATOR_ID-1))
-	con, _ := net.ListenUDP("udp", adr)
 	buf := make([]byte, 1024)
+	adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_PORT))
+	cmd_con, _ := net.ListenUDP("udp", adr) //Listening to the command port
+	adr, _ = net.ResolveUDPAddr("udp", "255.255.255.255:"+strconv.Itoa(config.COMMAND_RBC_PORT))
+	rbc_con, _ := net.DialUDP("udp", nil, adr) //Broadcasting on the readback port
 	for {
 		//Listen for incomming commands on command reception port
-		n, _, err := con.ReadFromUDP(buf)
+		n, _, err := cmd_con.ReadFromUDP(buf)
 		printError("Networking: error from command listener: ", err)
 		msg := string(buf[0:n])
 		data := strings.Split(msg, "_")
 		ID, _ := strconv.Atoi(data[0])
-		floor, _ := strconv.Atoi(data[1])
-		direction, _ := strconv.Atoi(data[2])
 
-		if reject_command(floor, direction) { //Check if i can perfrom the task
-			fmt.Println("Network: incomming command rejected")
-			_, err = readback_cons[ID-1].Write([]byte("CMD_REJECT"))
-		} else { //Accept the command by reading it back
-			_, err = readback_cons[ID-1].Write([]byte(msg))
-			//Wait for OK
-			n, _, err = con.ReadFromUDP(buf)
-			msg = string(buf[0:n])
-			if msg == "CMD_OK" {
-				ch_netcommand <- msg
+		if ID == config.ELEVATOR_ID { //Command for me
+			floor, _ := strconv.Atoi(data[1])
+			direction, _ := strconv.Atoi(data[2])
+			from_ID, _ := strconv.Atoi(data[3])
+			if reject_command(floor, direction) { //Check if i can perfrom the task
+				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
+				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
+			} else { //Accept the command by reading it back
+				rbc_con.Write([]byte(msg))
+				//Wait for OK
+				n, _, _ = cmd_con.ReadFromUDP(buf)
+				msg = string(buf[0:n])
+				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
+					ch_netcommand <- msg
+				}
+				fmt.Println("Networking: got a command from elevator " + strconv.Itoa(from_ID))
 			}
+		} else if ID == 98 { //Announcement
+			code := data[2]
+			if code == "DEAD" {
+				dead_ID, _ := strconv.Atoi(data[1])
+				reportedBy_ID, _ := strconv.Atoi(data[3])
+				fmt.Println("Networking: elevator " + strconv.Itoa(dead_ID) + " was found dead by elevator " + strconv.Itoa(reportedBy_ID))
+			}
+
 		}
+		defer cmd_con.Close()
 	}
 }
-*/
 
 func reject_command(direction, floor int) (reject bool) {
 	if Elevator_nodes[config.ELEVATOR_ID-1].Status == 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS {
