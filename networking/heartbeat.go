@@ -24,7 +24,6 @@ func GetLocalIp() (string, error) {
 }
 
 func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (err error) {
-	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	var msg, date, clock, broadcast string
 	var ID int = config.ELEVATOR_ID
 	var node Elevator_node
@@ -34,7 +33,8 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 	con, _ := net.DialUDP("udp", nil, network)
 
 	fmt.Println("Heartbeat: starting transmit")
-
+	//Timer to define when to broadcast heartbeat data
+	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	//Routine
 	for {
 		select {
@@ -46,14 +46,9 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 			clock = strconv.Itoa(hour) + ":" + strconv.Itoa(minute) + ":" + strconv.Itoa(second)
 			msg = date + " " + clock + "_"
 			//Requesting and getting elevator data
-			//ch_req_ID <- ID
+
 			node = Node_get_data(ID, ch_req_ID, ch_req_data)
-			/*
-				for node.ID != ID { //If i somehow get the wrong data
-					ch_req_ID <- config.ELEVATOR_ID
-					node = <-ch_req_data
-				}
-			*/
+
 			//Compressing the elevator data to a message
 			msg = msg + strconv.Itoa(ID) + "_"
 			msg = msg + strconv.Itoa(node.Direction) + "_"
@@ -62,33 +57,26 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 			msg = msg + strconv.Itoa(node.Status)
 			fmt.Println("Sending: " + msg)
 			//Sending to all nodes
-			/*
-				for i := 0; i < config.NUMBER_OF_ELEVATORS-1; i++ {
-					if i != ID-1 {
-						fmt.Println("sending")
-						con.Write([]byte(msg))
-					}
 
-				}*/
 			con.Write([]byte(msg))
 			timer.Reset(config.HEARTBEAT_TIME)
 		}
 	}
 }
 
-func heartBeathandler(ch_write_data chan Elevator_node) {
+func heartBeathandler(ch_req_ID chan int, ch_req_data, ch_write_data chan Elevator_node) {
 	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
 	ch_heartbeatmsg := make(chan string)
 	go heartbeat_UDPListener(ch_heartbeatmsg)
+
 	//Initiate heartbeat timers as go routines for each elevator
 	ch_timerReset := make(chan int)
-	var ch_foundDead, ch_timerStop chan int
-	var ID int = config.ELEVATOR_ID
+	ch_foundDead := make(chan int)
 	fmt.Println("Networking: HB starting timers")
 	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
-		if i != ID {
-			go heartbeatTimer(i, ch_foundDead, ch_timerReset, ch_timerStop)
+		if i != config.ELEVATOR_ID {
+			go heartbeatTimer(i, ch_foundDead, ch_timerReset)
 		}
 	}
 
@@ -98,7 +86,7 @@ func heartBeathandler(ch_write_data chan Elevator_node) {
 		case msg := <-ch_heartbeatmsg:
 			//Parsing the received heartbeat message
 			data := strings.Split(msg, "_")
-			ID, _ = strconv.Atoi(data[1])
+			ID, _ := strconv.Atoi(data[1])
 			node_data.Last_seen = data[0]
 			node_data.ID = ID
 			node_data.Direction, _ = strconv.Atoi(data[2])
@@ -106,7 +94,7 @@ func heartBeathandler(ch_write_data chan Elevator_node) {
 			node_data.Floor, _ = strconv.Atoi(data[4])
 			node_data.Status, _ = strconv.Atoi(data[5])
 			fmt.Println("Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
-
+			//Write the node data
 			ch_write_data <- node_data
 			//Reset the appropriate timer
 			ch_timerReset <- ID
@@ -114,13 +102,15 @@ func heartBeathandler(ch_write_data chan Elevator_node) {
 		case msg_id := <-ch_foundDead:
 			//Timer has run out,
 			fmt.Printf("found " + strconv.Itoa(msg_id) + " dead")
-			Elevator_nodes[<-ch_foundDead-1].Status = 404
+			node_data = Node_get_data(msg_id, ch_req_ID, ch_req_data)
+			node_data.Status = 404
+			ch_write_data <- node_data
 		}
 	}
 }
 
 //Timer, waiting for something to timeout. Run as a go routine, accessed through channels
-func heartbeatTimer(ID int, ch_foundDead, ch_timerReset, ch_timer_stop chan int) {
+func heartbeatTimer(ID int, ch_foundDead, ch_timerReset chan int) {
 	timer := time.NewTimer(config.HEARTBEAT_TIME_OUT)
 	timer.Stop()
 	for {
@@ -128,13 +118,10 @@ func heartbeatTimer(ID int, ch_foundDead, ch_timerReset, ch_timer_stop chan int)
 		case <-timer.C:
 			fmt.Println("Elevator " + strconv.Itoa(ID) + " is dead")
 			ch_foundDead <- ID
+			timer.Stop()
 		case cmd_id := <-ch_timerReset:
 			if cmd_id == ID {
 				timer.Reset(config.HEARTBEAT_TIME_OUT)
-			}
-		case cmd_id := <-ch_timer_stop:
-			if cmd_id == ID {
-				timer.Stop()
 			}
 		}
 	}

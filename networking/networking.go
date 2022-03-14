@@ -2,6 +2,9 @@ package networking
 
 import (
 	config "PROJECT-GROUP-10/config"
+	"fmt"
+	"strconv"
+
 	//"fmt"
 	//"strconv"
 	"time"
@@ -14,27 +17,22 @@ type Elevator_node struct {
 	Direction   int
 	Floor       int
 	Status      int
-	IP          string
+	Calls       [8]int
 }
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 
 func Networking_main() {
-	//Initialize heartbeat
-	/*
-		err := resolveHBConn()
-		if err != nil {
-			panic(err)
-		}
-	*/
-	//go heartBeathandler()
+	var ID int = config.ELEVATOR_ID
 
+	Elevator_nodes[ID-1].ID = config.ELEVATOR_ID
+	Elevator_nodes[ID-1].Floor = 4
 	ch_req_ID := make(chan int)
 	ch_req_data := make(chan Elevator_node)
 	ch_write_data := make(chan Elevator_node)
 	go Node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
-	go heartBeathandler(ch_write_data)
-	//go heartBeatTransmitter(ch_req_ID, ch_req_data)
+	go heartBeathandler(ch_req_ID, ch_req_data, ch_write_data)
+	go heartBeatTransmitter(ch_req_ID, ch_req_data)
 
 	/*
 				//initiate command transmit connections
@@ -89,6 +87,7 @@ func Node_get_data(ID int, ch_req_ID chan int, ch_req_data chan Elevator_node) (
 	ch_req_ID <- ID
 	nodeData = <-ch_req_data
 	for nodeData.ID != ID {
+		fmt.Println("Loop " + strconv.Itoa(ID) + " " + strconv.Itoa(nodeData.ID))
 		ch_req_ID <- ID
 		nodeData = <-ch_req_data
 	}
