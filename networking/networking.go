@@ -80,8 +80,7 @@ func Node_data_handler(
 		case ID := <-ch_req_ID: //Sending node data
 			ch_req_data <- Elevator_nodes[ID-1]
 		case data := <-ch_write_data: //Writing node data
-			ID := data.ID
-			Elevator_nodes[ID-1] = data
+			Elevator_nodes[data.ID-1] = data
 		}
 	}
 }
