@@ -29,12 +29,12 @@ func Networking_main() {
 	*/
 	//go heartBeathandler()
 
-	//ch_req_ID := make(chan int)
-	//ch_req_data := make(chan Elevator_node)
-	//ch_write_data := make(chan Elevator_node)
-	//go Node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
-	go heartBeathandler()
-	//go heartBeatTransmitter()
+	ch_req_ID := make(chan int)
+	ch_req_data := make(chan Elevator_node)
+	ch_write_data := make(chan Elevator_node)
+	go Node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
+	go heartBeathandler(ch_write_data)
+	//go heartBeatTransmitter(ch_req_ID, ch_req_data)
 
 	/*
 				//initiate command transmit connections
@@ -84,6 +84,16 @@ func Node_data_handler(
 			Elevator_nodes[ID-1] = data
 		}
 	}
+}
+
+func Node_get_data(ID int, ch_req_ID chan int, ch_req_data chan Elevator_node) (nodeData Elevator_node) {
+	ch_req_ID <- ID
+	nodeData = <-ch_req_data
+	for nodeData.ID != ID {
+		ch_req_ID <- ID
+		nodeData = <-ch_req_data
+	}
+	return nodeData
 }
 
 /*

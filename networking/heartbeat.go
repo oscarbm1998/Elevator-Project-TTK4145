@@ -23,16 +23,19 @@ func GetLocalIp() (string, error) {
 	return localIP, nil
 }
 
-func heartBeatTransmitter() (err error) {
+func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (err error) {
 	timer := time.NewTimer(config.HEARTBEAT_TIME)
-	var msg, date, clock string
+	var msg, date, clock, broadcast string
 	var ID int = config.ELEVATOR_ID
-	fmt.Println("Heartbeat: starting transmit")
-	var broadcast string = "255.255.255.255:" + strconv.Itoa(config.HEARTBEAT_PORT)
+	var node Elevator_node
+	//Resolve transmit connection (broadcast)
+	broadcast = "255.255.255.255:" + strconv.Itoa(config.HEARTBEAT_PORT)
 	network, _ := net.ResolveUDPAddr("udp", broadcast)
 	con, _ := net.DialUDP("udp", nil, network)
 
-	var node Elevator_node
+	fmt.Println("Heartbeat: starting transmit")
+
+	//Routine
 	for {
 		select {
 		case <-timer.C:
@@ -44,7 +47,7 @@ func heartBeatTransmitter() (err error) {
 			msg = date + " " + clock + "_"
 			//Requesting and getting elevator data
 			//ch_req_ID <- ID
-			node = Elevator_nodes[ID-1]
+			node = Node_get_data(ID, ch_req_ID, ch_req_data)
 			/*
 				for node.ID != ID { //If i somehow get the wrong data
 					ch_req_ID <- config.ELEVATOR_ID
@@ -73,7 +76,7 @@ func heartBeatTransmitter() (err error) {
 	}
 }
 
-func heartBeathandler() {
+func heartBeathandler(ch_write_data chan Elevator_node) {
 	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
 	ch_heartbeatmsg := make(chan string)
@@ -104,7 +107,7 @@ func heartBeathandler() {
 			node_data.Status, _ = strconv.Atoi(data[5])
 			fmt.Println("Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
 
-			Elevator_nodes[ID-1] = node_data
+			ch_write_data <- node_data
 			//Reset the appropriate timer
 			ch_timerReset <- ID
 
