@@ -1,6 +1,7 @@
 package ordering
 
 import (
+	"PROJECT-GROUP-10/config"
 	elevio "PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
 	"math"
@@ -16,6 +17,8 @@ type scoreboard struct {
 var score [shaft_ammount]scoreboard
 
 var elev_overview [shaft_ammount]networking.Elevator_node
+
+var button_calls elevio.ButtonEvent
 
 func heartbeat_monitor( //checks and alerts the system whenever a heartbeat ping occurs
 	ch_new_data chan int,
@@ -53,6 +56,7 @@ func pass_to_network(
 	ch_drv_buttons chan elevio.ButtonEvent,
 	ch_new_order chan scoreboard,
 	ch_take_calls chan int,
+	ch_self_command chan elevio.ButtonEvent,
 ) {
 	for {
 		select {
@@ -70,8 +74,13 @@ func pass_to_network(
 				master_tournament(a.Floor, 0)
 			}
 			for i := 0; i < shaft_ammount; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-				if networking.Send_command(elev_overview[score[i].placement].ID, a.Floor, dir) {
+				if elev_overview[score[i].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+					ch_self_command <- <-ch_drv_buttons
 					break
+				} else {
+					if networking.Send_command(elev_overview[score[i].placement].ID, a.Floor, dir) {
+						break
+					}
 				}
 			}
 
@@ -80,18 +89,29 @@ func pass_to_network(
 				if elev_overview[i].ID == death_id { //found the elevator
 					for e := 0; e < 6; e++ { //checks all calls
 						var dir int
+						var floor int
 						if elev_overview[i].HallCalls[e] == 1 {
 							if e%2 == 0 { //the number is even so the dir is up
 								dir = 1
-								master_tournament(e/2, 1)
+								floor = e / 2
+								master_tournament(floor, 1)
 								//this shit may cause errors as i am unshure if everyone is cool with floors starting at 0
 							} else { //the number is odd so the dir is down
 								dir = -1
-								master_tournament((e-1)/2, -1)
+								floor = (e - 1) / 2
+								master_tournament(floor, -1)
 							}
 							for c := 0; c < shaft_ammount; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-								if networking.Send_command(elev_overview[score[c].placement].ID, e, dir) {
+								if elev_overview[score[c].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+									ch_self_command <- <-ch_drv_buttons
 									break
+								} else {
+									if networking.Send_command(elev_overview[score[c].placement].ID, floor, dir) {
+										break
+										/*********************************
+										*		Welcome to Hell			 *
+										*********************************/
+									}
 								}
 							}
 						}
