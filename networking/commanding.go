@@ -33,6 +33,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 	ch_rbc_close := make(chan bool)
 	go command_readback_listener(ch_rbc_msg, ch_rbc_close)
 	//Send command
+	fmt.Println("Network: sending command " + cmd)
 	_, err := cmd_con.Write([]byte(cmd))
 	printError("Networking: Error sending command: ", err)
 

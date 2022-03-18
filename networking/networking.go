@@ -27,8 +27,8 @@ func Main(
 	ch_req_data, ch_write_data [3]chan Elevator_node,
 	ch_net_command chan elevio.ButtonEvent) {
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
-	go node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)
-	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_take_calls, ch_req_data[0], ch_write_data[0])
+	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
+	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0])
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
 	go command_listener(ch_net_command)
 }
@@ -36,9 +36,7 @@ func Main(
 //Function responsible for node data. Works as a mutex for the resource
 func node_data_handler(
 	ch_req_ID [3]chan int,
-	ch_new_data chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node) {
-	//ch_new_data <- 0 //** REMOVE BEFORE FLIGHT **
 	for {
 		select {
 		/*Handle data requests*/

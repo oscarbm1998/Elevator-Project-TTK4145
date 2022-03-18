@@ -46,14 +46,14 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 				msg = msg + strconv.Itoa(node.HallCalls[i]) + "_"
 			}
 			//Sending the message
-			fmt.Println("Networking: sending HB message: " + msg)
+			//fmt.Println("Networking: sending HB message: " + msg)
 			con.Write([]byte(msg))
 			timer.Reset(config.HEARTBEAT_TIME)
 		}
 	}
 }
 
-func heartBeathandler(ch_req_ID, ch_ext_dead, ch_take_calls chan int, ch_req_data, ch_write_data chan Elevator_node) {
+func heartBeathandler(ch_req_ID, ch_ext_dead, ch_new_data, ch_take_calls chan int, ch_req_data, ch_write_data chan Elevator_node) {
 	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
 	ch_heartbeatmsg := make(chan string)
@@ -87,14 +87,14 @@ func heartBeathandler(ch_req_ID, ch_ext_dead, ch_take_calls chan int, ch_req_dat
 			for i := range node_data.HallCalls {
 				node_data.HallCalls[i], _ = strconv.Atoi(data[6+i])
 			}
-			fmt.Println("Networking: Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
-			fmt.Println("Elevator " + strconv.Itoa(ID) + " at floor: " + strconv.Itoa(node_data.Floor))
+			//fmt.Println("Networking: Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
+			//fmt.Println("Elevator " + strconv.Itoa(ID) + " at floor: " + strconv.Itoa(node_data.Floor))
 			//Write the node data
 			ch_write_data <- node_data
 			//Reset the appropriate timer
 			ch_timerReset[ID-1] <- ID
 			//Allert cost function that there is new data on this ID
-
+			ch_new_data <- ID
 		case msg_ID := <-ch_foundDead:
 			//Timer has run out,
 			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead")

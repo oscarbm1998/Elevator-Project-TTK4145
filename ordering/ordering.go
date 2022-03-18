@@ -4,7 +4,9 @@ import (
 	"PROJECT-GROUP-10/config"
 	elevio "PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
+	"fmt"
 	"math"
+	"strconv"
 )
 
 type scoreboard struct {
@@ -28,6 +30,7 @@ func heartbeat_monitor( //checks and alerts the system whenever a heartbeat ping
 		case id := <-ch_new_data:
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 				lighthouse := networking.Node_get_data(id, ch_req_ID, ch_req_data)
+				fmt.Println("Lighthouse: " + strconv.Itoa(id))
 				elev_overview[i] = lighthouse
 			}
 		}
@@ -80,6 +83,7 @@ func Pass_to_network(
 				dir = 0
 				master_tournament(a.Floor, 0)
 			}
+			sorting()
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
 				if elev_overview[score[i].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
 					ch_self_command <- <-ch_drv_buttons
@@ -108,6 +112,7 @@ func Pass_to_network(
 								floor = (e - 1) / 2
 								master_tournament(floor, -1)
 							}
+							sorting()
 							for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
 								if elev_overview[score[c].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
 									ch_self_command <- <-ch_drv_buttons
