@@ -9,20 +9,6 @@ import (
 	"time"
 )
 
-var localIP string
-
-func GetLocalIp() (string, error) {
-	if localIP == "" {
-		conn, err := net.DialTCP("tcp4", nil, &net.TCPAddr{IP: []byte{8, 8, 8, 8}, Port: 53})
-		if err != nil {
-			return "", err
-		}
-		defer conn.Close()
-		localIP = strings.Split(conn.LocalAddr().String(), ":")[0]
-	}
-	return localIP, nil
-}
-
 func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (err error) {
 	var msg, date, clock, broadcast string
 	var ID int = config.ELEVATOR_ID
@@ -46,17 +32,18 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 			clock = strconv.Itoa(hour) + ":" + strconv.Itoa(minute) + ":" + strconv.Itoa(second)
 			msg = date + " " + clock + "_"
 			//Requesting and getting elevator data
-
 			node = Node_get_data(ID, ch_req_ID, ch_req_data)
 
-			//Compressing the elevator data to a message
+			//Generating the heartbeat message
 			msg = msg + strconv.Itoa(ID) + "_"
 			msg = msg + strconv.Itoa(node.Direction) + "_"
 			msg = msg + strconv.Itoa(node.Destination) + "_"
 			msg = msg + strconv.Itoa(node.Floor) + "_"
 			msg = msg + strconv.Itoa(node.Status)
-			//fmt.Println("Sending: " + msg)
-
+			for i := range node.HallCalls {
+				msg = msg + strconv.Itoa(node.HallCalls[i])
+			}
+			//Sending the message
 			con.Write([]byte(msg))
 			timer.Reset(config.HEARTBEAT_TIME)
 		}
@@ -94,6 +81,9 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			node_data.Destination, _ = strconv.Atoi(data[3])
 			node_data.Floor, _ = strconv.Atoi(data[4])
 			node_data.Status, _ = strconv.Atoi(data[5])
+			for i := range node_data.HallCalls {
+				node_data.HallCalls[i], _ = strconv.Atoi(data[6+i])
+			}
 			//fmt.Println("Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
 			//Write the node data
 			ch_write_data <- node_data

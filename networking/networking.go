@@ -21,10 +21,8 @@ type Elevator_node struct {
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 
 func Networking_main(ch_req_ID, ch_new_data, ch_ext_dead chan int, ch_req_data, ch_write_data chan Elevator_node) {
-	var ID int = config.ELEVATOR_ID
 
-	Elevator_nodes[ID-1].ID = config.ELEVATOR_ID
-	Elevator_nodes[ID-1].Floor = 4
+	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
 
 	go Node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)
 	go heartBeathandler(ch_req_ID, ch_ext_dead, ch_req_data, ch_write_data)
