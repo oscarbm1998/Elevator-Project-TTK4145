@@ -32,7 +32,7 @@ func Networking_main(
 	go Node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)
 	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_take_calls, ch_req_data[0], ch_write_data[0])
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
-	//	go command_listener(ch_net_command)
+	go command_listener(ch_net_command)
 
 }
 

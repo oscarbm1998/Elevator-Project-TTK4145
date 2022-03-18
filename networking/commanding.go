@@ -132,15 +132,20 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 			floor, _ := strconv.Atoi(data[1])
 			direction, _ := strconv.Atoi(data[2])
 			from_ID, _ := strconv.Atoi(data[3])
+
 			if reject_command(floor, direction) { //Check if i can perfrom the task
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
-			} else { //Accept the command by reading it back
+			} else {
+
+				//Accept the command by reading it back
 				rbc_con.Write([]byte(msg))
 				//Wait for OK
 				n, _, _ = cmd_con.ReadFromUDP(buf)
 				msg = string(buf[0:n])
 				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
+
+					//Pass the command to the elevator
 					switch direction {
 					case -1:
 						button_command.Button = elevio.BT_HallDown
@@ -149,8 +154,8 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 					}
 					button_command.Floor = floor
 					ch_netcommand <- button_command
+					fmt.Println("Networking: got a command from elevator " + strconv.Itoa(from_ID))
 				}
-				fmt.Println("Networking: got a command from elevator " + strconv.Itoa(from_ID))
 			}
 		} else if ID == 98 { //Announcement
 			code := data[2]
