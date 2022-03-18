@@ -3,8 +3,6 @@ package main
 import (
 	//"fmt"
 	networking "PROJECT-GROUP-10/networking"
-	"fmt"
-	"strconv"
 	//"net"
 )
 
@@ -44,18 +42,4 @@ func main() {
 	ch_write_data := make(chan networking.Elevator_node)
 	ch_ext_dead := make(chan int)
 	go networking.Networking_main(ch_req_ID, ch_new_data, ch_ext_dead, ch_req_data, ch_write_data)
-}
-
-func test(id int, ch_test chan int) {
-	fmt.Println("Starting")
-	for {
-		select {
-		case i := <-ch_test:
-			if i == id {
-				fmt.Println(strconv.Itoa(id) + " got " + strconv.Itoa(i))
-			} else {
-				ch_test <- id
-			}
-		}
-	}
 }
