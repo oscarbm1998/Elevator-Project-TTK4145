@@ -173,9 +173,12 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 }
 
 func reject_command(direction, floor int) (reject bool) {
-	if Elevator_nodes[config.ELEVATOR_ID-1].Status == 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS {
-		return true
-	} else {
-		return false
-	}
+	/*
+		if Elevator_nodes[config.ELEVATOR_ID-1].Status == 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS {
+			return true
+		} else {
+			return false
+		}
+	*/
+	return true
 }
