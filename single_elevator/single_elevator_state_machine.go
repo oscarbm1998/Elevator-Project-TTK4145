@@ -117,19 +117,23 @@ func SingleElevatorFSM(
 		case msg := <-ch_drv_stop: //Maybe change the name on channel to make it more clear
 			if msg {
 				elevio.SetMotorDirection(elevio.MD_Stop)
-				fmt.Printf("Elevator stopped")
+				fmt.Printf("Elevator stopped\n")
 				update_elevator_node("direction", elevio.MD_Stop, ch_req_ID, ch_req_data, ch_write_data)
 			} else {
 				elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
-				fmt.Printf("Elevator running")
+				fmt.Printf("Elevator running\n")
 				update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
 			}
 		case msg := <-ch_obstr_detected:
 			if msg {
 				elevator_door_blocked = true
+				update_elevator_node("status", 1, ch_req_ID, ch_req_data, ch_write_data)
 			} else {
 				elevator_door_blocked = false
+				update_elevator_node("status", 0, ch_req_ID, ch_req_data, ch_write_data)
 			}
+		case <-ch_elev_stuck_timer_out:
+			fmt.Println("Elevator: I'm stuck, please call Vakt & Service")
 		}
 	}
 }
@@ -185,6 +189,8 @@ func update_elevator_node(
 		updated_elevator_node.Direction = value
 	case "destination":
 		updated_elevator_node.Destination = value
+	case "status":
+		updated_elevator_node.Status = value
 	}
 	updated_elevator_node.ID = config.ELEVATOR_ID
 	//Samme for alt annet som må oppdaterers

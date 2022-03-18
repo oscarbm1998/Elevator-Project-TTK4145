@@ -2,7 +2,6 @@ package singleElevator
 
 import (
 	config "PROJECT-GROUP-10/config"
-	"fmt"
 	"time"
 )
 
@@ -29,7 +28,6 @@ func ElevatorStuckTimer(ch_elev_stuck_timer_out chan<- bool, ch_elev_stuck_timer
 	for {
 		select {
 		case <-timer.C:
-			fmt.Println("Elevator: I'm stuck, please call Vakt & Service")
 			ch_elev_stuck_timer_out <- true
 		case <-ch_elev_stuck_timer_start:
 			timer.Stop()
