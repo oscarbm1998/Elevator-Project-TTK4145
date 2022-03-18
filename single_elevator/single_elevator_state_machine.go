@@ -146,7 +146,6 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 			} else if msg == 0 {
 				elevator_command.direction = 1
 			}
-			fmt.Printf("%d\n", msg)
 			if elevator_command.floor == msg && last_floor != elevator_command.floor {
 				last_floor = elevator_command.floor
 				ch_elevator_has_arrived <- true
