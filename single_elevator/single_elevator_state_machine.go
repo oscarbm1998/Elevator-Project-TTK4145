@@ -31,7 +31,11 @@ func SingleElevatorFSM(
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
+	ch_elev_stuck_timer_out := make(chan bool)
+	ch_elev_stuck_timer_start := make(chan bool)
+	ch_elev_stuck_timer_stop := make(chan bool)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
+	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_req_ID, ch_req_data, ch_write_data)
 	RemoveAllLights()
 	//Init elevator
@@ -49,6 +53,7 @@ func SingleElevatorFSM(
 					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 					update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
 					update_elevator_node("destination", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
+					ch_elev_stuck_timer_start <- true
 					current_state = moving
 				} else {
 					elevio.SetMotorDirection(elevio.MotorDirection(0))
@@ -74,6 +79,7 @@ func SingleElevatorFSM(
 				update_elevator_node("direction", elevio.MD_Stop, ch_req_ID, ch_req_data, ch_write_data)
 				elevio.SetDoorOpenLamp(true)
 				ch_door_timer_reset <- true
+				ch_elev_stuck_timer_stop <- true
 				Update_position(elevator_command.floor, elevator_command.direction) //Bytt navn ?
 				current_state = doorOpen
 			default:
@@ -93,6 +99,7 @@ func SingleElevatorFSM(
 						elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 						update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
 						fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
+						ch_elev_stuck_timer_start <- true
 						if elevator_command.floor == elevator.floor {
 							current_state = doorOpen
 							elevio.SetDoorOpenLamp(true)
