@@ -9,10 +9,11 @@ import (
 const shaft_ammount = 3
 
 type scoreboard struct {
-	elevator [shaft_ammount]int
+	elevator  int
+	placement int
 }
 
-var score scoreboard
+var score [shaft_ammount]scoreboard
 
 var elev_overview [shaft_ammount]networking.Elevator_node
 
@@ -32,23 +33,19 @@ func heartbeat_monitor( //checks and alerts the system whenever a heartbeat ping
 	}
 }
 
-func sorting(ignoreval int) int {
+func sorting() {
 	//sorting
-	var best_elevator_index int = 0
-	var bestscore int = 0
-	for i := 0; i < shaft_ammount; i++ {
-		if score.elevator[i] > bestscore {
-			if i != ignoreval {
-				best_elevator_index = i
+	for p := 0; p < shaft_ammount; p++ { //runs thrice
+		var roundbest_index int              //the strongest placement for this round
+		var bestscore int                    //the strongest placement for this round
+		for i := p; i < shaft_ammount; i++ { //ignores the stuff that has already been positioned
+			if score[i].elevator > bestscore { //if the score surpasses the others
+				roundbest_index = i           //sets the new index
+				bestscore = score[i].elevator //sets the new best score
 			}
 		}
+		score[p].placement = roundbest_index
 	}
-	if networking.Send_command(elev_overview[best_elevator_index].ID, a.Floor, dir) {
-	} else {
-		best_elevator_index := sorting(best_elevator_index)
-		networking.Send_command(elev_overview[best_elevator_index].ID, a.Floor, dir)
-	}
-	return best_elevator_index
 }
 
 //meldigen som infoer victors modul om hva som skal sendes
@@ -72,7 +69,11 @@ func pass_to_network(
 				dir = 0
 				master_tournament(a.Floor, 0)
 			}
-			//sends a command to the highest scoring elevator currently only works twice :|
+			for i := 0; i < shaft_ammount; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+				if networking.Send_command(elev_overview[score[i].placement].ID, a.Floor, dir) {
+					break
+				}
+			}
 
 		case death_id := <-ch_take_calls:
 			for i := 0; i < shaft_ammount; i++ { //finds the elevator that has died
@@ -85,7 +86,11 @@ func pass_to_network(
 							} else { //the number is odd so the dir is down
 								master_tournament((e-1)/2, -1)
 							}
-
+							for i := 0; i < shaft_ammount; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+								if networking.Send_command(elev_overview[score[i].placement].ID, a.Floor, dir) {
+									break
+								}
+							}
 						}
 					}
 				}
@@ -97,17 +102,18 @@ func pass_to_network(
 func master_tournament(floor int, direction int) { //finds the most lucrative elevator
 	//resets scoring
 	for i := 0; i < shaft_ammount; i++ {
-		score.elevator[i] = 0
+		score[i].elevator = 0
+		score[i].placement = 0
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < shaft_ammount; i++ { //cycles shafts
 		if !(elev_overview[i].Status == 404) {
 			//direction scoring
 			if direction == elev_overview[i].Direction {
-				score.elevator[i] += 5
+				score[i].elevator += 3
 			}
 			//placement scoring (with alot of conversion)
-			score.elevator[i] += int(math.Abs(float64(elev_overview[i].Floor) - float64(floor)))
+			score[i].elevator += int(math.Abs(float64(elev_overview[i].Floor) - float64(floor)))
 		}
 	}
 }
