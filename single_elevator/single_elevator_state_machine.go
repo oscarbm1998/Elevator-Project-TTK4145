@@ -123,6 +123,7 @@ func SingleElevatorFSM(
 				elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 				fmt.Printf("Elevator running\n")
 				update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
+				update_elevator_node("status", 0, ch_req_ID, ch_req_data, ch_write_data)
 			}
 		case msg := <-ch_obstr_detected:
 			if msg {
@@ -134,6 +135,7 @@ func SingleElevatorFSM(
 			}
 		case <-ch_elev_stuck_timer_out:
 			fmt.Println("Elevator: I'm stuck, please call Vakt & Service")
+			update_elevator_node("status", 1, ch_req_ID, ch_req_data, ch_write_data)
 		}
 	}
 }
