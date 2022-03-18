@@ -92,7 +92,6 @@ func heartBeathandler(ch_req_ID, ch_ext_dead, ch_take_calls chan int, ch_req_dat
 			//Write the node data
 			ch_write_data <- node_data
 			//Reset the appropriate timer
-			fmt.Println(strconv.Itoa(ID))
 			ch_timerReset[ID-1] <- ID
 			//Allert cost function that there is new data on this ID
 
@@ -123,7 +122,6 @@ func heartbeatTimer(ID int, ch_foundDead, ch_timerReset, ch_timerStop chan int) 
 			ch_foundDead <- ID
 			timer.Stop()
 		case cmd_id := <-ch_timerReset:
-			fmt.Println("ID " + strconv.Itoa(cmd_id))
 			if cmd_id == ID {
 				timer.Reset(config.HEARTBEAT_TIME_OUT)
 			}
