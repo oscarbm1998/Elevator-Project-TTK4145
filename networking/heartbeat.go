@@ -4,8 +4,10 @@ import (
 	config "PROJECT-GROUP-10/config"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -44,14 +46,14 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 				msg = msg + strconv.Itoa(node.HallCalls[i]) + "_"
 			}
 			//Sending the message
-			fmt.Println("Networking: sending HB message: " + msg)
+			//fmt.Println("Networking: sending HB message: " + msg)
 			con.Write([]byte(msg))
 			timer.Reset(config.HEARTBEAT_TIME)
 		}
 	}
 }
 
-func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_data chan Elevator_node) {
+func heartBeathandler(ch_req_ID, ch_ext_dead, ch_take_calls chan int, ch_req_data, ch_write_data chan Elevator_node) {
 	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
 	ch_heartbeatmsg := make(chan string)
@@ -85,7 +87,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			for i := range node_data.HallCalls {
 				node_data.HallCalls[i], _ = strconv.Atoi(data[6+i])
 			}
-			fmt.Println("Networking: Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
+			//fmt.Println("Networking: Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
 			fmt.Println("Elevator " + strconv.Itoa(ID) + " at floor: " + strconv.Itoa(node_data.Floor))
 			//Write the node data
 			ch_write_data <- node_data
@@ -99,7 +101,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
 			node_data.Status = 404
 			ch_write_data <- node_data
-			go revive_calls(msg_ID)
+			go revive_calls(msg_ID, ch_take_calls)
 
 		case msg_ID := <-ch_ext_dead: //Set status to 404 and stop the timer
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
@@ -131,23 +133,54 @@ func heartbeatTimer(ID int, ch_foundDead, ch_timerReset, ch_timerStop chan int) 
 	}
 }
 
+func DialBroadcastUDP(port int) net.PacketConn {
+	s, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
+	if err != nil {
+		fmt.Println("Error: Socket:", err)
+	}
+	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+	if err != nil {
+		fmt.Println("Error: SetSockOpt REUSEADDR:", err)
+	}
+	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_BROADCAST, 1)
+	if err != nil {
+		fmt.Println("Error: SetSockOpt BROADCAST:", err)
+	}
+	syscall.Bind(s, &syscall.SockaddrInet4{Port: port})
+	if err != nil {
+		fmt.Println("Error: Bind:", err)
+	}
+
+	f := os.NewFile(uintptr(s), "")
+	conn, err := net.FilePacketConn(f)
+	if err != nil {
+		fmt.Println("Error: FilePacketConn:", err)
+	}
+	f.Close()
+
+	return conn
+}
+
 func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 	buf := make([]byte, 1024)
 	var msg string
 	var port string = ":" + strconv.Itoa(config.HEARTBEAT_PORT)
 	fmt.Println("Networking: Listening for HB-messages on port " + port)
-	network, _ := net.ResolveUDPAddr("udp", port)
-	conn, _ := net.ListenUDP("udp", network)
-	defer conn.Close()
+	//network, _ := net.ResolveUDPAddr("udp", port)
+	//conn, _ := net.ListenUDP("udp", network)
+
+	conn := DialBroadcastUDP(config.HEARTBEAT_PORT)
+
 	for {
-		n, _, err := conn.ReadFromUDP(buf)
+
+		//n, _, err := conn.ReadFromUDP(buf)
+		n, _, _ := conn.ReadFrom(buf)
 		msg = string(buf[0:n])
-		printError("Error: ", err)
 		data := strings.Split(msg, "_")
 		ID, _ := strconv.Atoi(data[1])
 
 		//Checking weather the message is of the correct format and sending to Heartbeat Handler
-		if len(data) == 6 && ID <= config.NUMBER_OF_ELEVATORS && ID != config.ELEVATOR_ID {
+		if ID <= config.NUMBER_OF_ELEVATORS && ID != config.ELEVATOR_ID {
 			ch_heartbeatmsg <- msg
 		}
 

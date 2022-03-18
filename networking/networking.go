@@ -23,16 +23,16 @@ var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 
 func Networking_main(
 	ch_req_ID [3]chan int,
-	ch_new_data, ch_ext_dead chan int,
+	ch_new_data, ch_ext_dead, ch_take_calls chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
 	ch_net_command chan elevio.ButtonEvent) {
-	
+
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
 
 	go Node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)
-	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_req_data[0], ch_write_data[0])
+	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_take_calls, ch_req_data[0], ch_write_data[0])
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
-	go command_listener(ch_net_command)
+	//	go command_listener(ch_net_command)
 
 }
 
@@ -69,7 +69,6 @@ func Node_data_handler(
 				//ch_new_data <- data.ID
 				Elevator_nodes[data.ID-1] = data
 			}
-		default:
 		}
 	}
 }
@@ -123,7 +122,7 @@ func stuck_timer(ID int, ch_stuck, ch_reset, ch_stop chan int) {
 	}
 }
 
-func revive_calls(ID int) {
+func revive_calls(ID int, ch_take_calls chan int) {
 	var msg, broadcast string
 	fmt.Println("Networking: Reviving elevator " + strconv.Itoa(ID) + ", taking his/her hall calls")
 	msg = "98_" + strconv.Itoa(ID) + "_DEAD_" + strconv.Itoa(config.ELEVATOR_ID)
@@ -131,4 +130,5 @@ func revive_calls(ID int) {
 	network, _ := net.ResolveUDPAddr("udp", broadcast)
 	con, _ := net.DialUDP("udp", nil, network)
 	con.Write([]byte(msg))
+	ch_take_calls <- ID
 }

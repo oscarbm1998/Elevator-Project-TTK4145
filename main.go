@@ -2,15 +2,20 @@ package main
 
 import (
 	//"fmt"
+	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
 	singleElevator "PROJECT-GROUP-10/single_elevator"
+	"flag"
 	//"net"
 )
 
 //var current_floor int
 
 func main() {
+	flag.IntVar(&config.ELEVATOR_ID, "id", 1, "id of this peer")
+	flag.Parse()
+
 	numFloors := 4
 
 	elevio.Init("localhost:15657", numFloors)
@@ -25,6 +30,7 @@ func main() {
 	ch_elevator_has_arrived := make(chan bool)
 	ch_new_order := make(chan bool)
 	ch_net_command := make(chan elevio.ButtonEvent)
+	ch_take_calls := make(chan int)
 	//Networking
 	//Multiple data modueles to avoid a deadlock
 	var ch_req_ID [3]chan int
@@ -53,6 +59,6 @@ func main() {
 		ch_write_data[0])
 	go singleElevator.Hall_order(ch_drv_buttons, ch_new_order)
 
-	go networking.Networking_main(ch_req_ID, ch_new_data, ch_ext_dead, ch_req_data, ch_write_data, ch_net_command)
+	go networking.Networking_main(ch_req_ID, ch_new_data, ch_ext_dead, ch_take_calls, ch_req_data, ch_write_data, ch_net_command)
 	select {}
 }
