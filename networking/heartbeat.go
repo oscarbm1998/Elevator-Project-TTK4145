@@ -39,7 +39,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 			msg = msg + strconv.Itoa(node.Direction) + "_"
 			msg = msg + strconv.Itoa(node.Destination) + "_"
 			msg = msg + strconv.Itoa(node.Floor) + "_"
-			msg = msg + strconv.Itoa(node.Status)
+			msg = msg + strconv.Itoa(node.Status) + "_"
 			for i := range node.HallCalls {
 				msg = msg + strconv.Itoa(node.HallCalls[i]) + "_"
 			}
@@ -136,6 +136,7 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 	fmt.Println("Networking: Listening for HB-messages on port " + port)
 	network, _ := net.ResolveUDPAddr("udp", port)
 	conn, _ := net.ListenUDP("udp", network)
+	defer conn.Close()
 	for {
 		n, _, err := conn.ReadFromUDP(buf)
 		msg = string(buf[0:n])
@@ -147,7 +148,7 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 		if len(data) == 6 && ID <= config.NUMBER_OF_ELEVATORS && ID != config.ELEVATOR_ID {
 			ch_heartbeatmsg <- msg
 		}
-		defer conn.Close()
+
 	}
 }
 
