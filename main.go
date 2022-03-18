@@ -2,12 +2,11 @@ package main
 
 import (
 	//"fmt"
-	"PROJECT-GROUP-10/config"
-	"PROJECT-GROUP-10/elevio"
+	config "PROJECT-GROUP-10/config"
+	elevio "PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
-	"PROJECT-GROUP-10/ordering"
+	ordering "PROJECT-GROUP-10/ordering"
 	singleElevator "PROJECT-GROUP-10/single_elevator"
-	ordering "Project-GROUP-10/ordering"
 	"flag"
 	//"net"
 )

@@ -89,7 +89,7 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 		select {
 		case <-ch_close:
 			con.Close()
-			break
+			goto Exit
 		default:
 			con.SetReadDeadline(time.Now().Add(3 * time.Second))
 			n, _, err := con.ReadFromUDP(buf)
@@ -99,15 +99,16 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 				} else {
 					fmt.Println("Networking: Getting nothing on readback channel, so quitting")
 					con.Close()
-					break
+					goto Exit
 				}
-				break
+				goto Exit
 			}
 			msg := string(buf[0:n])
 			ch_msg <- msg
 		}
 		defer con.Close()
 	}
+Exit:
 }
 
 func command_listener(ch_netcommand chan elevio.ButtonEvent) {
