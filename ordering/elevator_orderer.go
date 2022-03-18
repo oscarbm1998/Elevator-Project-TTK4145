@@ -79,15 +79,18 @@ func pass_to_network(
 			for i := 0; i < shaft_ammount; i++ { //finds the elevator that has died
 				if elev_overview[i].ID == death_id { //found the elevator
 					for e := 0; e < 6; e++ { //checks all calls
+						var dir int
 						if elev_overview[i].HallCalls[e] == 1 {
 							if e%2 == 0 { //the number is even so the dir is up
+								dir = 1
 								master_tournament(e/2, 1)
 								//this shit may cause errors as i am unshure if everyone is cool with floors starting at 0
 							} else { //the number is odd so the dir is down
+								dir = -1
 								master_tournament((e-1)/2, -1)
 							}
-							for i := 0; i < shaft_ammount; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-								if networking.Send_command(elev_overview[score[i].placement].ID, a.Floor, dir) {
+							for c := 0; c < shaft_ammount; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+								if networking.Send_command(elev_overview[score[c].placement].ID, e, dir) {
 									break
 								}
 							}
