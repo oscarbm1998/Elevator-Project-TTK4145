@@ -54,7 +54,7 @@ func sorting() {
 //meldigen som infoer victors modul om hva som skal sendes (main)
 func Pass_to_network(
 	ch_drv_buttons chan elevio.ButtonEvent,
-	ch_new_order chan scoreboard,
+	ch_new_order chan bool,
 	ch_take_calls chan int,
 	ch_self_command chan elevio.ButtonEvent,
 	ch_new_data chan int,

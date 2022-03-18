@@ -5,7 +5,9 @@ import (
 	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
+	"PROJECT-GROUP-10/ordering"
 	singleElevator "PROJECT-GROUP-10/single_elevator"
+	ordering "Project-GROUP-10/ordering"
 	"flag"
 	//"net"
 )
@@ -17,7 +19,6 @@ func main() {
 	flag.Parse()
 
 	numFloors := 4
-
 	elevio.Init("localhost:15657", numFloors)
 
 	//var d elevio.MotorDirection = elevio.MD_Up
@@ -57,9 +58,17 @@ func main() {
 		ch_drv_stop,
 		ch_req_ID[1],
 		ch_req_data[1],
-		ch_write_data[0])
+		ch_write_data[1])
 	go singleElevator.Hall_order(ch_new_order, ch_net_command, ch_self_command)
-
+	go ordering.Pass_to_network(
+		ch_drv_buttons,
+		ch_new_order,
+		ch_take_calls,
+		ch_self_command,
+		ch_new_data,
+		ch_req_ID[1],
+		ch_req_data[1],
+	)
 	go networking.Networking_main(ch_req_ID, ch_new_data, ch_ext_dead, ch_take_calls, ch_req_data, ch_write_data, ch_net_command)
 	select {}
 }
