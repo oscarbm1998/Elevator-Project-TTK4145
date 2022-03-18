@@ -4,9 +4,7 @@ import (
 	"PROJECT-GROUP-10/config"
 	elevio "PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
-	"fmt"
 	"math"
-	"strconv"
 )
 
 type scoreboard struct {
@@ -30,7 +28,7 @@ func heartbeat_monitor( //checks and alerts the system whenever a heartbeat ping
 		case id := <-ch_new_data:
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 				lighthouse := networking.Node_get_data(id, ch_req_ID, ch_req_data)
-				fmt.Println("Lighthouse: " + strconv.Itoa(id))
+				//fmt.Println("Lighthouse: " + strconv.Itoa(id))
 				elev_overview[i] = lighthouse
 			}
 		}

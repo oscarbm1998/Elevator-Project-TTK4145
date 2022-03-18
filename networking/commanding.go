@@ -44,6 +44,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 		select {
 		case msg := <-ch_rbc_msg:
 			data := strings.Split(msg, "_")
+			fmt.Println("Readback: " + msg + " expected: " + rbc)
 			rbc_id, _ := strconv.Atoi(data[0])
 			//Sending again if the readback is wrong
 			if rbc_id == config.ELEVATOR_ID {
