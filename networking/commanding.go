@@ -116,6 +116,8 @@ func command_listener(ch_netcommand chan string) {
 	cmd_con, _ := net.ListenUDP("udp", adr) //Listening to the command port
 	adr, _ = net.ResolveUDPAddr("udp", "255.255.255.255:"+strconv.Itoa(config.COMMAND_RBC_PORT))
 	rbc_con, _ := net.DialUDP("udp", nil, adr) //Broadcasting on the readback port
+
+	fmt.Println("Networking: command listener listenening on port :" + strconv.Itoa(config.COMMAND_PORT))
 	for {
 		//Listen for incomming commands on command reception port
 		n, _, err := cmd_con.ReadFromUDP(buf)
