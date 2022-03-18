@@ -2,6 +2,7 @@ package networking
 
 import (
 	config "PROJECT-GROUP-10/config"
+	"PROJECT-GROUP-10/elevio"
 	"fmt"
 	"net"
 	"strconv"
@@ -23,8 +24,9 @@ var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 func Networking_main(
 	ch_req_ID [3]chan int,
 	ch_new_data, ch_ext_dead chan int,
-	ch_req_data, ch_write_data [3]chan Elevator_node) {
-	ch_net_command := make(chan string)
+	ch_req_data, ch_write_data [3]chan Elevator_node,
+	ch_net_command chan elevio.ButtonEvent) {
+	
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
 
 	go Node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)

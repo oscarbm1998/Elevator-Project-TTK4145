@@ -2,6 +2,7 @@ package networking
 
 import (
 	config "PROJECT-GROUP-10/config"
+	elevio "PROJECT-GROUP-10/elevio"
 	"fmt"
 	"net"
 	"strconv"
@@ -110,7 +111,8 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 	}
 }
 
-func command_listener(ch_netcommand chan string) {
+func command_listener(ch_netcommand chan elevio.ButtonEvent) {
+	var button_command elevio.ButtonEvent
 	buf := make([]byte, 1024)
 	adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_PORT))
 	cmd_con, _ := net.ListenUDP("udp", adr) //Listening to the command port
@@ -139,7 +141,14 @@ func command_listener(ch_netcommand chan string) {
 				n, _, _ = cmd_con.ReadFromUDP(buf)
 				msg = string(buf[0:n])
 				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
-					ch_netcommand <- msg
+					switch direction {
+					case -1:
+						button_command.Button = elevio.BT_HallDown
+					case 1:
+						button_command.Button = elevio.BT_HallUp
+					}
+					button_command.Floor = floor
+					ch_netcommand <- button_command
 				}
 				fmt.Println("Networking: got a command from elevator " + strconv.Itoa(from_ID))
 			}
