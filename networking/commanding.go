@@ -51,11 +51,11 @@ func Send_command(ID, floor, direction int) (success bool) {
 					fmt.Println("Networking: readback OK")
 					cmd_con.Write([]byte(strconv.Itoa(ID) + "_CMD_OK"))
 					success = true
-					return
+					goto Exit
 				} else if rbc == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_REJECT" { //Command rejected
 					fmt.Printf("Network: elevator rejected the command")
 					success = false
-					return
+					goto Exit
 				} else {
 					fmt.Println("Networking: bad readback, sending command again")
 					_, err = cmd_con.Write([]byte(cmd))
@@ -65,18 +65,17 @@ func Send_command(ID, floor, direction int) (success bool) {
 				if attempts > 3 {
 					fmt.Println("Networking: too many command readback attemps")
 					success = false
-					return
+					goto Exit
 				}
 			}
 		case <-timer.C:
 			fmt.Println("Networking: sending command timed out, no readback")
 			timer.Stop()
 			success = false
-			return
+			goto Exit
 		}
-		break
 	}
-
+Exit:
 	//Stopping readback listener and returning the results
 	ch_rbc_close <- true
 	return success
@@ -118,7 +117,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 	cmd_con, _ := net.ListenUDP("udp", adr) //Listening to the command port
 	adr, _ = net.ResolveUDPAddr("udp", "255.255.255.255:"+strconv.Itoa(config.COMMAND_RBC_PORT))
 	rbc_con, _ := net.DialUDP("udp", nil, adr) //Broadcasting on the readback port
-	defer cmd_con.Close()
+
 	fmt.Println("Networking: command listener listenening on port :" + strconv.Itoa(config.COMMAND_PORT))
 	for {
 		//Listen for incomming commands on command reception port
@@ -164,9 +163,10 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 				reportedBy_ID, _ := strconv.Atoi(data[3])
 				fmt.Println("Networking: elevator " + strconv.Itoa(dead_ID) + " was found dead by elevator " + strconv.Itoa(reportedBy_ID))
 			}
-
 		}
+		defer cmd_con.Close()
 	}
+
 }
 
 func reject_command(direction, floor int) (reject bool) {

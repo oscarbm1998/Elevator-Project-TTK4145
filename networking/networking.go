@@ -21,52 +21,44 @@ type Elevator_node struct {
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 
-func Networking_main(
+func Main(
 	ch_req_ID [3]chan int,
 	ch_new_data, ch_ext_dead, ch_take_calls chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
 	ch_net_command chan elevio.ButtonEvent) {
-
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
-
-	go Node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)
+	go node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)
 	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_take_calls, ch_req_data[0], ch_write_data[0])
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
 	go command_listener(ch_net_command)
-
 }
 
-//Function responsible for node data
-func Node_data_handler(
+//Function responsible for node data. Works as a mutex for the resource
+func node_data_handler(
 	ch_req_ID [3]chan int,
 	ch_new_data chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node) {
 	//ch_new_data <- 0 //** REMOVE BEFORE FLIGHT **
 	for {
 		select {
-		case ID := <-ch_req_ID[0]: //Sending node data
-			//fmt.Println("Networking: reading data")
+		/*Handle data requests*/
+		case ID := <-ch_req_ID[0]:
 			ch_req_data[0] <- Elevator_nodes[ID-1]
-		case ID := <-ch_req_ID[1]: //Sending node data
-			//fmt.Println("Single elevator: reading data")
+		case ID := <-ch_req_ID[1]:
 			ch_req_data[1] <- Elevator_nodes[ID-1]
-		case ID := <-ch_req_ID[2]: //Sending node data
+		case ID := <-ch_req_ID[2]:
 			ch_req_data[2] <- Elevator_nodes[ID-1]
-		case data := <-ch_write_data[0]: //Writing node data
-			//fmt.Println("Networking: writing data")
+		/*Write incomming data*/
+		case data := <-ch_write_data[0]:
 			if data.ID != 0 {
-				//ch_new_data <- data.ID
 				Elevator_nodes[data.ID-1] = data
 			}
-		case data := <-ch_write_data[1]: //Writing node data
-			//fmt.Println("Single elevator: writing data")
+		case data := <-ch_write_data[1]:
 			if data.ID != 0 {
-				//ch_new_data <- data.ID
 				Elevator_nodes[data.ID-1] = data
 			}
-		case data := <-ch_write_data[2]: //Writing node data
+		case data := <-ch_write_data[2]:
 			if data.ID != 0 {
-				//ch_new_data <- data.ID
 				Elevator_nodes[data.ID-1] = data
 			}
 		}
@@ -77,7 +69,7 @@ func Node_get_data(ID int, ch_req_ID chan int, ch_req_data chan Elevator_node) (
 	ch_req_ID <- ID
 	nodeData = <-ch_req_data
 	for nodeData.ID != ID {
-		fmt.Println("Loop " + strconv.Itoa(ID) + " " + strconv.Itoa(nodeData.ID))
+		fmt.Println("Networking: SOMEONE TOOK MY DATA, I WANT " + strconv.Itoa(ID) + " BUT GOT " + strconv.Itoa(nodeData.ID))
 		ch_req_ID <- ID
 		nodeData = <-ch_req_data
 	}
