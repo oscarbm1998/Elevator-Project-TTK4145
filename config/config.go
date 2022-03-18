@@ -19,7 +19,7 @@ const (
 
 	//Networking
 	HEARTBEAT_TIME      = time.Second * 1
-	HEARTBEAT_TIME_OUT  = time.Second * 3
+	HEARTBEAT_TIME_OUT  = time.Second*3 + time.Millisecond*100*time.Duration(ELEVATOR_ID)
 	HEARTBEAT_PORT      = 7171
 	COMMAND_PORT        = 7272
 	COMMAND_RBC_PORT    = 7373
