@@ -168,7 +168,6 @@ func update_elevator_node(
 	value int,
 	ch_req_ID chan int,
 	ch_req_data, ch_write_data chan networking.Elevator_node) {
-	fmt.Printf("Before read")
 	updated_elevator_node := networking.Node_get_data(
 		config.ELEVATOR_ID,
 		ch_req_ID,
@@ -183,7 +182,5 @@ func update_elevator_node(
 	}
 	updated_elevator_node.ID = config.ELEVATOR_ID
 	//Samme for alt annet som må oppdaterers
-	fmt.Printf("Before write data\n")
 	ch_write_data <- updated_elevator_node
-	fmt.Printf("After write data\n")
 }
