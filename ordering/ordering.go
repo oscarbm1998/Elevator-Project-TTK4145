@@ -7,16 +7,14 @@ import (
 	"math"
 )
 
-const shaft_ammount = 3
-
 type scoreboard struct {
 	elevator  int
 	placement int
 }
 
-var score [shaft_ammount]scoreboard
+var score [config.NUMBER_OF_ELEVATORS]scoreboard
 
-var elev_overview [shaft_ammount]networking.Elevator_node
+var elev_overview [config.NUMBER_OF_ELEVATORS]networking.Elevator_node
 
 var button_calls elevio.ButtonEvent
 
@@ -28,7 +26,7 @@ func heartbeat_monitor( //checks and alerts the system whenever a heartbeat ping
 	for {
 		select {
 		case id := <-ch_new_data:
-			for i := 0; i < shaft_ammount; i++ {
+			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 				lighthouse := networking.Node_get_data(id, ch_req_ID, ch_req_data)
 				elev_overview[i] = lighthouse
 			}
@@ -38,10 +36,10 @@ func heartbeat_monitor( //checks and alerts the system whenever a heartbeat ping
 
 func sorting() {
 	//sorting
-	for p := 0; p < shaft_ammount; p++ { //runs thrice
-		var roundbest_index int              //the strongest placement for this round
-		var bestscore int                    //the strongest placement for this round
-		for i := p; i < shaft_ammount; i++ { //ignores the stuff that has already been positioned
+	for p := 0; p < config.NUMBER_OF_ELEVATORS; p++ { //runs thrice
+		var roundbest_index int                           //the strongest placement for this round
+		var bestscore int                                 //the strongest placement for this round
+		for i := p; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
 			if score[i].elevator > bestscore { //if the score surpasses the others
 				roundbest_index = i           //sets the new index
 				bestscore = score[i].elevator //sets the new best score
@@ -82,7 +80,7 @@ func Pass_to_network(
 				dir = 0
 				master_tournament(a.Floor, 0)
 			}
-			for i := 0; i < shaft_ammount; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
 				if elev_overview[score[i].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
 					ch_self_command <- <-ch_drv_buttons
 					break
@@ -94,7 +92,7 @@ func Pass_to_network(
 			}
 
 		case death_id := <-ch_take_calls:
-			for i := 0; i < shaft_ammount; i++ { //finds the elevator that has died
+			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died
 				if elev_overview[i].ID == death_id { //found the elevator
 					for e := 0; e < 6; e++ { //checks all calls
 						var dir int
@@ -110,7 +108,7 @@ func Pass_to_network(
 								floor = (e - 1) / 2
 								master_tournament(floor, -1)
 							}
-							for c := 0; c < shaft_ammount; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+							for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
 								if elev_overview[score[c].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
 									ch_self_command <- <-ch_drv_buttons
 									break
@@ -133,12 +131,12 @@ func Pass_to_network(
 
 func master_tournament(floor int, direction int) { //finds the most lucrative elevator
 	//resets scoring
-	for i := 0; i < shaft_ammount; i++ {
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 		score[i].elevator = 0
 		score[i].placement = 0
 	}
 	//filters out the nonworking and scores them
-	for i := 0; i < shaft_ammount; i++ { //cycles shafts
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
 		if !(elev_overview[i].Status == 404) {
 			//direction scoring
 			if direction == elev_overview[i].Direction {
