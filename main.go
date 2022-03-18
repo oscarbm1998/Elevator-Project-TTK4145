@@ -24,6 +24,7 @@ func main() {
 	ch_drv_stop := make(chan bool)
 	ch_elevator_has_arrived := make(chan bool)
 	ch_new_order := make(chan bool)
+	ch_net_command := make(chan elevio.ButtonEvent)
 	//Networking
 	//Multiple data modueles to avoid a deadlock
 	var ch_req_ID [3]chan int
@@ -49,8 +50,9 @@ func main() {
 		ch_drv_stop,
 		ch_req_ID[1],
 		ch_req_data[1],
-		ch_write_data[1])
+		ch_write_data[0])
 	go singleElevator.Hall_order(ch_drv_buttons, ch_new_order)
 
-	go networking.Networking_main(ch_req_ID, ch_new_data, ch_ext_dead, ch_req_data, ch_write_data)
+	go networking.Networking_main(ch_req_ID, ch_new_data, ch_ext_dead, ch_req_data, ch_write_data, ch_net_command)
+	select {}
 }
