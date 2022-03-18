@@ -174,16 +174,13 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 	for {
 
 		//n, _, err := conn.ReadFromUDP(buf)
-		n, _, err := conn.ReadFrom(buf)
+		n, _, _ := conn.ReadFrom(buf)
 		msg = string(buf[0:n])
-		printError("Error: ", err)
 		data := strings.Split(msg, "_")
-		fmt.Printf("%#v\n", data)
 		ID, _ := strconv.Atoi(data[1])
-		fmt.Printf("%#v\n", ID)
 
 		//Checking weather the message is of the correct format and sending to Heartbeat Handler
-		if len(data) == 6 && ID <= config.NUMBER_OF_ELEVATORS && ID != config.ELEVATOR_ID {
+		if ID <= config.NUMBER_OF_ELEVATORS && ID != config.ELEVATOR_ID {
 			ch_heartbeatmsg <- msg
 		}
 
