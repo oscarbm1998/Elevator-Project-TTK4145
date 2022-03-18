@@ -69,14 +69,15 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 	ch_heartbeatmsg := make(chan string)
 	go heartbeat_UDPListener(ch_heartbeatmsg)
 
-	//Initiate heartbeat timers as go routines for each elevator
-	ch_timerReset := make(chan int)
+	//Initiate heartbeat timers and channels for each elevator except myself
+	var ch_timerReset, ch_timerStop [config.NUMBER_OF_ELEVATORS]chan int
 	ch_foundDead := make(chan int)
-	ch_timerStop := make(chan int)
 	fmt.Println("Networking: HB starting timers")
 	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
 		if i != config.ELEVATOR_ID {
-			go heartbeatTimer(i, ch_foundDead, ch_timerReset, ch_timerStop)
+			ch_timerReset[i-1] = make(chan int)
+			ch_timerStop[i-1] = make(chan int)
+			go heartbeatTimer(i, ch_foundDead, ch_timerReset[i-1], ch_timerStop[i-1])
 		}
 	}
 
@@ -97,7 +98,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			//Write the node data
 			ch_write_data <- node_data
 			//Reset the appropriate timer
-			ch_timerReset <- ID
+			ch_timerReset[ID-1] <- ID
 			//Allert cost function that there is new data on this ID
 
 		case msg_ID := <-ch_foundDead:
@@ -112,7 +113,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
 			node_data.Status = 404
 			ch_write_data <- node_data
-			ch_timerStop <- msg_ID
+			ch_timerStop[msg_ID-1] <- msg_ID
 		}
 	}
 }
