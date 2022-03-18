@@ -1,7 +1,9 @@
 package singleElevator
 
 import (
+	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
+	"PROJECT-GROUP-10/networking"
 	"fmt"
 )
 
@@ -13,6 +15,11 @@ const (
 	doorOpen
 )
 
+type update_elevator struct {
+	value_to_update string
+	update_value int
+}
+
 var current_state elevator_state
 var last_floor int
 var elevator_door_blocked bool
@@ -23,17 +30,16 @@ func SingleElevatorFSM(
 	ch_obstr_detected <-chan bool,
 	ch_new_order <-chan bool,
 	ch_drv_stop <-chan bool,
-
-	// Channel koblet til orders
-	// Channel koblet til door time out
-	// Channel koblet til elevator_obstrukjson time out
-	// Channel
-
+	ch_req_ID chan int,
+	ch_req_data chan networking.Elevator_node, //Should be write only
+	ch_write_data chan networking.Elevator_node,
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
+	ch_update_elevator_node := make(chan update_elevator)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived)
+	update_elevator_node()
 	RemoveAllLights()
 	elevator.direction = 0
 	elevator.floor = 0
@@ -54,24 +60,6 @@ func SingleElevatorFSM(
 				}
 			case moving:
 				fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
-				Call_qeuer(elevator.direction)
-			case doorOpen:
-				//Vent til dørene lukkes eller personen inni trykker på noe. Hvis doortimer går ut sjekker heisen om det
-				if request_cab() {
-					elevio.SetDoorOpenLamp(false)
-					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
-					current_state = moving
-				}
-			}
-		case <-ch_elevator_has_arrived:
-			fmt.Printf("Arrived at floor %+v\n", elevator_command.floor)
-			// Send UDP that elevator has arrived so the others can shut of timmer (Don't need for single)
-			switch current_state {
-			case moving:
-				elevio.SetMotorDirection(elevio.MD_Stop)
-				elevio.SetDoorOpenLamp(true)
-				ch_door_timer_reset <- true
-				Update_position(elevator_command.floor, elevator_command.direction)
 				current_state = doorOpen
 				//Clear call that it has arrived
 			default:
@@ -134,7 +122,7 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int, ch_elevator_has_arrived
 			elevio.SetFloorIndicator(msg)
 			if msg == 3 {
 				elevator_command.direction = -1
-			} else if msg == 0 {
+			} else if msg == 0 {			update_elevator_node("floor", msg, ch_req_ID, ch_req_data, ch_write_data)
 				elevator_command.direction = 1
 			}
 			fmt.Printf("%d\n", msg)
@@ -152,4 +140,25 @@ func RemoveAllLights() { //Move this when time
 		elevio.SetButtonLamp(1, i, false)
 		elevio.SetButtonLamp(2, i, false)
 	}
+}
+
+func update_elevator_node(
+	input string, 
+	value int, 
+	ch_req_ID chan int, 
+	ch_req_data,ch_write_data chan networking.Elevator_node) {
+	updated_elevator_node := networking.Node_get_data(
+		config.ELEVATOR_ID, 
+		ch_req_ID, 
+		ch_req_data)
+	switch input {
+	case "floor":
+		updated_elevator_node.Floor = value
+	case "direction":
+		updated_elevator_node.Direction = value
+	case "destination":
+		updated_elevator_node.Destination = value
+	} 
+	//Samme for alt annet som må oppdaterers
+	ch_write_data <- updated_elevator_node
 }
