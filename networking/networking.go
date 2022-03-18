@@ -39,29 +39,35 @@ func Node_data_handler(
 	ch_req_ID [3]chan int,
 	ch_new_data chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node) {
+	//ch_new_data <- 0 //** REMOVE BEFORE FLIGHT **
 	for {
 		select {
 		case ID := <-ch_req_ID[0]: //Sending node data
+			//fmt.Println("Networking: reading data")
 			ch_req_data[0] <- Elevator_nodes[ID-1]
 		case ID := <-ch_req_ID[1]: //Sending node data
+			//fmt.Println("Single elevator: reading data")
 			ch_req_data[1] <- Elevator_nodes[ID-1]
 		case ID := <-ch_req_ID[2]: //Sending node data
 			ch_req_data[2] <- Elevator_nodes[ID-1]
 		case data := <-ch_write_data[0]: //Writing node data
+			//fmt.Println("Networking: writing data")
 			if data.ID != 0 {
-				ch_new_data <- data.ID
+				//ch_new_data <- data.ID
 				Elevator_nodes[data.ID-1] = data
 			}
 		case data := <-ch_write_data[1]: //Writing node data
+			//fmt.Println("Single elevator: writing data")
 			if data.ID != 0 {
-				ch_new_data <- data.ID
+				//ch_new_data <- data.ID
 				Elevator_nodes[data.ID-1] = data
 			}
 		case data := <-ch_write_data[2]: //Writing node data
 			if data.ID != 0 {
-				ch_new_data <- data.ID
+				//ch_new_data <- data.ID
 				Elevator_nodes[data.ID-1] = data
 			}
+		default:
 		}
 	}
 }
