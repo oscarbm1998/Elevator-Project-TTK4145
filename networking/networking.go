@@ -20,25 +20,43 @@ type Elevator_node struct {
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 
-func Networking_main(ch_req_ID, ch_new_data, ch_ext_dead chan int, ch_req_data, ch_write_data chan Elevator_node) {
+func Networking_main(
+	ch_req_ID [3]chan int,
+	ch_new_data, ch_ext_dead chan int,
+	ch_req_data, ch_write_data [3]chan Elevator_node) {
 
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
 
 	go Node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)
-	go heartBeathandler(ch_req_ID, ch_ext_dead, ch_req_data, ch_write_data)
-	go heartBeatTransmitter(ch_req_ID, ch_req_data)
+	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_req_data[0], ch_write_data[0])
+	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
 
 }
 
 //Function responsible for node data
 func Node_data_handler(
-	ch_req_ID, ch_new_data chan int,
-	ch_req_data, ch_write_data chan Elevator_node) {
+	ch_req_ID [3]chan int,
+	ch_new_data chan int,
+	ch_req_data, ch_write_data [3]chan Elevator_node) {
 	for {
 		select {
-		case ID := <-ch_req_ID: //Sending node data
-			ch_req_data <- Elevator_nodes[ID-1]
-		case data := <-ch_write_data: //Writing node data
+		case ID := <-ch_req_ID[0]: //Sending node data
+			ch_req_data[0] <- Elevator_nodes[ID-1]
+		case ID := <-ch_req_ID[1]: //Sending node data
+			ch_req_data[1] <- Elevator_nodes[ID-1]
+		case ID := <-ch_req_ID[2]: //Sending node data
+			ch_req_data[2] <- Elevator_nodes[ID-1]
+		case data := <-ch_write_data[0]: //Writing node data
+			if data.ID != 0 {
+				ch_new_data <- data.ID
+				Elevator_nodes[data.ID-1] = data
+			}
+		case data := <-ch_write_data[1]: //Writing node data
+			if data.ID != 0 {
+				ch_new_data <- data.ID
+				Elevator_nodes[data.ID-1] = data
+			}
+		case data := <-ch_write_data[2]: //Writing node data
 			if data.ID != 0 {
 				ch_new_data <- data.ID
 				Elevator_nodes[data.ID-1] = data
