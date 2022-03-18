@@ -15,6 +15,19 @@ type scoreboard struct {
 
 var score scoreboard
 
+func heartbeat_monitor( //checks and alerts the system whenever a heartbeat ping occurs
+	ch_new_data chan int,
+	ch_req_ID chan int,
+	ch_req_data chan networking.Elevator_node,
+) {
+	for {
+		select {
+		case id := <-ch_new_data:
+			lighthouse := networking.Node_get_data(id, ch_req_ID, ch_req_data)
+		}
+	}
+}
+
 //meldigen som infoer victors modul om hva som skal sendes
 func pass_to_network(
 	ch_drv_buttons chan elevio.ButtonEvent,
@@ -23,15 +36,20 @@ func pass_to_network(
 	for {
 		select {
 		case a := <-ch_drv_buttons:
+			var dir int
 			switch a.Button {
 			case 0: //up
+				dir = 1
 				master_tournament(a.Floor, 1)
 			case 1: //down
+				dir = -1
 				master_tournament(a.Floor, -1)
 			case 2: //cab
+				dir = 0
 				master_tournament(a.Floor, 0)
 			}
-			ch_new_order <- score
+
+			networking.send_command(lighthouse[x].ID, a.Floor, dir)
 		}
 	}
 }

@@ -132,7 +132,7 @@ func request_here() bool {
 	return false
 }
 
-func Call_qeuer(direction int) bool {
+func Request_next_action(direction int) bool {
 	switch direction {
 	case 1: //up
 		if request_above() {
