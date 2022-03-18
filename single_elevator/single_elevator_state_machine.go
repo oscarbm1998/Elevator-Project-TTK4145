@@ -47,7 +47,7 @@ func SingleElevatorFSM(
 					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 					update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
-					//update_elevator_node("destination", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
+					update_elevator_node("destination", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
 					fmt.Printf("Here")
 					current_state = moving
 				} else {
@@ -61,8 +61,8 @@ func SingleElevatorFSM(
 				if request_cab() {
 					elevio.SetDoorOpenLamp(false)
 					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
-					//update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
-					//update_elevator_node("destination", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
+					update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
+					update_elevator_node("destination", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
 					current_state = moving
 				}
 			}
@@ -91,7 +91,7 @@ func SingleElevatorFSM(
 					elevio.SetDoorOpenLamp(false)
 					if Request_next_action(elevator_command.direction) {
 						elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
-						//update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
+						update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
 						fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 						if elevator_command.floor == elevator.floor {
 							current_state = doorOpen
@@ -136,7 +136,7 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 		select {
 		case msg := <-ch_drv_floors:
 			elevator.floor = msg
-			//update_elevator_node("floor", msg, ch_req_ID, ch_req_data, ch_write_data)
+			update_elevator_node("floor", msg, ch_req_ID, ch_req_data, ch_write_data)
 			if last_floor == -1 {
 				last_floor = elevator.floor
 			}
