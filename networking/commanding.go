@@ -115,6 +115,7 @@ Exit:
 
 func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 	var button_command elevio.ButtonEvent
+	var rbc string
 	buf := make([]byte, 1024)
 	adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_PORT))
 	cmd_con, _ := net.ListenUDP("udp", adr) //Listening to the command port
@@ -134,6 +135,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 			floor, _ := strconv.Atoi(data[1])
 			direction, _ := strconv.Atoi(data[2])
 			from_ID, _ := strconv.Atoi(data[3])
+			rbc = data[3] + "_" + data[1] + "_" + data[2] + "_" + strconv.Itoa(ID)
 
 			if reject_command(floor, direction) { //Check if i can perfrom the task
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
@@ -141,7 +143,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 			} else {
 
 				//Accept the command by reading it back
-				rbc_con.Write([]byte(msg))
+				rbc_con.Write([]byte(rbc))
 				//Wait for OK
 				n, _, _ = cmd_con.ReadFromUDP(buf)
 				msg = string(buf[0:n])
