@@ -26,13 +26,13 @@ func Networking_main(
 	ch_new_data, ch_ext_dead chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
 	ch_net_command chan elevio.ButtonEvent) {
-	
+
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
 
 	go Node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)
 	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_req_data[0], ch_write_data[0])
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
-	go command_listener(ch_net_command)
+	//	go command_listener(ch_net_command)
 
 }
 

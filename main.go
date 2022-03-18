@@ -2,15 +2,20 @@ package main
 
 import (
 	//"fmt"
+	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
 	singleElevator "PROJECT-GROUP-10/single_elevator"
+	"flag"
 	//"net"
 )
 
 //var current_floor int
 
 func main() {
+	flag.IntVar(&config.ELEVATOR_ID, "id", 1, "id of this peer")
+	flag.Parse()
+
 	numFloors := 4
 
 	elevio.Init("localhost:15657", numFloors)

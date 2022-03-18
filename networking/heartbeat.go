@@ -4,8 +4,10 @@ import (
 	config "PROJECT-GROUP-10/config"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -131,20 +133,54 @@ func heartbeatTimer(ID int, ch_foundDead, ch_timerReset, ch_timerStop chan int) 
 	}
 }
 
+func DialBroadcastUDP(port int) net.PacketConn {
+	s, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
+	if err != nil {
+		fmt.Println("Error: Socket:", err)
+	}
+	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+	if err != nil {
+		fmt.Println("Error: SetSockOpt REUSEADDR:", err)
+	}
+	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_BROADCAST, 1)
+	if err != nil {
+		fmt.Println("Error: SetSockOpt BROADCAST:", err)
+	}
+	syscall.Bind(s, &syscall.SockaddrInet4{Port: port})
+	if err != nil {
+		fmt.Println("Error: Bind:", err)
+	}
+
+	f := os.NewFile(uintptr(s), "")
+	conn, err := net.FilePacketConn(f)
+	if err != nil {
+		fmt.Println("Error: FilePacketConn:", err)
+	}
+	f.Close()
+
+	return conn
+}
+
 func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 	buf := make([]byte, 1024)
 	var msg string
 	var port string = ":" + strconv.Itoa(config.HEARTBEAT_PORT)
 	fmt.Println("Networking: Listening for HB-messages on port " + port)
-	network, _ := net.ResolveUDPAddr("udp", port)
-	conn, _ := net.ListenUDP("udp", network)
-	defer conn.Close()
+	//network, _ := net.ResolveUDPAddr("udp", port)
+	//conn, _ := net.ListenUDP("udp", network)
+
+	conn := DialBroadcastUDP(config.HEARTBEAT_PORT)
+
 	for {
-		n, _, err := conn.ReadFromUDP(buf)
+
+		//n, _, err := conn.ReadFromUDP(buf)
+		n, _, err := conn.ReadFrom(buf)
 		msg = string(buf[0:n])
 		printError("Error: ", err)
 		data := strings.Split(msg, "_")
+		fmt.Printf("%#v\n", data)
 		ID, _ := strconv.Atoi(data[1])
+		fmt.Printf("%#v\n", ID)
 
 		//Checking weather the message is of the correct format and sending to Heartbeat Handler
 		if len(data) == 6 && ID <= config.NUMBER_OF_ELEVATORS && ID != config.ELEVATOR_ID {

@@ -2,8 +2,10 @@ package config
 
 import "time"
 
+var ELEVATOR_ID int = 1
+
 const (
-	ELEVATOR_ID            int    = 1
+	//ELEVATOR_ID            int    = 1
 	SIMULATION             bool   = false
 	SIMULATION_IP_AND_PORT string = ""
 	NUMBER_OF_FLOORS              = 4
@@ -19,7 +21,7 @@ const (
 
 	//Networking
 	HEARTBEAT_TIME      = time.Second * 1
-	HEARTBEAT_TIME_OUT  = time.Second*3 + time.Millisecond*100*time.Duration(ELEVATOR_ID)
+	HEARTBEAT_TIME_OUT  = time.Second * 3
 	HEARTBEAT_PORT      = 7171
 	COMMAND_PORT        = 7272
 	COMMAND_RBC_PORT    = 7373
