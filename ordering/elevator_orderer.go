@@ -32,6 +32,20 @@ func heartbeat_monitor( //checks and alerts the system whenever a heartbeat ping
 	}
 }
 
+func sorting(ignoreval int) int {
+	//sorting
+	var best_elevator_index int = 0
+	var bestscore int = 0
+	for i := 0; i < shaft_ammount; i++ {
+		if score.elevator[i] > bestscore {
+			if i != ignoreval {
+				best_elevator_index = i
+			}
+		}
+	}
+	return best_elevator_index
+}
+
 //meldigen som infoer victors modul om hva som skal sendes
 func pass_to_network(
 	ch_drv_buttons chan elevio.ButtonEvent,
@@ -41,8 +55,6 @@ func pass_to_network(
 		select {
 		case a := <-ch_drv_buttons:
 			var dir int
-			var best_elevator_index int = 0
-			var bestscore int = 0
 			switch a.Button {
 			case 0: //up
 				dir = 1
@@ -54,13 +66,13 @@ func pass_to_network(
 				dir = 0
 				master_tournament(a.Floor, 0)
 			}
-			//sorting
-			for i := 0; i < shaft_ammount; i++ {
-				if score.elevator[i] > bestscore {
-					best_elevator_index = i
-				}
-			} //sends the
-			networking.Send_command(elev_overview[best_elevator_index].ID, a.Floor, dir)
+			//sends a command to the highest scoring elevator currently only works twice :|
+			best_elevator_index := sorting(999)
+			if networking.Send_command(elev_overview[best_elevator_index].ID, a.Floor, dir) {
+			} else {
+				best_elevator_index := sorting(best_elevator_index)
+				networking.Send_command(elev_overview[best_elevator_index].ID, a.Floor, dir)
+			}
 		}
 	}
 }
