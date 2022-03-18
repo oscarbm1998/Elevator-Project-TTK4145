@@ -53,7 +53,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 	}
 }
 
-func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_data chan Elevator_node) {
+func heartBeathandler(ch_req_ID, ch_ext_dead, ch_take_calls chan int, ch_req_data, ch_write_data chan Elevator_node) {
 	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
 	ch_heartbeatmsg := make(chan string)
@@ -101,7 +101,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
 			node_data.Status = 404
 			ch_write_data <- node_data
-			go revive_calls(msg_ID)
+			go revive_calls(msg_ID, ch_take_calls)
 
 		case msg_ID := <-ch_ext_dead: //Set status to 404 and stop the timer
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
