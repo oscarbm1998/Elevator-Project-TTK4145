@@ -36,10 +36,10 @@ func main() {
 		go singleElevator.Hall_order(ch_drv_buttons, ch_new_order)
 	*/
 	//Networking
-	ch_req_ID := make(chan int)
-	ch_new_data := make(chan int)
-	ch_req_data := make(chan networking.Elevator_node)
-	ch_write_data := make(chan networking.Elevator_node)
-	ch_ext_dead := make(chan int)
+	ch_req_ID := make(chan int)                          //Send the ID of the elevator you want data from here
+	ch_req_data := make(chan networking.Elevator_node)   //... the data will be returned on this channel
+	ch_write_data := make(chan networking.Elevator_node) //Write data on this channel
+	ch_new_data := make(chan int)                        //The data handler will send the ID here if new data from HB to cost function
+	ch_ext_dead := make(chan int)                        //Returns ID of a dead elevator
 	go networking.Networking_main(ch_req_ID, ch_new_data, ch_ext_dead, ch_req_data, ch_write_data)
 }
