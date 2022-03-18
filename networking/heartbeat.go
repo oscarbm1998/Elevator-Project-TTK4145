@@ -81,7 +81,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			node_data.Destination, _ = strconv.Atoi(data[3])
 			node_data.Floor, _ = strconv.Atoi(data[4])
 			node_data.Status, _ = strconv.Atoi(data[5])
-			for i := 0; i <= 5; i++ {
+			for i := range node_data.HallCalls {
 				node_data.HallCalls[i], _ = strconv.Atoi(data[6+i])
 			}
 			//fmt.Println("Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
