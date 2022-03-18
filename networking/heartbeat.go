@@ -92,6 +92,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead, ch_take_calls chan int, ch_req_dat
 			//Write the node data
 			ch_write_data <- node_data
 			//Reset the appropriate timer
+			fmt.Println(strconv.Itoa(ID))
 			ch_timerReset[ID-1] <- ID
 			//Allert cost function that there is new data on this ID
 
@@ -122,6 +123,7 @@ func heartbeatTimer(ID int, ch_foundDead, ch_timerReset, ch_timerStop chan int) 
 			ch_foundDead <- ID
 			timer.Stop()
 		case cmd_id := <-ch_timerReset:
+			fmt.Println("ID " + strconv.Itoa(cmd_id))
 			if cmd_id == ID {
 				timer.Reset(config.HEARTBEAT_TIME_OUT)
 			}
@@ -129,6 +131,7 @@ func heartbeatTimer(ID int, ch_foundDead, ch_timerReset, ch_timerStop chan int) 
 			if cmd_id == ID {
 				timer.Stop()
 			}
+
 		}
 	}
 }
@@ -178,12 +181,11 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 		msg = string(buf[0:n])
 		data := strings.Split(msg, "_")
 		ID, _ := strconv.Atoi(data[1])
-		fmt.Println("got message: " + msg)
 		//Checking weather the message is of the correct format and sending to Heartbeat Handler
-		if ID <= config.NUMBER_OF_ELEVATORS /*&& ID != config.ELEVATOR_ID*/ {
+
+		if ID != config.ELEVATOR_ID && ID <= config.NUMBER_OF_ELEVATORS /*&& ID != config.ELEVATOR_ID*/ {
 			ch_heartbeatmsg <- msg
 		}
-
 	}
 }
 
