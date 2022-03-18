@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func send_command(ID, floor, direction int) (success bool) {
+func Send_command(ID, floor, direction int) (success bool) {
 	//(NB!!) This function does not check if the node is alive before attempting transmission.
 	var attempts int = 1
 	var cmd, rbc, broadcast string
