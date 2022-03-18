@@ -34,6 +34,7 @@ func SingleElevatorFSM(
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_req_ID, ch_req_data, ch_write_data)
 	RemoveAllLights()
+	//Init elevator
 	elevator.direction = 0
 	elevator.floor = 0
 	current_state = idle
@@ -48,7 +49,6 @@ func SingleElevatorFSM(
 					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 					update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
 					update_elevator_node("destination", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
-					fmt.Printf("Here")
 					current_state = moving
 				} else {
 					elevio.SetMotorDirection(elevio.MotorDirection(0))
