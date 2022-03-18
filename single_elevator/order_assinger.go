@@ -55,12 +55,32 @@ func Remove_order(level int, direction int) { //removes an order
 }
 
 func Hall_order(
-	ch_drv_buttons chan elevio.ButtonEvent,
 	ch_new_order chan bool,
+	ch_net_command chan elevio.ButtonEvent,
+	ch_self_command chan elevio.ButtonEvent,
 ) {
 	for {
 		select {
-		case a := <-ch_drv_buttons:
+		case a := <-ch_net_command:
+			if (floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor) {
+				//do nuffin as the order already exists
+				fmt.Printf("orders already exists\n")
+				//Remove_order(a.Floor, a.Floor)
+			} else { //do shit
+				switch a.Button {
+				case 0: //opp
+					floor[a.Floor].up = true
+					elevio.SetButtonLamp(0, a.Floor, true) //turns off light
+				case 1: //ned
+					floor[a.Floor].down = true
+					elevio.SetButtonLamp(1, a.Floor, true) //turns off light
+				case 2: //cab call
+					floor[a.Floor].cab = true
+					elevio.SetButtonLamp(2, a.Floor, true) //turns off light
+				}
+				ch_new_order <- true //forteller at en ny order er tilgjengelig
+			}
+		case a := <-ch_self_command:
 			if (floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor) {
 				//do nuffin as the order already exists
 				fmt.Printf("orders already exists\n")
@@ -170,19 +190,3 @@ func Update_position(level int, direction int) {
 	elevator.direction = direction
 	Remove_order(level, direction)
 }
-
-/*
-2
-			elevator_command.floor = i
-			if floor[i].cab_call > elevator.floor {
-				elevator_command.direction = 1
-			} else {
-				elevator_command.direction = -1
-			}
-			return true
-			break
-		}
-	}
-	return false
-}
-*/
