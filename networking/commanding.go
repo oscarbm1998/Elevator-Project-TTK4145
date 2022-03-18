@@ -180,5 +180,5 @@ func reject_command(direction, floor int) (reject bool) {
 			return false
 		}
 	*/
-	return true
+	return false
 }
