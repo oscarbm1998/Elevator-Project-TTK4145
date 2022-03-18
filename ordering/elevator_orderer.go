@@ -51,13 +51,22 @@ func sorting() {
 	}
 }
 
-//meldigen som infoer victors modul om hva som skal sendes
-func pass_to_network(
+//meldigen som infoer victors modul om hva som skal sendes (main)
+func Pass_to_network(
 	ch_drv_buttons chan elevio.ButtonEvent,
 	ch_new_order chan scoreboard,
 	ch_take_calls chan int,
 	ch_self_command chan elevio.ButtonEvent,
+	ch_new_data chan int,
+	ch_req_ID chan int,
+	ch_req_data chan networking.Elevator_node,
 ) {
+	go heartbeat_monitor(
+		ch_new_data,
+		ch_req_ID,
+		ch_req_data,
+	)
+
 	for {
 		select {
 		case a := <-ch_drv_buttons:
