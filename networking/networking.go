@@ -15,21 +15,18 @@ type Elevator_node struct {
 	Direction   int
 	Floor       int
 	Status      int
-	HallCalls   [8]int
+	HallCalls   [6]int
 }
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 
-func Networking_main() {
+func Networking_main(ch_req_ID, ch_new_data, ch_ext_dead chan int, ch_req_data, ch_write_data chan Elevator_node) {
 	var ID int = config.ELEVATOR_ID
 
 	Elevator_nodes[ID-1].ID = config.ELEVATOR_ID
 	Elevator_nodes[ID-1].Floor = 4
-	ch_req_ID := make(chan int)
-	ch_req_data := make(chan Elevator_node)
-	ch_write_data := make(chan Elevator_node)
-	ch_ext_dead := make(chan int)
-	go Node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
+
+	go Node_data_handler(ch_req_ID, ch_new_data, ch_req_data, ch_write_data)
 	go heartBeathandler(ch_req_ID, ch_ext_dead, ch_req_data, ch_write_data)
 	go heartBeatTransmitter(ch_req_ID, ch_req_data)
 
@@ -37,14 +34,17 @@ func Networking_main() {
 
 //Function responsible for node data
 func Node_data_handler(
-	ch_req_ID chan int,
+	ch_req_ID, ch_new_data chan int,
 	ch_req_data, ch_write_data chan Elevator_node) {
 	for {
 		select {
 		case ID := <-ch_req_ID: //Sending node data
 			ch_req_data <- Elevator_nodes[ID-1]
 		case data := <-ch_write_data: //Writing node data
-			Elevator_nodes[data.ID-1] = data
+			if data.ID != 0 {
+				ch_new_data <- data.ID
+				Elevator_nodes[data.ID-1] = data
+			}
 		}
 	}
 }

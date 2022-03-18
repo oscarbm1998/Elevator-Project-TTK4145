@@ -98,6 +98,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			ch_write_data <- node_data
 			//Reset the appropriate timer
 			ch_timerReset <- ID
+			//Allert cost function that there is new data on this ID
 
 		case msg_ID := <-ch_foundDead:
 			//Timer has run out,
@@ -105,7 +106,6 @@ func heartBeathandler(ch_req_ID, ch_ext_dead chan int, ch_req_data, ch_write_dat
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
 			node_data.Status = 404
 			ch_write_data <- node_data
-
 			go revive_calls(msg_ID)
 
 		case msg_ID := <-ch_ext_dead: //Set status to 404 and stop the timer
