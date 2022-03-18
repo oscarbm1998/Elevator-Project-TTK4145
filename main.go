@@ -65,8 +65,8 @@ func main() {
 		ch_take_calls,
 		ch_self_command,
 		ch_new_data,
-		ch_req_ID[1],
-		ch_req_data[1],
+		ch_req_ID[2],
+		ch_req_data[2],
 	)
 	go networking.Main(ch_req_ID, ch_new_data, ch_ext_dead, ch_take_calls, ch_req_data, ch_write_data, ch_net_command)
 	select {}

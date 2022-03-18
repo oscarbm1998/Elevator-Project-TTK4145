@@ -46,7 +46,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 				msg = msg + strconv.Itoa(node.HallCalls[i]) + "_"
 			}
 			//Sending the message
-			//fmt.Println("Networking: sending HB message: " + msg)
+			fmt.Println("Networking: sending HB message: " + msg)
 			con.Write([]byte(msg))
 			timer.Reset(config.HEARTBEAT_TIME)
 		}
@@ -87,7 +87,7 @@ func heartBeathandler(ch_req_ID, ch_ext_dead, ch_take_calls chan int, ch_req_dat
 			for i := range node_data.HallCalls {
 				node_data.HallCalls[i], _ = strconv.Atoi(data[6+i])
 			}
-			//fmt.Println("Networking: Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
+			fmt.Println("Networking: Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
 			fmt.Println("Elevator " + strconv.Itoa(ID) + " at floor: " + strconv.Itoa(node_data.Floor))
 			//Write the node data
 			ch_write_data <- node_data
@@ -178,9 +178,9 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 		msg = string(buf[0:n])
 		data := strings.Split(msg, "_")
 		ID, _ := strconv.Atoi(data[1])
-
+		fmt.Println("got message: " + msg)
 		//Checking weather the message is of the correct format and sending to Heartbeat Handler
-		if ID <= config.NUMBER_OF_ELEVATORS && ID != config.ELEVATOR_ID {
+		if ID <= config.NUMBER_OF_ELEVATORS /*&& ID != config.ELEVATOR_ID*/ {
 			ch_heartbeatmsg <- msg
 		}
 
