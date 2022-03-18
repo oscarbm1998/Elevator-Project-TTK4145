@@ -170,19 +170,3 @@ func Update_position(level int, direction int) {
 	elevator.direction = direction
 	Remove_order(level, direction)
 }
-
-/*
-2
-			elevator_command.floor = i
-			if floor[i].cab_call > elevator.floor {
-				elevator_command.direction = 1
-			} else {
-				elevator_command.direction = -1
-			}
-			return true
-			break
-		}
-	}
-	return false
-}
-*/
