@@ -2,10 +2,9 @@ package singleElevator
 
 import (
 	"PROJECT-GROUP-10/elevio"
+	"PROJECT-GROUP-10/config"
 	"fmt"
 )
-
-const floor_ammount int = 4
 
 type elevator_status struct {
 	floor      int
@@ -19,7 +18,7 @@ type floor_info struct {
 	cab  bool
 }
 
-var floor [floor_ammount]floor_info
+var floor [config.NUMBER_OF_FLOORS]floor_info
 var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
