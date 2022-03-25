@@ -29,15 +29,9 @@ func heartbeat_monitor(
 	ch_req_data chan networking.Elevator_node,
 ) {
 	for {
-		select {
-		case id := <-ch_new_data: //new data arrives
-			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //runs a loop
-				lighthouse := networking.Node_get_data(id, ch_req_ID, ch_req_data) //sets the "lighthouse" as a middle man as node get data only updates one elevator at a time
-				elev_overview[i] = lighthouse                                      //updates elev_overview with the new data
-				lighthouse = networking.Node_get_data(1, ch_req_ID, ch_req_data)   //sets the "lighthouse" as a middle man as node get data only updates one elevator at a time
-				elev_overview[1] = lighthouse                                      //updates elev_overview with the new data
-			}
-		}
+		id := <-ch_new_data                                                                                        //new data arrives
+		elev_overview[id-1] = networking.Node_get_data(id, ch_req_ID, ch_req_data)                                 //updates elev_overview with the new data
+		elev_overview[config.ELEVATOR_ID-1] = networking.Node_get_data(config.ELEVATOR_ID, ch_req_ID, ch_req_data) //update myself
 	}
 }
 
