@@ -33,8 +33,8 @@ func heartbeat_monitor(
 		case id := <-ch_new_data: //new data arrives
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //runs a loop
 				lighthouse := networking.Node_get_data(id, ch_req_ID, ch_req_data) //sets the "lighthouse" as a middle man as node get data only updates one elevator at a time
-				//fmt.Println("Lighthouse: " + strconv.Itoa(id))
-				elev_overview[i] = lighthouse //updates elev_overview with the new data
+				elev_overview[i] = lighthouse                                      //updates elev_overview with the new data
+				fmt.Printf("")
 			}
 		}
 	}
@@ -78,31 +78,18 @@ func Pass_to_network(
 	for {
 		select {
 		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
-			var dir int
 			switch a.Button {
 			case 0: //up
 				master_tournament(a.Floor, int(elevio.MD_Up))
-				dir = 1
+				dir := 1
+				Send_to_best_elevator(ch_self_command, a, dir)
 			case 1: //down
 				master_tournament(a.Floor, elevio.MD_Down)
-				dir = -1
+				dir := -1
+				Send_to_best_elevator(ch_self_command, a, dir)
 			case 2: //cab
+				fmt.Print("Cab call found\n")
 				ch_self_command <- a
-				dir = 0
-			}
-			sorting()                                         //calls the sorting algorithm to sort the elevator placements
-			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-				if elev_overview[placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-					fmt.Printf("own elevator won\n")
-					button_calls := <-ch_drv_buttons //as the message needs to be passed between two channels we need a middle man
-					ch_self_command <- button_calls
-					break
-				} else { //if the call is not going to itself
-					if networking.Send_command(elev_overview[placement[i].elevator_number].ID, a.Floor, dir) { //send command to suitable external elevator
-						fmt.Printf("external elevator won\n")
-						break //if it succeds break the loop
-					}
-				}
 			}
 			//if a death or stall occurs
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
@@ -158,6 +145,23 @@ func master_tournament(floor int, direction int) {
 			//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
 			//this means that the closer the elevator is the higher the score
 			placement[i].score += (4 - int(math.Abs(float64(elev_overview[i].Floor)-float64(floor))))
+		}
+	}
+}
+
+func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int) {
+	sorting()                                         //calls the sorting algorithm to sort the elevator placements
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+		if elev_overview[placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+			fmt.Printf("own elevator won\n")
+			button_calls := a //as the message needs to be passed between two channels we need a middle man
+			ch_self_command <- button_calls
+			break
+		} else { //if the call is not going to itself
+			if networking.Send_command(elev_overview[placement[i].elevator_number].ID, a.Floor, dir) { //send command to suitable external elevator
+				fmt.Printf("external elevator won\n")
+				break //if it succeds break the loop
+			}
 		}
 	}
 }
