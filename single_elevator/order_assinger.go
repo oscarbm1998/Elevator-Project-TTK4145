@@ -7,9 +7,8 @@ import (
 )
 
 type elevator_status struct {
-	floor      int
-	direction  int //1 up -1 down 0 idle
-	up_or_down bool
+	floor     int
+	direction int //1 up -1 down 0 idle
 }
 
 type floor_info struct {
