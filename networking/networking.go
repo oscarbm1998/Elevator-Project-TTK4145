@@ -29,7 +29,7 @@ func Main(
 	ch_new_data, ch_ext_dead, ch_take_calls chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
 	ch_net_command chan elevio.ButtonEvent,
-	ch_hallCallsTot_updated chan [config.NUMBER_OF_ELEVATORS]HallCall) {
+	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) {
 
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
 	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
