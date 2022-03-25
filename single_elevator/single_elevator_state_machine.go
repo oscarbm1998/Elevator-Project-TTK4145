@@ -172,15 +172,15 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 }
 
 func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) {
-	select {
-	case msg := <-ch_hallCallsTot_updated:
+	for {
+		msg := <-ch_hallCallsTot_updated
 		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
-			if msg[i].Up == true {
+			if msg[i].Up {
 				elevio.SetButtonLamp(0, i, true)
 			} else {
 				elevio.SetButtonLamp(0, i, false)
 			}
-			if msg[i].Down == true {
+			if msg[i].Down {
 				elevio.SetButtonLamp(1, i, true)
 			} else {
 				elevio.SetButtonLamp(1, i, false)
