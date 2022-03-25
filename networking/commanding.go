@@ -58,12 +58,10 @@ func Send_command(ID, floor, direction int) (success bool) {
 				if msg == rbc {
 					fmt.Println("Networking: readback OK")
 					cmd_con.Write([]byte(strconv.Itoa(ID) + "_CMD_OK"))
-					ch_rbc_close <- true
 					success = true
 					goto Exit
 				} else if rbc == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_REJECT" { //Command rejected
 					fmt.Printf("Network: elevator rejected the command")
-					ch_rbc_close <- true
 					success = false
 					goto Exit
 				} else {
@@ -88,7 +86,6 @@ func Send_command(ID, floor, direction int) (success bool) {
 	}
 Exit:
 	//Stopping readback listener and returning the results
-
 	ch_rbc_close <- true
 	fmt.Println("Networking: send_command exiting")
 	return success
