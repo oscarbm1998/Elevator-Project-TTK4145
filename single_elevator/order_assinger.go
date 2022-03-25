@@ -3,7 +3,6 @@ package singleElevator
 import (
 	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
-	"PROJECT-GROUP-10/networking"
 	"fmt"
 )
 
@@ -22,27 +21,45 @@ var floor [config.NUMBER_OF_FLOORS]floor_info
 var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
-func Remove_order(level int, direction int) { //removes an order
+func Remove_order(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) { //removes an order
 	floor[level].cab = false              //removes here call as the elevator has arrived there
 	elevio.SetButtonLamp(2, level, false) //turns off cab light
 	if direction == int(elevio.MD_Up) {   //if the direction is up or there are no orders below and orders above
 		if !floor[level].up {
 			floor[level].down = false
+			remove_order_from_node.command = "remove order down"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
 		} else {
 			floor[level].up = false
+			remove_order_from_node.command = "remove order up"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
 		}
 		//disables the up direction
 	} else if direction == int(elevio.MD_Down) { //if the direction is down or there are no orders above and orders below
 		if !floor[level].down {
 			floor[level].up = false
+			remove_order_from_node.command = "remove order up"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
 		} else {
 			floor[level].down = false
+			remove_order_from_node.command = "remove order down"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
 		}
 	} else if direction == int(elevio.MD_Stop) {
 		if !floor[level].down {
 			floor[level].up = false
+			remove_order_from_node.command = "remove order up"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
 		} else {
 			floor[level].down = false
+			remove_order_from_node.command = "remove order down"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
 		}
 	}
 }
@@ -51,9 +68,8 @@ func Hall_order(
 	ch_new_order chan bool,
 	ch_net_command chan elevio.ButtonEvent,
 	ch_self_command chan elevio.ButtonEvent,
-	ch_req_ID chan int,
-	ch_req_data chan networking.Elevator_node,
-	ch_write_data chan networking.Elevator_node,
+	ch_update_elevator_node_order chan update_elevator_node,
+	ch_remove_elevator_node_order chan update_elevator_node,
 ) {
 	for {
 		select {
@@ -64,10 +80,14 @@ func Hall_order(
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
 					floor[a.Floor].up = true
-					update_elevator_node("update order up", a.Floor, ch_req_ID, ch_req_data, ch_write_data)
+					add_order_to_node.command = "update order up"
+					add_order_to_node.update_value = a.Floor
+					ch_update_elevator_node_order <- add_order_to_node
 				case elevio.BT_HallDown: //ned
 					floor[a.Floor].down = true
-					update_elevator_node("update order down", a.Floor, ch_req_ID, ch_req_data, ch_write_data)
+					add_order_to_node.command = "update order down"
+					add_order_to_node.update_value = a.Floor
+					ch_update_elevator_node_order <- add_order_to_node
 				case elevio.BT_Cab: //cab call
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(2, a.Floor, true) //turns off light
@@ -83,10 +103,14 @@ func Hall_order(
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
 					floor[a.Floor].up = true
-					update_elevator_node("update order up", a.Floor, ch_req_ID, ch_req_data, ch_write_data)
+					add_order_to_node.command = "update order up"
+					add_order_to_node.update_value = a.Floor
+					ch_update_elevator_node_order <- add_order_to_node
 				case elevio.BT_HallDown: //ned
 					floor[a.Floor].down = true
-					update_elevator_node("update order down", a.Floor, ch_req_ID, ch_req_data, ch_write_data)
+					add_order_to_node.command = "update order down"
+					add_order_to_node.update_value = a.Floor
+					ch_update_elevator_node_order <- add_order_to_node
 				case elevio.BT_Cab: //cab call
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(2, a.Floor, true) //turns off light
@@ -179,8 +203,8 @@ func Request_next_action(direction int) bool {
 	return false
 }
 
-func Update_position(level int, direction int) {
+func Update_position(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) { //Er denne nødvendig?
 	elevator.floor = level
 	elevator.direction = direction
-	Remove_order(level, direction)
+	Remove_order(level, direction, ch_remove_elevator_node_order)
 }
