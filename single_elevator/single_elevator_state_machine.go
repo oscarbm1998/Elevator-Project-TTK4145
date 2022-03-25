@@ -48,7 +48,6 @@ func SingleElevatorFSM(
 	for {
 		select {
 		case <-ch_new_order:
-			update_elevator_node("update order", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
 			switch current_state {
 			case idle:
 				if Request_next_action(elevator.direction) {
@@ -56,6 +55,7 @@ func SingleElevatorFSM(
 					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 					update_elevator_node("direction", elevator_command.direction, ch_req_ID, ch_req_data, ch_write_data)
 					update_elevator_node("destination", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
+					update_elevator_node("update order", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
 					ch_elev_stuck_timer_start <- true
 					current_state = moving
 				} else {
