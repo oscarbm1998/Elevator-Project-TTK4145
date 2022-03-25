@@ -88,7 +88,9 @@ func Send_command(ID, floor, direction int) (success bool) {
 	}
 Exit:
 	//Stopping readback listener and returning the results
+
 	ch_rbc_close <- true
+	fmt.Println("Networking: send_command exiting")
 	return success
 }
 
