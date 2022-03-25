@@ -23,18 +23,21 @@ func SingleElevatorFSM(
 	ch_drv_floors <-chan int,
 	ch_elevator_has_arrived chan bool,
 	ch_obstr_detected <-chan bool,
-	ch_new_order <-chan bool,
+	ch_new_order chan bool,
 	ch_drv_stop <-chan bool,
 	ch_req_ID chan int,
 	ch_req_data chan networking.Elevator_node, //Should be write only
 	ch_write_data chan networking.Elevator_node,
 	ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall,
+	ch_net_command chan elevio.ButtonEvent,
+	ch_self_command chan elevio.ButtonEvent,
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
 	ch_elev_stuck_timer_out := make(chan bool)
 	ch_elev_stuck_timer_start := make(chan bool)
 	ch_elev_stuck_timer_stop := make(chan bool)
+	go Hall_order(ch_new_order, ch_net_command, ch_self_command, ch_req_ID, ch_req_data, ch_write_data)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_req_ID, ch_req_data, ch_write_data)
@@ -172,7 +175,7 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 	}
 }
 
-func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) {
+func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) { //Might be better to go this to reduce amount of necessary code
 	for {
 		msg := <-ch_hallCallsTot_updated
 		/*
@@ -224,12 +227,10 @@ func update_elevator_node(
 		updated_elevator_node.Destination = value
 	case "status":
 		updated_elevator_node.Status = value
-	case "update order":
-		if elevator_command.direction == 1 {
-			updated_elevator_node.HallCalls[value].Up = true
-		} else {
-			updated_elevator_node.HallCalls[value].Down = true
-		}
+	case "update order up":
+		updated_elevator_node.HallCalls[value].Up = true
+	case "update order down":
+		updated_elevator_node.HallCalls[value].Down = true
 	case "remove order":
 		if elevator_command.direction == 1 {
 			updated_elevator_node.HallCalls[value].Up = false

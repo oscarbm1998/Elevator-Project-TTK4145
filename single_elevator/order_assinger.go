@@ -3,6 +3,7 @@ package singleElevator
 import (
 	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
+	"PROJECT-GROUP-10/networking"
 	"fmt"
 )
 
@@ -50,6 +51,9 @@ func Hall_order(
 	ch_new_order chan bool,
 	ch_net_command chan elevio.ButtonEvent,
 	ch_self_command chan elevio.ButtonEvent,
+	ch_req_ID chan int,
+	ch_req_data chan networking.Elevator_node,
+	ch_write_data chan networking.Elevator_node,
 ) {
 	for {
 		select {
@@ -60,8 +64,10 @@ func Hall_order(
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
 					floor[a.Floor].up = true
+					update_elevator_node("update order up", a.Floor, ch_req_ID, ch_req_data, ch_write_data)
 				case elevio.BT_HallDown: //ned
 					floor[a.Floor].down = true
+					update_elevator_node("update order down", a.Floor, ch_req_ID, ch_req_data, ch_write_data)
 				case elevio.BT_Cab: //cab call
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(2, a.Floor, true) //turns off light
@@ -77,8 +83,10 @@ func Hall_order(
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
 					floor[a.Floor].up = true
+					update_elevator_node("update order up", a.Floor, ch_req_ID, ch_req_data, ch_write_data)
 				case elevio.BT_HallDown: //ned
 					floor[a.Floor].down = true
+					update_elevator_node("update order down", a.Floor, ch_req_ID, ch_req_data, ch_write_data)
 				case elevio.BT_Cab: //cab call
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(2, a.Floor, true) //turns off light
