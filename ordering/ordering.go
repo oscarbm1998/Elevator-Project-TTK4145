@@ -87,6 +87,7 @@ func Pass_to_network(
 				master_tournament(a.Floor, elevio.MD_Down)
 				dir = -1
 			case 2: //cab
+				fmt.Print("Cab call found\n")
 				ch_self_command <- a
 				dir = 0
 			}
@@ -94,7 +95,7 @@ func Pass_to_network(
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
 				if elev_overview[placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
 					fmt.Printf("own elevator won\n")
-					button_calls := <-ch_drv_buttons //as the message needs to be passed between two channels we need a middle man
+					button_calls := a //as the message needs to be passed between two channels we need a middle man
 					ch_self_command <- button_calls
 					break
 				} else { //if the call is not going to itself
