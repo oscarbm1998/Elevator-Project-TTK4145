@@ -24,31 +24,25 @@ var elevator_command elevator_status //where elevator should go
 
 func Remove_order(level int, direction int) { //removes an order
 	floor[level].cab = false              //removes here call as the elevator has arrived there
-	elevio.SetButtonLamp(2, level, false) //turns off light
+	elevio.SetButtonLamp(2, level, false) //turns off cab light
 	if direction == 1 {                   //if the direction is up or there are no orders below and orders above
 		if !floor[level].up {
 			floor[level].down = false
-			elevio.SetButtonLamp(1, level, false) //turns off light
 		} else {
 			floor[level].up = false
-			elevio.SetButtonLamp(0, level, false) //turns off light
 		}
 		//disables the up direction
 	} else if direction == -1 { //if the direction is down or there are no orders above and orders below
 		if !floor[level].down {
 			floor[level].up = false
-			elevio.SetButtonLamp(0, level, false) //turns off light
 		} else {
 			floor[level].down = false
-			elevio.SetButtonLamp(1, level, false) //turns off light
 		}
 	} else if direction == 0 {
 		if !floor[level].down {
 			floor[level].up = false
-			elevio.SetButtonLamp(0, level, false) //turns off light
 		} else {
 			floor[level].down = false
-			elevio.SetButtonLamp(1, level, false) //turns off light
 		}
 	}
 }
@@ -69,10 +63,8 @@ func Hall_order(
 				switch a.Button {
 				case 0: //opp
 					floor[a.Floor].up = true
-					elevio.SetButtonLamp(0, a.Floor, true) //turns off light
 				case 1: //ned
 					floor[a.Floor].down = true
-					elevio.SetButtonLamp(1, a.Floor, true) //turns off light
 				case 2: //cab call
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(2, a.Floor, true) //turns off light
@@ -88,10 +80,8 @@ func Hall_order(
 				switch a.Button {
 				case 0: //opp
 					floor[a.Floor].up = true
-					elevio.SetButtonLamp(0, a.Floor, true) //turns off light
 				case 1: //ned
 					floor[a.Floor].down = true
-					elevio.SetButtonLamp(1, a.Floor, true) //turns off light
 				case 2: //cab call
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(2, a.Floor, true) //turns off light
