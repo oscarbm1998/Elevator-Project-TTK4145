@@ -156,6 +156,7 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 	for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
 		if elev_overview[j].Floor == a.Floor {
 			counter++
+			fmt.Printf("One elevator is already here\n")
 		}
 	}
 	if counter == 0 {
