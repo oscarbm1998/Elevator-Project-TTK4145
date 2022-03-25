@@ -28,6 +28,7 @@ func SingleElevatorFSM(
 	ch_req_ID chan int,
 	ch_req_data chan networking.Elevator_node, //Should be write only
 	ch_write_data chan networking.Elevator_node,
+	ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall,
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
@@ -37,7 +38,8 @@ func SingleElevatorFSM(
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_req_ID, ch_req_data, ch_write_data)
-	RemoveAllLights()
+	go Update_hall_lights(ch_hallCallsTot_updated)
+	Reset_all_lights()
 	//Init elevator
 	elevator.direction = 0
 	elevator.floor = 0
@@ -81,6 +83,7 @@ func SingleElevatorFSM(
 				ch_door_timer_reset <- true
 				ch_elev_stuck_timer_stop <- true
 				Update_position(elevator_command.floor, elevator_command.direction) //Bytt navn ?
+				update_elevator_node("remove order", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
 				current_state = doorOpen
 			default:
 				fmt.Printf("Arrived at floor outside of state moving. Something is wrong")
@@ -104,6 +107,7 @@ func SingleElevatorFSM(
 							current_state = doorOpen
 							elevio.SetDoorOpenLamp(true)
 							Update_position(elevator_command.floor, (elevator_command.direction))
+							update_elevator_node("remove order", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
 							ch_door_timer_reset <- true
 						} else {
 							current_state = moving
@@ -150,10 +154,10 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 		case msg := <-ch_drv_floors:
 			elevator.floor = msg
 			update_elevator_node("floor", msg, ch_req_ID, ch_req_data, ch_write_data)
+			elevio.SetFloorIndicator(msg)
 			if last_floor == -1 {
 				last_floor = elevator.floor
 			}
-			elevio.SetFloorIndicator(msg)
 			if msg == 3 {
 				elevator_command.direction = -1
 			} else if msg == 0 {
@@ -167,8 +171,26 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 	}
 }
 
-func RemoveAllLights() { //Move this when time
-	for i := 0; i < floor_ammount; i++ {
+func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) {
+	select {
+	case msg := <-ch_hallCallsTot_updated:
+		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
+			if msg[i].Up == true {
+				elevio.SetButtonLamp(0, i, true)
+			} else {
+				elevio.SetButtonLamp(0, i, false)
+			}
+			if msg[i].Down == true {
+				elevio.SetButtonLamp(1, i, true)
+			} else {
+				elevio.SetButtonLamp(1, i, false)
+			}
+		}
+	}
+}
+
+func Reset_all_lights() {
+	for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
 		elevio.SetButtonLamp(0, i, false)
 		elevio.SetButtonLamp(1, i, false)
 		elevio.SetButtonLamp(2, i, false)
@@ -193,6 +215,12 @@ func update_elevator_node(
 		updated_elevator_node.Destination = value
 	case "status":
 		updated_elevator_node.Status = value
+	case "remove order":
+		if elevator_command.direction == 1 {
+			updated_elevator_node.HallCalls[value].Up = false
+		} else {
+			updated_elevator_node.HallCalls[value].Down = false
+		}
 	}
 	updated_elevator_node.ID = config.ELEVATOR_ID
 	//Samme for alt annet som må oppdaterers
