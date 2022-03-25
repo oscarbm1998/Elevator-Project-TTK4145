@@ -1,8 +1,8 @@
 package singleElevator
 
 import (
-	"PROJECT-GROUP-10/elevio"
 	"PROJECT-GROUP-10/config"
+	"PROJECT-GROUP-10/elevio"
 	"fmt"
 )
 
@@ -103,12 +103,21 @@ func Hall_order(
 }
 
 func request_above() bool { //checks if there are any active calls above the elevator and updates the "command struct"
-	for i := elevator.floor + 1; i < floor_ammount; i++ { //checks from the last known floor of the elevator to the top
+	for i := elevator.floor + 1; i < config.NUMBER_OF_FLOORS; i++ { //checks from the last known floor of the elevator to the top
 		if floor[i].up || floor[i].down { //if a floor with call up is found
 			elevator_command.floor = i     //updates the command value
 			elevator_command.direction = 1 //sets the direction up just in case
 			return true
 		}
+	}
+	return false
+}
+
+func request_here() bool {
+	if floor[elevator.floor].up || floor[elevator.floor].down {
+		elevator_command.floor = elevator.floor //updates the command value
+		elevator_command.direction = 0          //sets the direction down just in case
+		return true
 	}
 	return false
 }
@@ -125,7 +134,7 @@ func request_below() bool { //checks if there are any active calls below the ele
 }
 
 func request_cab() bool { //tad unshure if this is needed or not but its used for internal calls
-	for i := 0; i < floor_ammount; i++ { //checks the entire struct for calls
+	for i := 0; i < config.NUMBER_OF_FLOORS; i++ { //checks the entire struct for calls
 		if floor[i].cab { //if a call is found
 			elevator_command.floor = i //update command struct
 			if i > elevator.floor {    //set direction
@@ -135,15 +144,6 @@ func request_cab() bool { //tad unshure if this is needed or not but its used fo
 			}
 			return true
 		}
-	}
-	return false
-}
-
-func request_here() bool {
-	if floor[elevator.floor].up || floor[elevator.floor].down {
-		elevator_command.floor = elevator.floor //updates the command value
-		elevator_command.direction = 0          //sets the direction down just in case
-		return true
 	}
 	return false
 }
