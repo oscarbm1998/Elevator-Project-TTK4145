@@ -4,10 +4,8 @@ import (
 	config "PROJECT-GROUP-10/config"
 	"fmt"
 	"net"
-	"os"
 	"strconv"
 	"strings"
-	"syscall"
 	"time"
 )
 
@@ -125,11 +123,11 @@ func heartBeathandler(
 				fmt.Println("Elevator " + strconv.Itoa(ID) + " at floor: " + strconv.Itoa(node_data.Floor))
 			}
 
-			ch_write_data <- node_data  //Write the node data
-			ch_timerReset[ID-1] <- true //Reset the appropriate timer
-			//Update data
-			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
-			ch_new_data <- ID //Tell cost function that there is new data on this ID
+			ch_write_data <- node_data                                             //Write the node data
+			ch_timerReset[ID-1] <- true                                            //Reset the appropriate timer
+			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data) //Find out what hallcalls are being served and send result to SingleElevator
+			ch_new_data <- ID                                                      //Tell cost function that there is new data on this ID
+
 		case msg_ID := <-ch_foundDead:
 			var msg, broadcast string
 
@@ -137,9 +135,9 @@ func heartBeathandler(
 
 			//Timer has run out, update status
 			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead")
-			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
-			node_data.Status = 404 //Unreachable
-			ch_write_data <- node_data
+			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data) //Get the latest data to avoid overwrite
+			node_data.Status = 404                                    //Unreachable
+			ch_write_data <- node_data                                //write
 
 			//Tell everyone that an elevator has died and that you are taking responsibility
 			fmt.Println("Networking: Reviving elevator " + strconv.Itoa(msg_ID) + ", taking his/her hall calls")
@@ -182,34 +180,7 @@ func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timerStop c
 	}
 }
 
-func DialBroadcastUDP(port int) net.PacketConn {
-	s, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
-	if err != nil {
-		fmt.Println("Error: Socket:", err)
-	}
-	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
-	if err != nil {
-		fmt.Println("Error: SetSockOpt REUSEADDR:", err)
-	}
-	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_BROADCAST, 1)
-	if err != nil {
-		fmt.Println("Error: SetSockOpt BROADCAST:", err)
-	}
-	syscall.Bind(s, &syscall.SockaddrInet4{Port: port})
-	if err != nil {
-		fmt.Println("Error: Bind:", err)
-	}
-
-	f := os.NewFile(uintptr(s), "")
-	conn, err := net.FilePacketConn(f)
-	if err != nil {
-		fmt.Println("Error: FilePacketConn:", err)
-	}
-	f.Close()
-
-	return conn
-}
-
+//Listening for UDP heartbeat messages on port defined in config
 func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 	buf := make([]byte, 1024)
 	var msg string
@@ -225,11 +196,13 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 		n, _, _ := conn.ReadFrom(buf)
 		msg = string(buf[0:n])
 		data := strings.Split(msg, "_")
-		ID, _ := strconv.Atoi(data[1])
+		ID, err := strconv.Atoi(data[1])
 
 		//Checking weather the message is of the correct format and sending to Heartbeat Handler
-		if ID != config.ELEVATOR_ID && ID <= config.NUMBER_OF_ELEVATORS {
+		if err == nil && ID != config.ELEVATOR_ID && ID <= config.NUMBER_OF_ELEVATORS {
 			ch_heartbeatmsg <- msg
+		} else {
+			fmt.Println("Networking: got a bad heartbeat message")
 		}
 	}
 }

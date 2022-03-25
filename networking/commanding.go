@@ -88,8 +88,9 @@ Exit:
 }
 
 func command_readback_listener(ch_msg chan string, ch_close chan bool) {
-	network, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_RBC_PORT))
-	con, _ := net.ListenUDP("udp", network)
+	//network, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_RBC_PORT))
+	//con, _ := net.ListenUDP("udp", network)
+	con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
 	buf := make([]byte, 1024)
 	for {
 		select {
@@ -97,39 +98,39 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 			con.Close()
 			goto Exit
 		default:
-			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Connection with a timeout
-			n, _, err := con.ReadFromUDP(buf)
+			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
+			n, _, err := con.ReadFrom(buf)
 			if err != nil {
 				if e, ok := err.(net.Error); !ok || e.Timeout() {
 					printError("Networking: command readback net error: ", err)
 				} else {
 					fmt.Println("Networking: Getting nothing on readback channel, so quitting")
 					con.Close()
-					goto Exit
 				}
 				goto Exit
 			}
 			msg := string(buf[0:n])
 			ch_msg <- msg
 		}
-		defer con.Close()
 	}
 Exit:
+	defer con.Close()
 }
 
 func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 	var button_command elevio.ButtonEvent
 	var rbc string
 	buf := make([]byte, 1024)
-	adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_PORT))
-	cmd_con, _ := net.ListenUDP("udp", adr) //Listening to the command port
-	adr, _ = net.ResolveUDPAddr("udp", "255.255.255.255:"+strconv.Itoa(config.COMMAND_RBC_PORT))
+	//adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_PORT))
+	//cmd_con, _ := net.ListenUDP("udp", adr) //Listening to the command port
+	cmd_con := DialBroadcastUDP(config.COMMAND_PORT)
+	adr, _ := net.ResolveUDPAddr("udp", "255.255.255.255:"+strconv.Itoa(config.COMMAND_RBC_PORT))
 	rbc_con, _ := net.DialUDP("udp", nil, adr) //Broadcasting on the readback port
 
 	fmt.Println("Networking: command listener listenening on port :" + strconv.Itoa(config.COMMAND_PORT))
 	for {
 		//Listen for incomming commands on command reception port
-		n, _, err := cmd_con.ReadFromUDP(buf)
+		n, _, err := cmd_con.ReadFrom(buf)
 		printError("Networking: error from command listener: ", err)
 		msg := string(buf[0:n])
 		data := strings.Split(msg, "_")
@@ -149,7 +150,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 				//Accept the command by reading it back
 				rbc_con.Write([]byte(rbc))
 				//Wait for OK
-				n, _, _ = cmd_con.ReadFromUDP(buf)
+				n, _, _ = cmd_con.ReadFrom(buf)
 				msg = string(buf[0:n])
 				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
 
@@ -173,7 +174,6 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 				fmt.Println("Networking: elevator " + strconv.Itoa(dead_ID) + " was found dead by elevator " + strconv.Itoa(reportedBy_ID))
 			}
 		}
-		defer cmd_con.Close()
 	}
 
 }
