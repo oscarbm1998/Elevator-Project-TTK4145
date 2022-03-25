@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var HeartBeatLogger bool = false
+var HeartBeatLogger bool = true
 
 func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (err error) {
 	var msg, date, clock, broadcast string
@@ -135,14 +135,13 @@ func heartBeathandler(
 			ch_timerStop[msg_ID-1] <- true //Stop the timer of the dead elevator
 
 			//Timer has run out, update status
-			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead")
+			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead, redistributing his/her hall calls")
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data) //Get the latest data to avoid overwrite
 			node_data.ID = msg_ID                                     //ID
 			node_data.Status = 404                                    //Set status to unreachable elevator
 			ch_write_data <- node_data                                //write
 
 			//Tell everyone that an elevator has died and that you are taking responsibility
-			fmt.Println("Networking: Reviving elevator " + strconv.Itoa(msg_ID) + ", taking his/her hall calls")
 			msg = "98_" + strconv.Itoa(msg_ID) + "_DEAD_" + strconv.Itoa(config.ELEVATOR_ID)
 			broadcast = "255.255.255.255:" + strconv.Itoa(config.COMMAND_PORT)
 			network, _ := net.ResolveUDPAddr("udp", broadcast)
