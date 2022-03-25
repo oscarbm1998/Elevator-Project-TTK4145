@@ -60,7 +60,8 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 
 func heartBeathandler(
 	ch_req_ID, ch_ext_dead, ch_new_data, ch_take_calls chan int,
-	ch_req_data, ch_write_data chan Elevator_node) {
+	ch_req_data, ch_write_data chan Elevator_node,
+	ch_hallCallsTot_updated chan [6]int) {
 
 	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
@@ -103,7 +104,7 @@ func heartBeathandler(
 			ch_write_data <- node_data //Write the node data
 			ch_timerReset[ID-1] <- ID  //Reset the appropriate timer
 			//Update data
-
+			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 			ch_new_data <- ID //Tell cost function that there is new data on this ID
 		case msg_ID := <-ch_foundDead:
 			var msg, broadcast string
@@ -210,7 +211,7 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 	}
 }
 
-func update_HallCallsTot(ch_req_ID chan int, ch_req_data, ch_write_data chan Elevator_node) (HallCallsTot [6]int) {
+func update_HallCallsTot(ch_req_ID chan int, ch_req_data chan Elevator_node) (HallCallsTot [6]int) {
 	var Elevator [config.NUMBER_OF_ELEVATORS]Elevator_node
 
 	for i := range Elevator {

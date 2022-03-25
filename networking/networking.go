@@ -27,7 +27,7 @@ func Main(
 	ch_hallCallsTot_updated chan [6]int) {
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
 	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
-	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0])
+	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0], ch_hallCallsTot_updated)
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
 	go command_listener(ch_net_command)
 }
