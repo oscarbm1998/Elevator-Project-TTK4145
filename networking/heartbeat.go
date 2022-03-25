@@ -136,7 +136,8 @@ func heartBeathandler(
 			//Timer has run out, update status
 			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead")
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data) //Get the latest data to avoid overwrite
-			node_data.Status = 404                                    //Unreachable
+			node_data.ID = msg_ID                                     //ID
+			node_data.Status = 404                                    //Set status to unreachable
 			ch_write_data <- node_data                                //write
 
 			//Tell everyone that an elevator has died and that you are taking responsibility
@@ -186,13 +187,10 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 	var msg string
 	var port string = ":" + strconv.Itoa(config.HEARTBEAT_PORT)
 	fmt.Println("Networking: Listening for HB-messages on port " + port)
-	//network, _ := net.ResolveUDPAddr("udp", port)
-	//conn, _ := net.ListenUDP("udp", network)
 
 	conn := DialBroadcastUDP(config.HEARTBEAT_PORT)
 
 	for {
-		//n, _, err := conn.ReadFromUDP(buf)
 		n, _, _ := conn.ReadFrom(buf)
 		msg = string(buf[0:n])
 		data := strings.Split(msg, "_")
@@ -202,7 +200,7 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 		if err == nil && ID != config.ELEVATOR_ID && ID <= config.NUMBER_OF_ELEVATORS {
 			ch_heartbeatmsg <- msg
 		} else {
-			fmt.Println("Networking: got a bad heartbeat message")
+			fmt.Println("Networking: got a bad heartbeat message " + msg)
 		}
 	}
 }
