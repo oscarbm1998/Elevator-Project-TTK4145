@@ -165,7 +165,7 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 		select {
 		case msg := <-ch_drv_floors:
 			elevator.floor = msg
-			//ch_update_elevator_node_placement <- "floor"
+			ch_update_elevator_node_placement <- "floor"
 			elevio.SetFloorIndicator(msg)
 			if last_floor == -1 {
 				last_floor = elevator.floor
