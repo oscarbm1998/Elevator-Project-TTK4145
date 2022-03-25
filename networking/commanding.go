@@ -56,10 +56,12 @@ func Send_command(ID, floor, direction int) (success bool) {
 				if msg == rbc {
 					fmt.Println("Networking: readback OK")
 					cmd_con.Write([]byte(strconv.Itoa(ID) + "_CMD_OK"))
+					ch_rbc_close <- true
 					success = true
 					goto Exit
 				} else if rbc == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_REJECT" { //Command rejected
 					fmt.Printf("Network: elevator rejected the command")
+					ch_rbc_close <- true
 					success = false
 					goto Exit
 				} else {
@@ -95,7 +97,6 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 	for {
 		select {
 		case <-ch_close:
-			con.Close()
 			goto Exit
 		default:
 			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
@@ -105,7 +106,6 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 					printError("Networking: command readback net error: ", err)
 				} else {
 					fmt.Println("Networking: Getting nothing on readback channel, so quitting")
-					con.Close()
 				}
 				goto Exit
 			}
@@ -114,7 +114,8 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 		}
 	}
 Exit:
-	defer con.Close()
+	fmt.Println("Networking: closing readback connection")
+	con.Close()
 }
 
 func command_listener(ch_netcommand chan elevio.ButtonEvent) {
