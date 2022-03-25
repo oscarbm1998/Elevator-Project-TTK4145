@@ -224,45 +224,46 @@ func Update_elevator_node(
 	ch_update_elevator_node_order chan update_elevator_node,
 	ch_remove_elevator_node_order chan update_elevator_node,
 ) {
-
-	updated_elevator_node := networking.Node_get_data(
-		config.ELEVATOR_ID,
-		ch_req_ID,
-		ch_req_data)
-	select {
-	case msg := <-ch_update_elevator_node_placement:
-		switch msg {
-		case "floor":
-			updated_elevator_node.Floor = elevator.floor
-		case "direction":
-			updated_elevator_node.Direction = elevator_command.direction
-		case "destination":
-			updated_elevator_node.Destination = elevator_command.floor
-		case "status":
-			updated_elevator_node.Status = 1
+	for {
+		updated_elevator_node := networking.Node_get_data(
+			config.ELEVATOR_ID,
+			ch_req_ID,
+			ch_req_data)
+		select {
+		case msg := <-ch_update_elevator_node_placement:
+			switch msg {
+			case "floor":
+				updated_elevator_node.Floor = elevator.floor
+			case "direction":
+				updated_elevator_node.Direction = elevator_command.direction
+			case "destination":
+				updated_elevator_node.Destination = elevator_command.floor
+			case "status":
+				updated_elevator_node.Status = 1
+			}
+			updated_elevator_node.ID = config.ELEVATOR_ID
+			//Samme for alt annet som må oppdaterers
+			ch_write_data <- updated_elevator_node
+		case msg := <-ch_update_elevator_node_order:
+			switch msg.command {
+			case "update order up":
+				updated_elevator_node.HallCalls[msg.update_value].Up = true
+			case "update order down":
+				updated_elevator_node.HallCalls[msg.update_value].Down = true
+			}
+			updated_elevator_node.ID = config.ELEVATOR_ID
+			//Samme for alt annet som må oppdaterers
+			ch_write_data <- updated_elevator_node
+		case msg := <-ch_remove_elevator_node_order:
+			switch msg.command {
+			case "remove order up":
+				updated_elevator_node.HallCalls[msg.update_value].Up = false
+			case "remove order down":
+				updated_elevator_node.HallCalls[msg.update_value].Down = false
+			}
+			updated_elevator_node.ID = config.ELEVATOR_ID
+			//Samme for alt annet som må oppdaterers
+			ch_write_data <- updated_elevator_node
 		}
-		updated_elevator_node.ID = config.ELEVATOR_ID
-		//Samme for alt annet som må oppdaterers
-		ch_write_data <- updated_elevator_node
-	case msg := <-ch_update_elevator_node_order:
-		switch msg.command {
-		case "update order up":
-			updated_elevator_node.HallCalls[msg.update_value].Up = true
-		case "update order down":
-			updated_elevator_node.HallCalls[msg.update_value].Down = true
-		}
-		updated_elevator_node.ID = config.ELEVATOR_ID
-		//Samme for alt annet som må oppdaterers
-		ch_write_data <- updated_elevator_node
-	case msg := <-ch_remove_elevator_node_order:
-		switch msg.command {
-		case "remove order up":
-			updated_elevator_node.HallCalls[msg.update_value].Up = false
-		case "remove order down":
-			updated_elevator_node.HallCalls[msg.update_value].Down = false
-		}
-		updated_elevator_node.ID = config.ELEVATOR_ID
-		//Samme for alt annet som må oppdaterers
-		ch_write_data <- updated_elevator_node
 	}
 }
