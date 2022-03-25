@@ -155,7 +155,6 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 				n, _, _ = cmd_con.ReadFrom(buf)
 				msg = string(buf[0:n])
 				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
-
 					//Pass the command to the elevator
 					switch direction {
 					case -1:
@@ -168,12 +167,14 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 					fmt.Println("Networking: got a command from elevator " + strconv.Itoa(from_ID))
 				}
 			}
-		} else if ID == 98 { //Announcement to everyone
+		} else if ID == 98 { //Announcement to everyone from someone
 			code := data[2]
 			if code == "DEAD" {
 				dead_ID, _ := strconv.Atoi(data[1])
 				reportedBy_ID, _ := strconv.Atoi(data[3])
-				fmt.Println("Networking: elevator " + strconv.Itoa(dead_ID) + " was found dead by elevator " + strconv.Itoa(reportedBy_ID))
+				if reportedBy_ID != config.ELEVATOR_ID {
+					fmt.Println("Networking: elevator " + strconv.Itoa(dead_ID) + " was found dead by elevator " + strconv.Itoa(reportedBy_ID))
+				}
 			}
 		}
 	}
