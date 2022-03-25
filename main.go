@@ -32,7 +32,7 @@ func main() {
 	ch_net_command := make(chan elevio.ButtonEvent)
 	ch_self_command := make(chan elevio.ButtonEvent)
 	ch_take_calls := make(chan int)
-	ch_hallCallsTot_updated := make(chan [6]int)
+	ch_hallCallsTot_updated := make(chan [config.NUMBER_OF_FLOORS]networking.HallCall)
 	//Networking
 	//Multiple data modueles to avoid a deadlock
 	var ch_req_ID [3]chan int
@@ -59,7 +59,7 @@ func main() {
 		ch_req_ID[1],
 		ch_req_data[1],
 		ch_write_data[1],
-		ch_hallCallsTot_updated) 
+		ch_hallCallsTot_updated)
 	go singleElevator.Hall_order(ch_new_order, ch_net_command, ch_self_command)
 	go ordering.Pass_to_network(
 		ch_drv_buttons,

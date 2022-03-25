@@ -7,6 +7,11 @@ import (
 	"strconv"
 )
 
+type HallCall struct {
+	Up   bool
+	Down bool
+}
+
 type Elevator_node struct {
 	Last_seen   string
 	ID          int
@@ -14,7 +19,7 @@ type Elevator_node struct {
 	Direction   int
 	Floor       int
 	Status      int
-	HallCalls   [6]int
+	HallCalls   [config.NUMBER_OF_FLOORS]HallCall
 }
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
@@ -24,7 +29,8 @@ func Main(
 	ch_new_data, ch_ext_dead, ch_take_calls chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
 	ch_net_command chan elevio.ButtonEvent,
-	ch_hallCallsTot_updated chan [6]int) {
+	ch_hallCallsTot_updated chan [config.NUMBER_OF_ELEVATORS]HallCall) {
+
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
 	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
 	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0], ch_hallCallsTot_updated)

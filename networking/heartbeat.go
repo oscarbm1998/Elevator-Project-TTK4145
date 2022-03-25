@@ -61,7 +61,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 func heartBeathandler(
 	ch_req_ID, ch_ext_dead, ch_new_data, ch_take_calls chan int,
 	ch_req_data, ch_write_data chan Elevator_node,
-	ch_hallCallsTot_updated chan [6]int) {
+	ch_hallCallsTot_updated chan [config.NUMBER_OF_ELEVATORS]HallCall) {
 
 	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
@@ -139,7 +139,10 @@ func heartBeathandler(
 
 //Timer, waiting for something to timeout. Run as a go routine, accessed through channels
 func heartbeatTimer(ID int, ch_foundDead, ch_timerReset, ch_timerStop chan int) {
-	timer := time.NewTimer(config.HEARTBEAT_TIME_OUT)
+	//Offset timeout based on elevator ID
+	var TIME_OUT = config.HEARTBEAT_TIMEOUT + 100*time.Millisecond*time.Duration(config.ELEVATOR_ID)
+
+	timer := time.NewTimer(TIME_OUT)
 	timer.Stop()
 	for {
 		select {
@@ -148,7 +151,7 @@ func heartbeatTimer(ID int, ch_foundDead, ch_timerReset, ch_timerStop chan int) 
 			timer.Stop()
 		case cmd_id := <-ch_timerReset:
 			if cmd_id == ID {
-				timer.Reset(config.HEARTBEAT_TIME_OUT)
+				timer.Reset(TIME_OUT)
 			}
 		case cmd_id := <-ch_timerStop:
 			if cmd_id == ID {
@@ -211,13 +214,14 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 	}
 }
 
-func update_HallCallsTot(ch_req_ID chan int, ch_req_data chan Elevator_node) (HallCallsTot [6]int) {
-	var Elevator [config.NUMBER_OF_ELEVATORS]Elevator_node
+//Updates a list of all the hallcalls currently being served
+func update_HallCallsTot(ch_req_ID chan int, ch_req_data chan Elevator_node) (HallCallsTot [config.NUMBER_OF_ELEVATORS]HallCall) {
+	var Elevator Elevator_node
 
-	for i := range Elevator {
-		Elevator[i] = Node_get_data(i+1, ch_req_ID, ch_req_data)
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
+		Elevator = Node_get_data(i+1, ch_req_ID, ch_req_data)
 		for k := range HallCallsTot {
-			if Elevator[i].HallCalls[k] == 1 {
+			if Elevator.HallCalls[k] == 1 {
 				HallCallsTot[k] = 1
 			}
 		}
