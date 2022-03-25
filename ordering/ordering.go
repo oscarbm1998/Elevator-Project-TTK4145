@@ -144,7 +144,7 @@ func master_tournament(floor int, direction int) {
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
-		if !(elev_overview[i].Status == 404) { //if the elevator is nonfunctional it is ignored
+		if !(elev_overview[i].Status != 0) { //if the elevator is nonfunctional it is ignored
 			//direction scoring
 			if direction == elev_overview[i].Direction { //if the elevators direction matches the input
 				placement[i].score += 3 //give 3 good boy points
