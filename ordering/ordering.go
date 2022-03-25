@@ -78,13 +78,17 @@ func Pass_to_network(
 	for {
 		select {
 		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
+			var dir int
 			switch a.Button {
 			case 0: //up
 				master_tournament(a.Floor, int(elevio.MD_Up))
+				dir = 1
 			case 1: //down
 				master_tournament(a.Floor, elevio.MD_Down)
+				dir = -1
 			case 2: //cab
 				ch_self_command <- a
+				dir = 0
 			}
 			sorting()                                         //calls the sorting algorithm to sort the elevator placements
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
@@ -109,8 +113,10 @@ func Pass_to_network(
 						var floor int
 						if elev_overview[i].HallCalls[e].Up {
 							master_tournament(e, 1) //runs a tournament with the parametres for up
+							dir = 1
 						} else if elev_overview[i].HallCalls[e].Down {
 							master_tournament(e, -1) //runs a tournament with the parametres for up
+							dir = -1
 						}
 						sorting() //runs the sorting algorithm
 						//again tries to send the results to the elevators
@@ -144,7 +150,7 @@ func master_tournament(floor int, direction int) {
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
-		if !(elev_overview[i].Status == 404) { //if the elevator is nonfunctional it is ignored
+		if !(elev_overview[i].Status != 0) { //if the elevator is nonfunctional it is ignored
 			//direction scoring
 			if direction == elev_overview[i].Direction { //if the elevators direction matches the input
 				placement[i].score += 3 //give 3 good boy points
