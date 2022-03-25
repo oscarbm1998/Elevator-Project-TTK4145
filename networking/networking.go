@@ -4,10 +4,13 @@ import (
 	config "PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
 	"fmt"
-	"net"
 	"strconv"
-	"time"
 )
+
+type HallCall struct {
+	Up   bool
+	Down bool
+}
 
 type Elevator_node struct {
 	Last_seen   string
@@ -16,7 +19,7 @@ type Elevator_node struct {
 	Direction   int
 	Floor       int
 	Status      int
-	HallCalls   [6]int
+	HallCalls   [config.NUMBER_OF_FLOORS]HallCall
 }
 
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
@@ -25,10 +28,12 @@ func Main(
 	ch_req_ID [3]chan int,
 	ch_new_data, ch_ext_dead, ch_take_calls chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
-	ch_net_command chan elevio.ButtonEvent) {
+	ch_net_command chan elevio.ButtonEvent,
+	ch_hallCallsTot_updated chan [config.NUMBER_OF_ELEVATORS]HallCall) {
+
 	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
 	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
-	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0])
+	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0], ch_hallCallsTot_updated)
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
 	go command_listener(ch_net_command)
 }
@@ -74,51 +79,9 @@ func Node_get_data(ID int, ch_req_ID chan int, ch_req_data chan Elevator_node) (
 	return nodeData
 }
 
-/*
-func network_main_observer(ch_main_observer chan string) {
-	//Initiate threads that listenes to messages on all ports
-	var ch_observers chan string
-	var ch_stuck, ch_reset, ch_stop chan int
-	for i := 1; i < config.NUMBER_OF_ELEVATORS; i++ {
-		go stuck_timer(i, ch_stuck, ch_reset, ch_stop)
+func printError(str string, err error) {
+	if err != nil {
+		fmt.Print(str)
+		fmt.Println(err)
 	}
-	ch_stop <- config.ELEVATOR_ID
-	for {
-		select {
-			case <-ch_stuck:
-				ch_main_observer <- strconv.Itoa(i)+ "_" +strconv.Itoa()
-			}
-		}
-	}
-}
-*/
-
-func stuck_timer(ID int, ch_stuck, ch_reset, ch_stop chan int) {
-	timer := time.NewTimer(config.ELEVATOR_STUCK_TIMOUT)
-	for {
-		select {
-		case <-timer.C:
-			ch_stuck <- ID
-		case <-ch_reset:
-			if <-ch_reset == ID {
-				timer.Reset(config.ELEVATOR_STUCK_TIMOUT)
-			}
-		case <-ch_stop:
-			if <-ch_stop == ID {
-				timer.Stop()
-			}
-		}
-
-	}
-}
-
-func revive_calls(ID int, ch_take_calls chan int) {
-	var msg, broadcast string
-	fmt.Println("Networking: Reviving elevator " + strconv.Itoa(ID) + ", taking his/her hall calls")
-	msg = "98_" + strconv.Itoa(ID) + "_DEAD_" + strconv.Itoa(config.ELEVATOR_ID)
-	broadcast = "255.255.255.255:" + strconv.Itoa(config.COMMAND_PORT)
-	network, _ := net.ResolveUDPAddr("udp", broadcast)
-	con, _ := net.DialUDP("udp", nil, network)
-	con.Write([]byte(msg))
-	ch_take_calls <- ID
 }
