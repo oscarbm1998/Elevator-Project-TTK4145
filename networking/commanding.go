@@ -184,8 +184,8 @@ func reject_command(direction, floor int) (reject bool) {
 	if Elevator_nodes[config.ELEVATOR_ID-1].Status != 0 {
 		fmt.Println("Reason for reject: my status is not 0")
 		return true
-	} else if floor < 0 || floor > config.NUMBER_OF_FLOORS || floor == Elevator_nodes[config.ELEVATOR_ID-1].Floor {
-		fmt.Println("Reason for reject: illigal floor")
+	} else if floor < 0 || floor > config.NUMBER_OF_FLOORS {
+		fmt.Println("Reason for reject: illigal floor, can't go to floor " + strconv.Itoa(floor))
 		return true
 	} else if floor == Elevator_nodes[config.ELEVATOR_ID-1].Floor {
 		fmt.Println("Reason for reject: I'm allready there")
