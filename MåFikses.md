@@ -2,3 +2,5 @@ Problem at hvis vi har to calls i samme etasje kan den svare ene, sjekke om det 
 den ikke får til å få melding om at den har kommet frem.
 
 Fiks slik at cab calls ikke alltid sjekker fra bunn men ser basert på rettning og nåværene plassering
+
+Reset direction når heisen ikke har flere ordre å service
