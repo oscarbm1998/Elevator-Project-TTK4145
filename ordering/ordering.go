@@ -97,7 +97,7 @@ func Pass_to_network(
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died
 				if elev_overview[i].ID == death_id { //found the elevator
 					for e := 0; e < 6; e++ { //checks all calls
-						var dir int
+						var dir int //creates temp variables
 						var floor int
 						if elev_overview[i].HallCalls[e] == 1 {
 							if e%2 == 0 { //the number is even so the dir is up
@@ -113,7 +113,7 @@ func Pass_to_network(
 							sorting()
 							for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
 								if elev_overview[score[c].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-									ch_self_command <- <-ch_drv_buttons
+									ch_self_command <- ch_drv_buttons
 									break
 								} else {
 									if networking.Send_command(elev_overview[score[c].placement].ID, floor, dir) {
