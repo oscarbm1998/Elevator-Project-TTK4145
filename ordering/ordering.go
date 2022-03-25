@@ -84,7 +84,7 @@ func Pass_to_network(
 			sorting()
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
 				if elev_overview[score[i].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-					ch_self_command <- <-ch_drv_buttons
+					ch_self_command <- ch_drv_buttons
 					break
 				} else {
 					if networking.Send_command(elev_overview[score[i].placement].ID, a.Floor, dir) {
