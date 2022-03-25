@@ -197,11 +197,13 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 		ID, err := strconv.Atoi(data[1])
 
 		//Checking weather the message is of the correct format and sending to Heartbeat Handler
-		if err == nil && ID != config.ELEVATOR_ID && ID <= config.NUMBER_OF_ELEVATORS {
-			ch_heartbeatmsg <- msg
-		} else {
+		if err != nil {
 			fmt.Println("Networking: got a bad heartbeat message " + msg)
 			printError("Got error: ", err)
+		} else {
+			if ID != config.ELEVATOR_ID && ID <= config.NUMBER_OF_ELEVATORS {
+				ch_heartbeatmsg <- msg
+			}
 		}
 	}
 }
