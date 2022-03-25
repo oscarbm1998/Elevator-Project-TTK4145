@@ -4,15 +4,16 @@ import (
 	"PROJECT-GROUP-10/config"
 	elevio "PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
+	"fmt"
 	"math"
 )
 
-type scoreboard struct {
-	elevator  int
-	placement int
+type score_tracker struct { //
+	score           int
+	elevator_number int
 }
 
-var score [config.NUMBER_OF_ELEVATORS]scoreboard
+var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 
 var elev_overview [config.NUMBER_OF_ELEVATORS]networking.Elevator_node
 
@@ -41,12 +42,16 @@ func sorting() {
 		var roundbest_index int                           //the strongest placement for this round
 		var bestscore int                                 //the strongest placement for this round
 		for i := p; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
-			if score[i].elevator > bestscore { //if the score surpasses the others
-				roundbest_index = i           //sets the new index
-				bestscore = score[i].elevator //sets the new best score
+			if placement[i].score > bestscore { //if the score surpasses the others
+				roundbest_index = i            //sets the new index
+				bestscore = placement[i].score //sets the new best score
 			}
 		}
-		score[p].placement = roundbest_index
+		placement[p].elevator_number = roundbest_index //sets the index of the highest scorer
+	}
+	//printing the sorting
+	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
+		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
 	}
 }
 
@@ -81,13 +86,16 @@ func Pass_to_network(
 				dir = 0
 				master_tournament(a.Floor, 0)
 			}
-			sorting()
+			sorting()                                         //calls the sorting algorithm to sort the elevator placements
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-				if elev_overview[score[i].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-					ch_self_command <- ch_drv_buttons
+				if elev_overview[placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+					fmt.Printf("own elevator won\n")
+					button_calls := <-ch_drv_buttons //this convertion is kinda fucky
+					ch_self_command <- button_calls
 					break
 				} else {
-					if networking.Send_command(elev_overview[score[i].placement].ID, a.Floor, dir) {
+					if networking.Send_command(elev_overview[placement[i].elevator_number].ID, a.Floor, dir) {
+						fmt.Printf("external elevator won\n")
 						break
 					}
 				}
@@ -112,11 +120,12 @@ func Pass_to_network(
 							}
 							sorting()
 							for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-								if elev_overview[score[c].placement].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-									ch_self_command <- ch_drv_buttons
+								if elev_overview[placement[c].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+									button_calls := <-ch_drv_buttons //this convertion is kinda fucky
+									ch_self_command <- button_calls
 									break
 								} else {
-									if networking.Send_command(elev_overview[score[c].placement].ID, floor, dir) {
+									if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
 										break
 										/*********************************
 										*		Welcome to Hell			 *
@@ -135,18 +144,18 @@ func Pass_to_network(
 func master_tournament(floor int, direction int) { //finds the most lucrative elevator
 	//resets scoring
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		score[i].elevator = 0
-		score[i].placement = 0
+		placement[i].score = 0
+		placement[i].elevator_number = 0
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
 		if !(elev_overview[i].Status == 404) {
 			//direction scoring
 			if direction == elev_overview[i].Direction {
-				score[i].elevator += 3
+				placement[i].score += 3
 			}
 			//placement scoring (with alot of conversion)
-			score[i].elevator += int(math.Abs(float64(elev_overview[i].Floor) - float64(floor)))
+			placement[i].score += int(math.Abs(float64(elev_overview[i].Floor) - float64(floor)))
 		}
 	}
 }
