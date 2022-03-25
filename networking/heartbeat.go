@@ -43,9 +43,18 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 			msg = msg + strconv.Itoa(node.Direction) + "_"
 			msg = msg + strconv.Itoa(node.Destination) + "_"
 			msg = msg + strconv.Itoa(node.Floor) + "_"
-			msg = msg + strconv.Itoa(node.Status) + "_"
+			msg = msg + strconv.Itoa(node.Status)
+
 			for i := range node.HallCalls {
-				msg = msg + strconv.Itoa(node.HallCalls[i]) + "_"
+				var up, down int = 0, 0
+				if node.HallCalls[i].Up {
+					up = 1
+				}
+				if node.HallCalls[i].Down {
+					down = 1
+				}
+				msg = msg + "_" + strconv.Itoa(up) + "_"
+				msg = msg + strconv.Itoa(down)
 			}
 
 			if HeartBeatLogger {
@@ -93,8 +102,24 @@ func heartBeathandler(
 			node_data.Destination, _ = strconv.Atoi(data[3])
 			node_data.Floor, _ = strconv.Atoi(data[4])
 			node_data.Status, _ = strconv.Atoi(data[5])
+			var k, up, down int
 			for i := range node_data.HallCalls {
-				node_data.HallCalls[i], _ = strconv.Atoi(data[6+i])
+				up, _ = strconv.Atoi(data[6+k])
+				k++
+				down, _ = strconv.Atoi(data[6+k])
+				k++
+				switch up {
+				case 1:
+					node_data.HallCalls[i].Up = true
+				case 0:
+					node_data.HallCalls[i].Up = false
+				}
+				switch down {
+				case 1:
+					node_data.HallCalls[i].Down = true
+				case 0:
+					node_data.HallCalls[i].Down = false
+				}
 			}
 			if HeartBeatLogger {
 				fmt.Println("Networking: Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
@@ -217,12 +242,14 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 //Updates a list of all the hallcalls currently being served
 func update_HallCallsTot(ch_req_ID chan int, ch_req_data chan Elevator_node) (HallCallsTot [config.NUMBER_OF_ELEVATORS]HallCall) {
 	var Elevator Elevator_node
-
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		Elevator = Node_get_data(i+1, ch_req_ID, ch_req_data)
-		for k := range HallCallsTot {
-			if Elevator.HallCalls[k] == 1 {
-				HallCallsTot[k] = 1
+	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
+		Elevator = Node_get_data(i, ch_req_ID, ch_req_data)
+		for k := range Elevator.HallCalls {
+			if Elevator.HallCalls[k].Up {
+				HallCallsTot[k].Up = true
+			}
+			if Elevator.HallCalls[k].Down {
+				HallCallsTot[k].Down = true
 			}
 		}
 	}
