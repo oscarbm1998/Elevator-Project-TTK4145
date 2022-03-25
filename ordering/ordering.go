@@ -151,17 +151,25 @@ func master_tournament(floor int, direction int) {
 }
 
 func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int) {
-	sorting()                                         //calls the sorting algorithm to sort the elevator placements
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-		if elev_overview[placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-			fmt.Printf("own elevator won\n")
-			button_calls := a //as the message needs to be passed between two channels we need a middle man
-			ch_self_command <- button_calls
-			break
-		} else { //if the call is not going to itself
-			if networking.Send_command(elev_overview[placement[i].elevator_number].ID, a.Floor, dir) { //send command to suitable external elevator
-				fmt.Printf("external elevator won\n")
-				break //if it succeds break the loop
+	sorting() //calls the sorting algorithm to sort the elevator placements
+	counter := 0
+	for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
+		if elev_overview[j].Floor == a.Floor {
+			counter++
+		}
+	}
+	if counter == 0 {
+		for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+			if elev_overview[placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+				fmt.Printf("own elevator won\n")
+				button_calls := a //as the message needs to be passed between two channels we need a middle man
+				ch_self_command <- button_calls
+				break
+			} else { //if the call is not going to itself
+				if networking.Send_command(elev_overview[placement[i].elevator_number].ID, a.Floor, dir) { //send command to suitable external elevator
+					fmt.Printf("external elevator won\n")
+					break //if it succeds break the loop
+				}
 			}
 		}
 	}
