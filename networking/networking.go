@@ -16,15 +16,16 @@ type HallCall struct {
 }
 
 type Elevator_node struct {
-	Last_seen   string
-	ID          int
-	Destination int
-	Direction   int
-	Floor       int
-	Status      int
-	HallCalls   [config.NUMBER_OF_FLOORS]HallCall
+	Last_seen   string                            //Date and time of the last heartbeat message
+	ID          int                               //Elevator ID
+	Destination int                               //Current destination
+	Direction   int                               //Current moving direction
+	Floor       int                               //Current floor
+	Status      int                               //Status variable. 404 = unreachable, 1 or 2 = stuck, 0 = OK
+	HallCalls   [config.NUMBER_OF_FLOORS]HallCall //Current hallcalls tasks
 }
 
+//Array with information from all the elevators
 var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 
 func Main(
@@ -41,10 +42,11 @@ func Main(
 	go command_listener(ch_net_command)
 }
 
-//Function responsible for node data. Works as a mutex for the resource
+//Function responsible for the Elevator_node resource
 func node_data_handler(
 	ch_req_ID [3]chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node) {
+
 	for {
 		select {
 		/*Handle data requests*/
