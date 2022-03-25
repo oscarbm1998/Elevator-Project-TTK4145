@@ -33,7 +33,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 		clock = strconv.Itoa(hour) + ":" + strconv.Itoa(minute) + ":" + strconv.Itoa(second)
 		msg = date + " " + clock + "_"
 
-		node = Node_get_data(ID, ch_req_ID, ch_req_data) //Requesting and getting the latest elevator
+		node = Node_get_data(ID, ch_req_ID, ch_req_data) //Requesting to acquire the latest elevator data
 
 		//Generating the heartbeat message
 		msg = msg + strconv.Itoa(ID) + "_"
@@ -68,15 +68,17 @@ func heartBeathandler(
 	ch_req_ID, ch_ext_dead, ch_new_data, ch_take_calls chan int,
 	ch_req_data, ch_write_data chan Elevator_node,
 	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) {
+	var node_data Elevator_node
+	var ch_timerReset, ch_timerStop [config.NUMBER_OF_ELEVATORS]chan bool
+
+	ch_heartbeatmsg := make(chan string) //Channel for received heartbeat messages
+	ch_foundDead := make(chan int)       //A timer that runs out will send it's ID here
 
 	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
-	ch_heartbeatmsg := make(chan string)
 	go heartbeat_UDPListener(ch_heartbeatmsg)
 
 	//Initiate heartbeat timers and channels for each elevator except for myself
-	var ch_timerReset, ch_timerStop [config.NUMBER_OF_ELEVATORS]chan bool
-	ch_foundDead := make(chan int)
 	fmt.Println("Networking: HB starting timers")
 	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
 		if i != config.ELEVATOR_ID {
@@ -86,7 +88,6 @@ func heartBeathandler(
 		}
 	}
 
-	var node_data Elevator_node
 	for {
 		select {
 		case msg := <-ch_heartbeatmsg:
@@ -137,7 +138,7 @@ func heartBeathandler(
 			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead")
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data) //Get the latest data to avoid overwrite
 			node_data.ID = msg_ID                                     //ID
-			node_data.Status = 404                                    //Set status to unreachable
+			node_data.Status = 404                                    //Set status to unreachable elevator
 			ch_write_data <- node_data                                //write
 
 			//Tell everyone that an elevator has died and that you are taking responsibility
@@ -182,7 +183,7 @@ func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timerStop c
 }
 
 //Listening for UDP heartbeat messages on port defined in config
-func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
+func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) {
 	buf := make([]byte, 1024)
 	var msg string
 	var port string = ":" + strconv.Itoa(config.HEARTBEAT_PORT)
