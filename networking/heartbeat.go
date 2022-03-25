@@ -53,11 +53,11 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 			msg = msg + "_" + strconv.Itoa(up) + "_"
 			msg = msg + strconv.Itoa(down)
 		}
-
-		if HeartBeatLogger {
-			fmt.Println("Networking: sending HB message " + msg)
-		}
-
+		/*
+			if HeartBeatLogger {
+				fmt.Println("Networking: sending HB message " + msg)
+			}
+		*/
 		con.Write([]byte(msg)) //Sending the message
 		timer.Reset(config.HEARTBEAT_TIME)
 
