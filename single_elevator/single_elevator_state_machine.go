@@ -48,9 +48,9 @@ func SingleElevatorFSM(
 	for {
 		select {
 		case <-ch_new_order:
+			update_elevator_node("update order", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
 			switch current_state {
 			case idle:
-				update_elevator_node("update order", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
 				if Request_next_action(elevator.direction) {
 					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
