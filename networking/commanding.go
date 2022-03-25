@@ -180,7 +180,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 
 }
 
-func reject_command(direction, floor int) (reject bool) {
+func reject_command(floor, direction int) (reject bool) {
 	if Elevator_nodes[config.ELEVATOR_ID-1].Status != 0 {
 		fmt.Println("Reason for reject: my status is not 0")
 		return true
