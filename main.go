@@ -58,7 +58,8 @@ func main() {
 		ch_drv_stop,
 		ch_req_ID[1],
 		ch_req_data[1],
-		ch_write_data[1])
+		ch_write_data[1],
+		ch_hallCallsTot_updated) 
 	go singleElevator.Hall_order(ch_new_order, ch_net_command, ch_self_command)
 	go ordering.Pass_to_network(
 		ch_drv_buttons,

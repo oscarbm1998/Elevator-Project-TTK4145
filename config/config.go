@@ -10,6 +10,7 @@ const (
 	SIMULATION_IP_AND_PORT string = ""
 	NUMBER_OF_FLOORS              = 4
 	NUMBER_OF_BUTTONS             = 3
+	NUMBER_OF_HALL_BUTTONS        = 6
 
 	UDP_S_R_PORT   = 20007
 	UDP_PEERS_PORT = 30007
