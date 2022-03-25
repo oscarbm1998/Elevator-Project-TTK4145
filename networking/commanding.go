@@ -34,11 +34,13 @@ func Send_command(ID, floor, direction int) (success bool) {
 	//Initiate readback connection and timer
 	ch_rbc_msg := make(chan string)
 	ch_rbc_close := make(chan bool)
-	go command_readback_listener(ch_rbc_msg, ch_rbc_close)
+	ch_rbc_listen := make(chan bool)
+	go command_readback_listener(ch_rbc_msg, ch_rbc_close, ch_rbc_listen)
 
 	//Send command
 	fmt.Println("Network: sending command " + cmd)
 	_, err := cmd_con.Write([]byte(cmd))
+	ch_rbc_listen <- true
 	printError("Networking: Error sending command: ", err)
 
 	//Starting a timer for timeout
@@ -67,6 +69,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 				} else {
 					fmt.Println("Networking: bad readback, sending command again")
 					_, err = cmd_con.Write([]byte(cmd))
+					ch_rbc_listen <- true
 					printError("Networking: Error sending command: ", err)
 					attempts++
 				}
@@ -89,16 +92,14 @@ Exit:
 	return success
 }
 
-func command_readback_listener(ch_msg chan string, ch_close chan bool) {
-	//network, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_RBC_PORT))
-	//con, _ := net.ListenUDP("udp", network)
-	con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
+func command_readback_listener(ch_msg chan<- string, ch_close, ch_rbc_listen <-chan bool) {
 	buf := make([]byte, 1024)
 	for {
 		select {
 		case <-ch_close:
 			goto Exit
-		default:
+		case <-ch_rbc_listen:
+			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
 			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
 			n, _, err := con.ReadFrom(buf)
 			if err != nil {
@@ -111,11 +112,11 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 			}
 			msg := string(buf[0:n])
 			ch_msg <- msg
+			con.Close()
 		}
 	}
 Exit:
-	fmt.Println("Networking: closing readback connection")
-	con.Close()
+	fmt.Println("Networking: closing readback listener")
 }
 
 func command_listener(ch_netcommand chan elevio.ButtonEvent) {
