@@ -21,6 +21,9 @@ func Send_command(ID, floor, direction int) (success bool) {
 	//Generate command
 	//Format: ToElevatorID_ToFloor_InDirection_FromElevatorID
 	cmd = strconv.Itoa(ID) + "_" + strconv.Itoa(floor) + "_" + strconv.Itoa(direction) + "_" + strconv.Itoa(config.ELEVATOR_ID)
+
+	//Expected readback
+	//Format: fromElevatorID_ToFloor_InDirection_toElevatorID
 	rbc = strconv.Itoa(config.ELEVATOR_ID) + "_" + strconv.Itoa(floor) + "_" + strconv.Itoa(direction) + "_" + strconv.Itoa(ID)
 
 	//Initiate command broadcast connection
@@ -32,6 +35,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 	ch_rbc_msg := make(chan string)
 	ch_rbc_close := make(chan bool)
 	go command_readback_listener(ch_rbc_msg, ch_rbc_close)
+
 	//Send command
 	fmt.Println("Network: sending command " + cmd)
 	_, err := cmd_con.Write([]byte(cmd))
@@ -93,7 +97,7 @@ func command_readback_listener(ch_msg chan string, ch_close chan bool) {
 			con.Close()
 			goto Exit
 		default:
-			con.SetReadDeadline(time.Now().Add(3 * time.Second))
+			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Connection with a timeout
 			n, _, err := con.ReadFromUDP(buf)
 			if err != nil {
 				if e, ok := err.(net.Error); !ok || e.Timeout() {
