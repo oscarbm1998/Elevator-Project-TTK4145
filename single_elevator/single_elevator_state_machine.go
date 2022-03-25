@@ -50,6 +50,7 @@ func SingleElevatorFSM(
 		case <-ch_new_order:
 			switch current_state {
 			case idle:
+				update_elevator_node("update order", elevator_command.floor, ch_req_ID, ch_req_data, ch_write_data)
 				if Request_next_action(elevator.direction) {
 					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
@@ -174,16 +175,24 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) {
 	for {
 		msg := <-ch_hallCallsTot_updated
+		/*
+			for j := 0; j < config.NUMBER_OF_FLOORS; j++ {
+				fmt.Printf("%v", msg[j].Up)
+				fmt.Printf("  %v\n", msg[j].Down)
+
+			}
+			fmt.Printf("--------\n")
+		*/
 		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
 			if msg[i].Up {
-				elevio.SetButtonLamp(0, i, true)
+				elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
 			} else {
-				elevio.SetButtonLamp(0, i, false)
+				elevio.SetButtonLamp(elevio.BT_HallUp, i, false)
 			}
 			if msg[i].Down {
-				elevio.SetButtonLamp(1, i, true)
+				elevio.SetButtonLamp(elevio.BT_HallDown, i, true)
 			} else {
-				elevio.SetButtonLamp(1, i, false)
+				elevio.SetButtonLamp(elevio.BT_HallDown, i, false)
 			}
 		}
 	}
@@ -215,6 +224,12 @@ func update_elevator_node(
 		updated_elevator_node.Destination = value
 	case "status":
 		updated_elevator_node.Status = value
+	case "update order":
+		if elevator_command.direction == 1 {
+			updated_elevator_node.HallCalls[value].Up = true
+		} else {
+			updated_elevator_node.HallCalls[value].Down = true
+		}
 	case "remove order":
 		if elevator_command.direction == 1 {
 			updated_elevator_node.HallCalls[value].Up = false

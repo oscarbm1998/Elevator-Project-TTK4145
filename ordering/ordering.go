@@ -34,7 +34,8 @@ func heartbeat_monitor(
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //runs a loop
 				lighthouse := networking.Node_get_data(id, ch_req_ID, ch_req_data) //sets the "lighthouse" as a middle man as node get data only updates one elevator at a time
 				elev_overview[i] = lighthouse                                      //updates elev_overview with the new data
-				fmt.Printf("")
+				lighthouse = networking.Node_get_data(1, ch_req_ID, ch_req_data)   //sets the "lighthouse" as a middle man as node get data only updates one elevator at a time
+				elev_overview[1] = lighthouse                                      //updates elev_overview with the new data
 			}
 		}
 	}

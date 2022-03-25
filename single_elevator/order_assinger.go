@@ -55,10 +55,8 @@ func Hall_order(
 		select {
 		case a := <-ch_net_command:
 			if (floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor) {
-				//do nuffin as the order already exists
 				fmt.Printf("orders already exists\n")
-				//Remove_order(a.Floor, a.Floor)
-			} else { //do shit
+			} else {
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
 					floor[a.Floor].up = true
