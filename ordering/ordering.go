@@ -88,7 +88,7 @@ func Pass_to_network(
 				master_tournament(a.Floor, -1)
 			case 2: //cab
 				dir = 0
-				master_tournament(a.Floor, 0)
+				ch_self_command <- a
 			}
 			sorting()                                         //calls the sorting algorithm to sort the elevator placements
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
