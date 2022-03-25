@@ -138,7 +138,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 		data := strings.Split(msg, "_")
 		ID, _ := strconv.Atoi(data[0])
 
-		if ID == config.ELEVATOR_ID { //Command for me
+		if ID == config.ELEVATOR_ID { //Command is addressed to me
 			floor, _ := strconv.Atoi(data[1])
 			direction, _ := strconv.Atoi(data[2])
 			from_ID, _ := strconv.Atoi(data[3])
@@ -168,7 +168,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 					fmt.Println("Networking: got a command from elevator " + strconv.Itoa(from_ID))
 				}
 			}
-		} else if ID == 98 { //Announcement
+		} else if ID == 98 { //Announcement to everyone
 			code := data[2]
 			if code == "DEAD" {
 				dead_ID, _ := strconv.Atoi(data[1])
@@ -181,12 +181,9 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 }
 
 func reject_command(direction, floor int) (reject bool) {
-	/*
-		if Elevator_nodes[config.ELEVATOR_ID-1].Status == 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS {
-			return true
-		} else {
-			return false
-		}
-	*/
-	return false
+	if Elevator_nodes[config.ELEVATOR_ID-1].Status != 0 || floor < 0 || floor > config.NUMBER_OF_FLOORS || floor == Elevator_nodes[config.ELEVATOR_ID-1].Floor {
+		return true
+	} else {
+		return false
+	}
 }
