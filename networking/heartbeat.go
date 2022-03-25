@@ -201,6 +201,7 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan string) {
 			ch_heartbeatmsg <- msg
 		} else {
 			fmt.Println("Networking: got a bad heartbeat message " + msg)
+			printError("Got error: ", err)
 		}
 	}
 }
