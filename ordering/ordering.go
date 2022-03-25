@@ -111,32 +111,24 @@ func Pass_to_network(
 					for e := 0; e < 6; e++ { //checks all calls by running a
 						var dir int //creates temp variables
 						var floor int
-						if elev_overview[i].HallCalls[e] == 1 { //if a hall call is found
-							//here we need to run a distinction algorithm to determine direction to be able to run the tournament
-							if e%2 == 0 { //the number is even so the dir is up
-								dir = 1                     //sets the tempdir to up
-								floor = e / 2               //finds the correct floor
-								master_tournament(floor, 1) //runs a tournament with the new
-								//this shit may cause errors as i am unshure if everyone is cool with floors starting at 0
-							} else { //the number is odd so the dir is down
-								dir = -1                     //sets the tempdir down
-								floor = (e - 1) / 2          //finds the floor
-								master_tournament(floor, -1) //sets the dir down
-							}
-							sorting() //runs the sorting algorithm
-							//again tries to send the results to the elevators
-							for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-								if elev_overview[placement[c].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-									button_calls := <-ch_drv_buttons //again the convertion is needed as it is between channels
-									ch_self_command <- button_calls
+						if elev_overview[i].HallCalls[e].Up {
+							master_tournament(e, 1) //runs a tournament with the parametres for up
+						} else if elev_overview[i].HallCalls[e].Down {
+							master_tournament(e, -1) //runs a tournament with the parametres for up
+						}
+						sorting() //runs the sorting algorithm
+						//again tries to send the results to the elevators
+						for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+							if elev_overview[placement[c].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+								button_calls := <-ch_drv_buttons //again the convertion is needed as it is between channels
+								ch_self_command <- button_calls
+								break
+							} else {
+								if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
 									break
-								} else {
-									if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
-										break
-										/*********************************
-										*		Welcome to Hell			 *
-										*********************************/
-									}
+									/*********************************
+									*		Welcome to Hell			 *
+									*********************************/
 								}
 							}
 						}
