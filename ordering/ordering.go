@@ -78,16 +78,12 @@ func Pass_to_network(
 	for {
 		select {
 		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
-			var dir int
 			switch a.Button {
 			case 0: //up
-				dir = 1
-				master_tournament(a.Floor, 1)
+				master_tournament(a.Floor, int(elevio.MD_Up))
 			case 1: //down
-				dir = -1
-				master_tournament(a.Floor, -1)
+				master_tournament(a.Floor, elevio.MD_Down)
 			case 2: //cab
-				dir = 0
 				ch_self_command <- a
 			}
 			sorting()                                         //calls the sorting algorithm to sort the elevator placements
