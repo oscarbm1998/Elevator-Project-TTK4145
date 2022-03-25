@@ -111,7 +111,13 @@ func Pass_to_network(
 								if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
 									break
 									/*********************************
-									*		Welcome to Hell			 *
+									*		Welcome to Hell
+												───▄▄▄
+												─▄▀░▄░▀▄
+												─█░█▄▀░█
+												─█░▀▄▄▀█▄█▄▀
+												▄▄█▄▄▄▄███▀
+
 									*********************************/
 								}
 							}
