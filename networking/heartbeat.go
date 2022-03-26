@@ -210,15 +210,16 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) {
 
 //Returns an array of all the hallcalls currently being served
 func update_HallCallsTot(ch_req_ID chan int, ch_req_data chan Elevator_node) (HallCallsTot [config.NUMBER_OF_FLOORS]HallCall) {
-	var Elevator Elevator_node
-	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
-		Elevator = Node_get_data(i, ch_req_ID, ch_req_data)
-		for k := range Elevator.HallCalls {
-			if Elevator.HallCalls[k].Up {
-				HallCallsTot[k].Up = true
-			}
-			if Elevator.HallCalls[k].Down {
-				HallCallsTot[k].Down = true
+	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ { //For each elevaotr
+		Elevator := Node_get_data(i, ch_req_ID, ch_req_data) //Get data
+		if Elevator.Status == 0 {                            //Ignore elevators with error
+			for k := range Elevator.HallCalls {
+				if Elevator.HallCalls[k].Up {
+					HallCallsTot[k].Up = true
+				}
+				if Elevator.HallCalls[k].Down {
+					HallCallsTot[k].Down = true
+				}
 			}
 		}
 	}
