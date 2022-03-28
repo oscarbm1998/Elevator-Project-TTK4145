@@ -62,7 +62,6 @@ func SingleElevatorFSM(
 	for {
 		select {
 		case <-ch_new_order:
-			fmt.Printf("Came to new order")
 			switch current_state {
 			case idle:
 				if Request_next_action(elevator.direction) {

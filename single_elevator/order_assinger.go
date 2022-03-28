@@ -144,8 +144,8 @@ func request_here() bool {
 func request_below() bool { //checks if there are any active calls below the elevator and updates the "command struct"
 	for i := elevator.floor - 1; i >= 0; i-- { //checks from the last known floor of the elevator to the botton
 		if floor[i].down || floor[i].up { //if a floor with call down is found
-			elevator_command.floor = i      //updates the command value
-			elevator_command.direction = -1 //sets the direction down just in case
+			elevator_command.floor = i                       //updates the command value
+			elevator_command.direction = int(elevio.MD_Down) //sets the direction down just in case
 			return true
 		}
 	}
@@ -153,6 +153,29 @@ func request_below() bool { //checks if there are any active calls below the ele
 }
 
 func request_cab() bool { //tad unshure if this is needed or not but its used for internal calls
+
+	//Skrive en funksjon som gjør et par ting:
+	//1. Hvis rettning er oppover, sjekk fra current floor og så opp
+	//2. Hvis rettning er ned sjekk nedover fra current floor og så videre ned
+	// if elevator_command.direction == int(elevio.MD_Up) {
+	// 	for i := elevator.floor; i < config.NUMBER_OF_FLOORS; i++ {
+	// 		if floor[i].cab { //if a floor with call up is found
+	// 			elevator_command.floor = i                     //updates the command value
+	// 			elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
+	// 			return true
+	// 		}
+	// 	}
+	// }
+	// if elevator_command.direction == int(elevio.MD_Down) {
+	// 	for i := elevator.floor; i > 0; i-- {
+	// 		if floor[i].cab { //if a floor with call up is found
+	// 			elevator_command.floor = i                     //updates the command value
+	// 			elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
+	// 			return true
+	// 		}
+	// 	}
+	// }
+	// return false
 	for i := 0; i < config.NUMBER_OF_FLOORS; i++ { //checks the entire struct for calls
 		if floor[i].cab { //if a call is found
 			elevator_command.floor = i //update command struct
