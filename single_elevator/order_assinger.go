@@ -157,37 +157,37 @@ func request_cab() bool { //tad unshure if this is needed or not but its used fo
 	//Skrive en funksjon som gjør et par ting:
 	//1. Hvis rettning er oppover, sjekk fra current floor og så opp
 	//2. Hvis rettning er ned sjekk nedover fra current floor og så videre ned
-	// if elevator_command.direction == int(elevio.MD_Up) {
-	// 	for i := elevator.floor; i < config.NUMBER_OF_FLOORS; i++ {
-	// 		if floor[i].cab { //if a floor with call up is found
-	// 			elevator_command.floor = i                     //updates the command value
-	// 			elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
-	// 			return true
-	// 		}
-	// 	}
-	// }
-	// if elevator_command.direction == int(elevio.MD_Down) {
-	// 	for i := elevator.floor; i > 0; i-- {
-	// 		if floor[i].cab { //if a floor with call up is found
-	// 			elevator_command.floor = i                     //updates the command value
-	// 			elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
-	// 			return true
-	// 		}
-	// 	}
-	// }
-	// return false
-	for i := 0; i < config.NUMBER_OF_FLOORS; i++ { //checks the entire struct for calls
-		if floor[i].cab { //if a call is found
-			elevator_command.floor = i //update command struct
-			if i > elevator.floor {    //set direction
-				elevator_command.direction = int(elevio.MD_Up)
-			} else {
-				elevator_command.direction = int(elevio.MD_Down)
+	if elevator_command.direction == int(elevio.MD_Up) {
+		for i := elevator.floor; i < config.NUMBER_OF_FLOORS; i++ {
+			if floor[i].cab { //if a floor with call up is found
+				elevator_command.floor = i                     //updates the command value
+				elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
+				return true
 			}
-			return true
+		}
+	}
+	if elevator_command.direction == int(elevio.MD_Down) {
+		for i := elevator.floor; i > 0; i-- {
+			if floor[i].cab { //if a floor with call up is found
+				elevator_command.floor = i                     //updates the command value
+				elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
+				return true
+			}
 		}
 	}
 	return false
+	// for i := 0; i < config.NUMBER_OF_FLOORS; i++ { //checks the entire struct for calls
+	// 	if floor[i].cab { //if a call is found
+	// 		elevator_command.floor = i //update command struct
+	// 		if i > elevator.floor {    //set direction
+	// 			elevator_command.direction = int(elevio.MD_Up)
+	// 		} else {
+	// 			elevator_command.direction = int(elevio.MD_Down)
+	// 		}
+	// 		return true
+	// 	}
+	// }
+	// return false
 }
 
 func Request_next_action(direction int) bool {
