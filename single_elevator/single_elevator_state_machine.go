@@ -94,7 +94,6 @@ func SingleElevatorFSM(
 				elevio.SetDoorOpenLamp(true)
 				ch_door_timer_reset <- true
 				current_state = doorOpen
-				elevator_command.floor = elevator.floor
 			case moving:
 				fmt.Printf("Arrived at floor %+v\n", elevator_command.floor)
 				elevio.SetMotorDirection(elevio.MD_Stop)
