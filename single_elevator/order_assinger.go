@@ -3,7 +3,6 @@ package singleElevator
 import (
 	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
-	"fmt"
 )
 
 type elevator_status struct {
@@ -101,9 +100,7 @@ func Hall_order(
 			}
 		case a := <-ch_self_command:
 			if (floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor) {
-				//do nuffin as the order already exists
-				fmt.Printf("orders already exists\n")
-				//Remove_order(a.Floor, a.Floor)
+				ch_elevator_has_arrived <- true
 			} else { //do shit
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
