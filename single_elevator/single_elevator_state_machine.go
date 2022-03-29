@@ -15,7 +15,7 @@ const (
 	doorOpen
 )
 
-type update_elevator_node struct { //this struct keeps track of the score and what elevator the socre belongs to
+type update_elevator_node struct { 
 	command      string
 	update_value int
 }
