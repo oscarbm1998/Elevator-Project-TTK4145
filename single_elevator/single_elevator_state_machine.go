@@ -47,7 +47,7 @@ func SingleElevatorFSM(
 	ch_update_elevator_node_placement := make(chan string)
 	ch_update_elevator_node_order := make(chan update_elevator_node)
 	ch_remove_elevator_node_order := make(chan update_elevator_node)
-	go Hall_order(ch_new_order, ch_net_command, ch_self_command, ch_update_elevator_node_order, ch_remove_elevator_node_order)
+	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_net_command, ch_self_command, ch_update_elevator_node_order, ch_remove_elevator_node_order)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_update_elevator_node_placement)
@@ -127,6 +127,8 @@ func SingleElevatorFSM(
 					} else {
 						fmt.Printf("No new orders, returning to idle\n")
 						current_state = idle
+						elevator_command.direction = 0
+						ch_update_elevator_node_placement <- "direction"
 					}
 				}
 			}
