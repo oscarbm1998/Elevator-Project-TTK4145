@@ -91,10 +91,10 @@ func SingleElevatorFSM(
 			switch current_state {
 			case idle:
 				fmt.Printf("Elevator already here, opening door\n")
-				elevator_command.floor = elevator.floor
 				elevio.SetDoorOpenLamp(true)
 				ch_door_timer_reset <- true
 				current_state = doorOpen
+				elevator_command.floor = elevator.floor
 			case moving:
 				fmt.Printf("Arrived at floor %+v\n", elevator_command.floor)
 				elevio.SetMotorDirection(elevio.MD_Stop)
@@ -104,8 +104,6 @@ func SingleElevatorFSM(
 				ch_elev_stuck_timer_stop <- true
 				Update_position(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order) //Bytt navn ?
 				current_state = doorOpen
-			default:
-				fmt.Printf("Arrived at floor outside of state moving. Something is wrong")
 			}
 		case <-ch_door_timer_out:
 			fmt.Printf("Door time out detected\n")
