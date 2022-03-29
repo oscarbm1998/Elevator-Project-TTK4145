@@ -159,7 +159,7 @@ func master_tournament(floor int, direction int) {
 			}
 			//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
 			//this means that the closer the elevator is the higher the score
-			placement[i].score += (4 - int(math.Abs(float64(elev_overview[i].Floor)-float64(floor))))
+			placement[i].score += (3 - int(math.Abs(float64(elev_overview[i].Floor-floor))))
 		}
 	}
 }
