@@ -113,7 +113,7 @@ func Pass_to_network(
 							temp_button_event.Button = 1
 							temp_button_event.Floor = e
 							Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
-						} 
+						}
 						//has to be this way otherwise it wont catch both instances
 						if elev_overview[i].HallCalls[e].Down {
 							master_tournament(e, -1) //runs a tournament with the parametres for up
@@ -128,16 +128,15 @@ func Pass_to_network(
 	}
 }
 
-				/*********************************
-				*		Welcome to Hell
-							───▄▄▄
-							─▄▀░▄░▀▄
-							─█░█▄▀░█
-							─█░▀▄▄▀█▄█▄▀
-							▄▄█▄▄▄▄███▀
+/*********************************
+*		Welcome to Hell
+			───▄▄▄
+			─▄▀░▄░▀▄
+			─█░█▄▀░█
+			─█░▀▄▄▀█▄█▄▀
+			▄▄█▄▄▄▄███▀
 
-				*********************************/
-
+*********************************/
 
 //a function that scores all the elevators based on two inputs: floor and direction
 func master_tournament(floor int, direction int) {
@@ -212,4 +211,28 @@ for e := 0; e < 6; e++ { //checks all calls by running a
 		}
 	}
 }
+*/
+
+/*
+              ██████          
+            ██▒▒▒▒▒▒██        
+          ██▓▓▓▓▓▓▒▒██        
+          ██▓▓▒▒▒▒▒▒▒▒██      
+        ██░░      ▒▒    ██    
+        ██░░  ████░░██  ░░██  
+      ████░░  ████░░██  ░░██  
+      ██▓▓▒▒▒▒░░░░▒▒░░▓▓▒▒██  
+      ██▓▓▒▒▒▒▒▒░░░░░░▓▓▒▒██  
+    ██▓▓████████░░░░░░████    
+  ██▓▓▓▓██▓▓▓▓████████▓▓██    
+██▓▓▓▓██▓▓▒▒▒▒██▓▓▓▓▓▓██▓▓██  
+██▓▓██▓▓▒▒▒▒▒▒██▒▒▒▒░░▓▓▒▒▓▓██
+██▓▓██▓▓▒▒▒▒▒▒██▒▒░░██▓▓▒▒▓▓██
+██▓▓██▓▓▒▒▒▒▒▒▒▒████▓▓▓▓▒▒▓▓██
+██▓▓██▓▓▒▒▒▒▒▒▒▒▒▒██░░▒▒▒▒▓▓██
+██░░██░░▒▒▒▒░░░░░░████░░░░░░██
+  ██████░░░░░░██░░██  ██████  
+        ██████████            
+
+
 */
