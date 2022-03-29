@@ -187,10 +187,11 @@ func reject_command(floor, direction int) (reject bool) {
 	} else if floor < 0 || floor > config.NUMBER_OF_FLOORS {
 		fmt.Println("Reason for reject: illigal floor, can't go to floor " + strconv.Itoa(floor))
 		return true
-	} else if floor == Elevator_nodes[config.ELEVATOR_ID-1].Floor {
-		fmt.Println("Reason for reject: I'm allready there")
-		return true
 	} else {
 		return false
 	}
 }
+
+//else if floor == Elevator_nodes[config.ELEVATOR_ID-1].Floor {
+//fmt.Println("Reason for reject: I'm allready there")
+//return true
