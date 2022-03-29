@@ -15,7 +15,7 @@ const (
 	doorOpen
 )
 
-type update_elevator_node struct { 
+type update_elevator_node struct {
 	command      string
 	update_value int
 }
@@ -185,14 +185,6 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) { //Might be better to go this to reduce amount of necessary code
 	for {
 		msg := <-ch_hallCallsTot_updated
-		/*
-			for j := 0; j < config.NUMBER_OF_FLOORS; j++ {
-				fmt.Printf("%v", msg[j].Up)
-				fmt.Printf("  %v\n", msg[j].Down)
-
-			}
-			fmt.Printf("--------\n")
-		*/
 		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
 			if msg[i].Up {
 				elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
