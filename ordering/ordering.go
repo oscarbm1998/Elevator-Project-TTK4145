@@ -77,11 +77,19 @@ func Pass_to_network(
 			case 0: //up
 				master_tournament(a.Floor, int(elevio.MD_Up))
 				dir := 1
-				Send_to_best_elevator(ch_self_command, a, dir)
+				if config.NUMBER_OF_ELEVATORS >= 2 {
+					Send_to_best_elevator(ch_self_command, a, dir)
+				} else {
+					ch_self_command <- a
+				}
 			case 1: //down
 				master_tournament(a.Floor, elevio.MD_Down)
 				dir := -1
-				Send_to_best_elevator(ch_self_command, a, dir)
+				if config.NUMBER_OF_ELEVATORS >= 2 {
+					Send_to_best_elevator(ch_self_command, a, dir)
+				} else {
+					ch_self_command <- a
+				}
 			case 2: //cab
 				fmt.Print("Cab call found\n")
 				ch_self_command <- a
