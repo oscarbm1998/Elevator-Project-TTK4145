@@ -106,37 +106,20 @@ func Pass_to_network(
 			fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died in the internal overwiew struct
 				if elev_overview[i].ID == death_id { //found the elevator
-					for e := 0; e < 6; e++ { //checks all calls by running a
-						var dir int //creates temp variables
-						var floor int
+					var temp_button_event elevio.ButtonEvent //defines a temporary button event in order to reuse a command
+					for e := 0; e < config.NUMBER_OF_FLOORS; e++ {
 						if elev_overview[i].HallCalls[e].Up {
 							master_tournament(e, 1) //runs a tournament with the parametres for up
-							dir = 1
-						} else if elev_overview[i].HallCalls[e].Down {
-							master_tournament(e, -1) //runs a tournament with the parametres for up
-							dir = -1
+							temp_button_event.Button = 1
+							temp_button_event.Floor = e
+							Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
 						}
-						sorting() //runs the sorting algorithm
-						//again tries to send the results to the elevators
-						for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-							if elev_overview[placement[c].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-								button_calls := <-ch_drv_buttons //again the convertion is needed as it is between channels
-								ch_self_command <- button_calls
-								break
-							} else {
-								if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
-									break
-									/*********************************
-									*		Welcome to Hell
-												───▄▄▄
-												─▄▀░▄░▀▄
-												─█░█▄▀░█
-												─█░▀▄▄▀█▄█▄▀
-												▄▄█▄▄▄▄███▀
-
-									*********************************/
-								}
-							}
+						//has to be this way otherwise it wont catch both instances
+						if elev_overview[i].HallCalls[e].Down {
+							master_tournament(e, -1) //runs a tournament with the parametres for up
+							temp_button_event.Button = -1
+							temp_button_event.Floor = e
+							Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
 						}
 					}
 				}
@@ -144,6 +127,16 @@ func Pass_to_network(
 		}
 	}
 }
+
+/*********************************
+*		Welcome to Hell
+			───▄▄▄
+			─▄▀░▄░▀▄
+			─█░█▄▀░█
+			─█░▀▄▄▀█▄█▄▀
+			▄▄█▄▄▄▄███▀
+
+*********************************/
 
 //a function that scores all the elevators based on two inputs: floor and direction
 func master_tournament(floor int, direction int) {
@@ -191,3 +184,55 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 		}
 	}
 }
+
+/*
+for e := 0; e < 6; e++ { //checks all calls by running a
+	var dir int //creates temp variables
+	var floor int
+	if elev_overview[i].HallCalls[e].Up {
+		master_tournament(e, 1) //runs a tournament with the parametres for up
+		dir = 1
+	} else if elev_overview[i].HallCalls[e].Down {
+		master_tournament(e, -1) //runs a tournament with the parametres for up
+		dir = -1
+	}
+	sorting() //runs the sorting algorithm
+	//again tries to send the results to the elevators
+	for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+		if elev_overview[placement[c].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+			button_calls := <-ch_drv_buttons //again the convertion is needed as it is between channels
+			ch_self_command <- button_calls
+			break
+		} else {
+			if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
+				break
+
+			}
+		}
+	}
+}
+*/
+
+/*
+              ██████          
+            ██▒▒▒▒▒▒██        
+          ██▓▓▓▓▓▓▒▒██        
+          ██▓▓▒▒▒▒▒▒▒▒██      
+        ██░░      ▒▒    ██    
+        ██░░  ████░░██  ░░██  
+      ████░░  ████░░██  ░░██  
+      ██▓▓▒▒▒▒░░░░▒▒░░▓▓▒▒██  
+      ██▓▓▒▒▒▒▒▒░░░░░░▓▓▒▒██  
+    ██▓▓████████░░░░░░████    
+  ██▓▓▓▓██▓▓▓▓████████▓▓██    
+██▓▓▓▓██▓▓▒▒▒▒██▓▓▓▓▓▓██▓▓██  
+██▓▓██▓▓▒▒▒▒▒▒██▒▒▒▒░░▓▓▒▒▓▓██
+██▓▓██▓▓▒▒▒▒▒▒██▒▒░░██▓▓▒▒▓▓██
+██▓▓██▓▓▒▒▒▒▒▒▒▒████▓▓▓▓▒▒▓▓██
+██▓▓██▓▓▒▒▒▒▒▒▒▒▒▒██░░▒▒▒▒▓▓██
+██░░██░░▒▒▒▒░░░░░░████░░░░░░██
+  ██████░░░░░░██░░██  ██████  
+        ██████████            
+
+
+*/
