@@ -73,11 +73,17 @@ func Pass_to_network(
 	for {
 		select {
 		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
+			var number_of_alive_elevs int                     //keeps track of the number of elevators alive
+			for y := 0; y < config.NUMBER_OF_ELEVATORS; y++ { //cycles all elevators
+				if elev_overview[y].Status != 404 { //if the elevator is not dead
+					number_of_alive_elevs++
+				}
+			}
 			switch a.Button {
 			case 0: //up
 				master_tournament(a.Floor, int(elevio.MD_Up))
 				dir := 1
-				if config.NUMBER_OF_ELEVATORS >= 2 {
+				if number_of_alive_elevs >= 2 {
 					Send_to_best_elevator(ch_self_command, a, dir)
 				} else {
 					ch_self_command <- a
@@ -85,7 +91,7 @@ func Pass_to_network(
 			case 1: //down
 				master_tournament(a.Floor, elevio.MD_Down)
 				dir := -1
-				if config.NUMBER_OF_ELEVATORS >= 2 {
+				if number_of_alive_elevs >= 2 {
 					Send_to_best_elevator(ch_self_command, a, dir)
 				} else {
 					ch_self_command <- a
