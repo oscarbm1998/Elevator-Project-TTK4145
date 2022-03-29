@@ -72,16 +72,18 @@ func Remove_order(level int, direction int, ch_remove_elevator_node_order chan u
 
 func Hall_order(
 	ch_new_order chan bool,
+	ch_elevator_has_arrived chan bool,
 	ch_net_command chan elevio.ButtonEvent,
 	ch_self_command chan elevio.ButtonEvent,
 	ch_update_elevator_node_order chan update_elevator_node,
 	ch_remove_elevator_node_order chan update_elevator_node,
 ) {
+
 	for {
 		select {
 		case a := <-ch_net_command:
 			if (floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor) {
-				fmt.Printf("orders already exists\n")
+				ch_elevator_has_arrived <- true
 			} else {
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
@@ -163,7 +165,7 @@ func request_cab() bool { //tad unshure if this is needed or not but its used fo
 	//1. Hvis rettning er oppover, sjekk fra current floor og så opp
 	//2. Hvis rettning er ned sjekk nedover fra current floor og så videre ned
 	/*
-		fmt.Printf("Direction is %v", elevator.direction)
+		fmt.Printf("Direction is %v", elevator_command.direction)
 		if elevator_command.direction == int(elevio.MD_Up) {
 			for i := elevator.floor; i < config.NUMBER_OF_FLOORS; i++ {
 				if floor[i].cab { //if a floor with call up is found
@@ -173,11 +175,11 @@ func request_cab() bool { //tad unshure if this is needed or not but its used fo
 				}
 			}
 		}
-		if elevator.direction == int(elevio.MD_Down) {
-			for i := elevator.floor; i > 0; i-- {
+		if elevator_command.direction == int(elevio.MD_Down) {
+			for i := elevator.floor; i >= 0; i-- {
 				if floor[i].cab { //if a floor with call up is found
-					elevator_command.floor = i                     //updates the command value
-					elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
+					elevator_command.floor = i                       //updates the command value
+					elevator_command.direction = int(elevio.MD_Down) //sets the direction up just in case
 					return true
 				}
 			}
@@ -196,6 +198,7 @@ func request_cab() bool { //tad unshure if this is needed or not but its used fo
 		}
 	}
 	return false
+
 }
 
 func Request_next_action(direction int) bool {

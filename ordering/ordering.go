@@ -19,6 +19,8 @@ var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 //a copy of the elevator node struct to keep internal track of the elevators
 var elev_overview [config.NUMBER_OF_ELEVATORS]networking.Elevator_node
 
+var number_of_alive_elevs int
+
 //a translator for when we need to pass info between two channels
 var button_calls elevio.ButtonEvent
 
@@ -50,7 +52,7 @@ func sorting() {
 	}
 	//printing the sorting
 	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
-		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
+		//fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
 	}
 }
 
@@ -69,16 +71,10 @@ func Pass_to_network(
 		ch_req_ID,
 		ch_req_data,
 	)
-
+	number_of_alive_elevs = config.NUMBER_OF_ELEVATORS
 	for {
 		select {
 		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
-			var number_of_alive_elevs int                     //keeps track of the number of elevators alive
-			for y := 0; y < config.NUMBER_OF_ELEVATORS; y++ { //cycles all elevators
-				if elev_overview[y].Status != 404 { //if the elevator is not dead
-					number_of_alive_elevs++
-				}
-			}
 			switch a.Button {
 			case 0: //up
 				master_tournament(a.Floor, int(elevio.MD_Up))
@@ -87,6 +83,8 @@ func Pass_to_network(
 					Send_to_best_elevator(ch_self_command, a, dir)
 				} else {
 					ch_self_command <- a
+					fmt.Println("Lol dead xD")
+
 				}
 			case 1: //down
 				master_tournament(a.Floor, elevio.MD_Down)
@@ -95,6 +93,7 @@ func Pass_to_network(
 					Send_to_best_elevator(ch_self_command, a, dir)
 				} else {
 					ch_self_command <- a
+					fmt.Println("Lol dead 2 xD")
 				}
 			case 2: //cab
 				fmt.Print("Cab call found\n")
@@ -102,6 +101,9 @@ func Pass_to_network(
 			}
 			//if a death or stall occurs
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
+			fmt.Printf("lol le funni dead id \n")
+			number_of_alive_elevs--
+			fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died in the internal overwiew struct
 				if elev_overview[i].ID == death_id { //found the elevator
 					for e := 0; e < 6; e++ { //checks all calls by running a
