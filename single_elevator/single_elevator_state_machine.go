@@ -79,13 +79,6 @@ func SingleElevatorFSM(
 				fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 				Request_next_action(elevator.direction)
 			case doorOpen:
-				if request_cab() {
-					elevio.SetDoorOpenLamp(false)
-					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
-					ch_update_elevator_node_placement <- "direction"
-					ch_update_elevator_node_placement <- "destnation"
-					current_state = moving
-				}
 			}
 		case <-ch_elevator_has_arrived:
 			switch current_state {
