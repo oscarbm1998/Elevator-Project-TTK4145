@@ -83,7 +83,6 @@ func Pass_to_network(
 					Send_to_best_elevator(ch_self_command, a, dir)
 				} else {
 					ch_self_command <- a
-					fmt.Println("Lol dead xD")
 
 				}
 			case 1: //down
@@ -93,7 +92,6 @@ func Pass_to_network(
 					Send_to_best_elevator(ch_self_command, a, dir)
 				} else {
 					ch_self_command <- a
-					fmt.Println("Lol dead 2 xD")
 				}
 			case 2: //cab
 				fmt.Print("Cab call found\n")
@@ -101,7 +99,6 @@ func Pass_to_network(
 			}
 			//if a death or stall occurs
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
-			fmt.Printf("lol le funni dead id \n")
 			number_of_alive_elevs--
 			fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died in the internal overwiew struct

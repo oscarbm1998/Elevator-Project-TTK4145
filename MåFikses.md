@@ -7,3 +7,5 @@ Reset direction når heisen ikke har flere ordre å service (Fikset)
 
 Fiks slik at heisen ved første kjøring klarer å stoppe på eks 1 etasje når den er på vei til 0. Funker ikke per nå pga at start direction er 0 og logikken vår bygger
 på at heisen har en retning fra sist når 
+
+Legg til buffer size 1 on channels so if 2 commands arrive at the same time it does not deadlock
