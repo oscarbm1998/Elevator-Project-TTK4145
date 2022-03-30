@@ -3,9 +3,9 @@ package config
 import "time"
 
 var ELEVATOR_ID int = 1
+var ELEVATOR_LOCAL_HOST string = "localhost:15657"
 
 const (
-	//ELEVATOR_ID            int    = 1
 	SIMULATION             bool   = false
 	SIMULATION_IP_AND_PORT string = ""
 	NUMBER_OF_FLOORS              = 4
@@ -26,5 +26,5 @@ const (
 	COMMAND_PORT        = 7272
 	COMMAND_RBC_PORT    = 7373
 	REVIVE_PORT         = 7474
-	NUMBER_OF_ELEVATORS = 1
+	NUMBER_OF_ELEVATORS = 2
 )
