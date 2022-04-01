@@ -55,7 +55,7 @@ func Pass_to_network(
 	for {
 		select {
 		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
-			go cab_call_hander(ch_self_command, a, elev_overview, &m)
+			go cab_call_hander(ch_self_command, a, elev_overview)
 			/*
 				switch a.Button {
 				case 0: //up
@@ -84,7 +84,7 @@ func Pass_to_network(
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
 			number_of_alive_elevs--
 			fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
-			go death_call_hander(death_id, ch_self_command, elev_overview, &m)
+			go death_call_hander(death_id, ch_self_command, elev_overview)
 			/*
 				number_of_alive_elevs--
 				fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
@@ -122,15 +122,14 @@ func Pass_to_network(
 			▄▄█▄▄▄▄███▀
 
 *********************************/
-func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, m *sync.Mutex) {
-	m.Lock()
+func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	switch a.Button {
 	case 0: //up
 		placement := master_tournament(a.Floor, int(elevio.MD_Up), placement, lighthouse)
 		dir := 1
 		if number_of_alive_elevs >= 2 {
-			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
+			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement, &m)
 		} else {
 			ch_self_command <- a
 		}
@@ -138,7 +137,7 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 		placement := master_tournament(a.Floor, elevio.MD_Down, placement, lighthouse)
 		dir := -1
 		if number_of_alive_elevs >= 2 {
-			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
+			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement, &m)
 		} else {
 			ch_self_command <- a
 		}
@@ -146,11 +145,9 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 		fmt.Print("Cab call found\n")
 		ch_self_command <- a
 	}
-	m.Unlock()
-	return
 }
 
-func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, m *sync.Mutex) {
+func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
 	m.Lock()
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died in the internal overwiew struct
@@ -161,20 +158,19 @@ func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthou
 					placement = master_tournament(e, 1, placement, lighthouse) //runs a tournament with the parametres for up
 					temp_button_event.Button = 1
 					temp_button_event.Floor = e
-					Send_to_best_elevator(ch_self_command, temp_button_event, 1, lighthouse, placement)
+					Send_to_best_elevator(ch_self_command, temp_button_event, 1, lighthouse, placement, &m)
 				}
 				//has to be this way otherwise it wont catch both instances
 				if lighthouse[i].HallCalls[e].Down {
 					placement = master_tournament(e, -1, placement, lighthouse) //runs a tournament with the parametres for up
 					temp_button_event.Button = -1
 					temp_button_event.Floor = e
-					Send_to_best_elevator(ch_self_command, temp_button_event, -1, lighthouse, placement)
+					Send_to_best_elevator(ch_self_command, temp_button_event, -1, lighthouse, placement, &m)
 				}
 			}
 		}
 	}
 	m.Unlock()
-	return
 }
 
 /*
@@ -216,7 +212,7 @@ func send_command_helper(returnval chan bool, ID int, floor int, direction int, 
 //a function that scores all the elevators based on two inputs: floor and direction
 func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	//resets scoring to prepare the tournament
-	for i := 0; i < count; i++ {
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 		fmt.Printf("floor of elev %d is %d \n", i, lighthouse[i].Floor)
 		fmt.Printf("direction of elev %d is %d \n", i, lighthouse[i].Direction)
 	}
@@ -240,7 +236,14 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	return placement
 }
 
-func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
+func Send_to_best_elevator(
+	ch_self_command chan elevio.ButtonEvent,
+	a elevio.ButtonEvent,
+	dir int,
+	lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node,
+	placement [config.NUMBER_OF_ELEVATORS]score_tracker, m *sync.Mutex) {
+
+	m.Lock()
 	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement) //calls the sorting algorithm to sort the elevator placements
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {                                      //will automatically cycle the scoreboard and attempt to send from best to worst
 		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
@@ -254,26 +257,28 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 			}
 		}
 	}
+	m.Unlock()
 }
 
 //a sorting algorithm responsible for updating the placement struct from highest to lowest score
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
+	var temp_placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	for p := 0; p < config.NUMBER_OF_ELEVATORS; p++ { //runs thrice
-		var roundbest_index int                           //the strongest placement for this round
-		var bestscore int                                 //the strongest placement for this round
+		var roundbest_index int = 0                       //the strongest placement for this round
+		var bestscore int = 0                             //the strongest placement for this round
 		for i := p; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
 			if placement[i].score > bestscore { //if the score surpasses the others
 				roundbest_index = i            //sets the new index
 				bestscore = placement[i].score //sets the new best score
 			}
 		}
-		placement[p].elevator_number = roundbest_index //sets the index of the highest scorer
+		temp_placement[p].elevator_number = roundbest_index //sets the index of the highest scorer
 	}
 	//printing the sorting
 	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
-		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
+		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", temp_placement[x].elevator_number, x, temp_placement[x].score)
 	}
-	return placement
+	return temp_placement
 }
 
 /*
