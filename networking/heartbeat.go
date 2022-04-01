@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-var HeartBeatLogger bool = true
+var HeartBeatLogger bool = false
 
 func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (err error) {
 	var msg, date, clock, broadcast string

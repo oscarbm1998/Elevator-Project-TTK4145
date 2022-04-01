@@ -236,14 +236,8 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	return placement
 }
 
-func Send_to_best_elevator(
-	ch_self_command chan elevio.ButtonEvent,
-	a elevio.ButtonEvent,
-	dir int,
-	lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node,
-	placement [config.NUMBER_OF_ELEVATORS]score_tracker, m *sync.Mutex) {
+func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker, m *sync.Mutex) {
 
-	m.Lock()
 	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement) //calls the sorting algorithm to sort the elevator placements
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {                                      //will automatically cycle the scoreboard and attempt to send from best to worst
 		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
@@ -255,9 +249,9 @@ func Send_to_best_elevator(
 			if networking.Send_command(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir) {
 
 			}
+
 		}
 	}
-	m.Unlock()
 }
 
 //a sorting algorithm responsible for updating the placement struct from highest to lowest score

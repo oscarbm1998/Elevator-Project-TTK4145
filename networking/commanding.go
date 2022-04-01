@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var commandLogger bool = false
+var commandLogger bool = true
 
 //Commands and elevator with ID, to service a specified hallcall command. Returns true if successfull
 func Send_command(ID, floor, direction int) (success bool) {
@@ -91,7 +91,9 @@ func Send_command(ID, floor, direction int) (success bool) {
 	}
 Exit:
 	//Work done
+	fmt.Println("Networking: trying to exit")
 	ch_rbc_close <- true //close readback listener listener
+	fmt.Println("Networking: done sending, exited")
 	return success
 }
 
@@ -102,6 +104,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen <-ch
 		case <-ch_rbc_listen: //Will listen when told to
 			var loop bool = true
 			for loop {
+				fmt.Println("Starting connection")
 				con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
 				con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
 				n, _, err := con.ReadFrom(buf)
@@ -113,7 +116,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen <-ch
 						fmt.Println("Networking: Getting nothing on readback channel, so quitting")
 					}
 					loop = false
-					ch_msg <- "ERROR"
+					ch_msg <- strconv.Itoa(config.ELEVATOR_ID) + "_ERROR"
 				} else {
 					msg := string(buf[0:n])
 					data := strings.Split(msg, "_")
@@ -123,10 +126,13 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen <-ch
 						loop = false
 					}
 				}
+				fmt.Println("closing connection")
 				con.Close()
 			}
 		case <-ch_exit:
 			goto Exit
+		default:
+			fmt.Println("alive")
 		}
 	}
 Exit:
