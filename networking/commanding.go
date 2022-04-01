@@ -173,7 +173,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 				reportedBy_ID, _ := strconv.Atoi(data[3])
 				if reportedBy_ID != config.ELEVATOR_ID {
 					fmt.Println("Networking: elevator " + strconv.Itoa(dead_ID) + " was found dead by elevator " + strconv.Itoa(reportedBy_ID))
-					ch_ext_dead <- dead_ID
+					ch_ext_dead <- dead_ID //Allert heartbeat-handler
 				}
 			}
 		}
