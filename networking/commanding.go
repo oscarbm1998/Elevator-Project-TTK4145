@@ -131,8 +131,6 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen <-ch
 			}
 		case <-ch_exit:
 			goto Exit
-		default:
-			fmt.Println("alive")
 		}
 	}
 Exit:

@@ -226,7 +226,7 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 		if !(lighthouse[i].Status != 0) { //if the elevator is nonfunctional it is ignored
 			//direction scoring
 			if direction == lighthouse[i].Direction { //if the elevators direction matches the input
-				placement[i].score += 3 //give 3 good boy points
+				placement[i].score += 2 //give 3 good boy points
 			}
 			//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
 			//this means that the closer the elevator is the higher the score
@@ -246,8 +246,11 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 			ch_self_command <- button_calls
 			break
 		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 { //if the call is not going to itself
-			if networking.Send_command(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir) {
-
+			m.Lock()
+			success := networking.Send_command(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir)
+			m.Unlock()
+			if success {
+				break
 			}
 
 		}
