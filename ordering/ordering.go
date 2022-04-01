@@ -145,12 +145,18 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
 		if !(lighthouse[i].Status != 0) { //if the elevator is nonfunctional it is ignored
 			//direction scoring
+			if direction == 0 {
+				placement[i].score += 3
+			}
 			if direction == lighthouse[i].Direction { //if the elevators direction matches the input
 				placement[i].score += 2 //give 3 good boy points
 			}
+			if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
+				placement[i].score += 5
+			}
 			//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
 			//this means that the closer the elevator is the higher the score
-			placement[i].score += (3 - int(math.Abs(float64(lighthouse[i].Floor-floor))))
+			placement[i].score += (4 - int(math.Abs(float64(lighthouse[i].Floor-floor))))
 		}
 	}
 	return placement
