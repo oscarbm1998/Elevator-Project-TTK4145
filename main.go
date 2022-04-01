@@ -30,7 +30,7 @@ func main() {
 	ch_drv_stop := make(chan bool)                  //of what
 	ch_elevator_has_arrived := make(chan bool)      //do
 
-	ch_net_command := make(chan elevio.ButtonEvent)      //pls
+	ch_net_command := make(chan elevio.ButtonEvent, 6)   //pls
 	ch_self_command := make(chan elevio.ButtonEvent, 10) //ppl
 
 	//Networking
