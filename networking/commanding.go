@@ -175,7 +175,10 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 			direction, _ := strconv.Atoi(data[2])
 			from_ID, _ := strconv.Atoi(data[3])
 			rbc = data[3] + "_" + data[1] + "_" + data[2] + "_" + strconv.Itoa(ID)
-			fmt.Println("Networking CMDL: got command")
+			if commandLogger {
+				fmt.Println("Networking CMDL: got command")
+			}
+
 			if reject_command(floor, direction) { //Check if i can perfrom the task
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
