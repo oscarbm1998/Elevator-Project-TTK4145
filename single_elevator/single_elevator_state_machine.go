@@ -278,8 +278,7 @@ func init_elevator() {
 
 func MoveNearestFloor(ch_elevator_stuck_between chan bool) {
 	time.Sleep(1 * time.Second) //Kan være lurt å unngå sleep xD
-	if elevator_stuck == true {
-		fmt.Printf("lol is stucked")
+	if elevator_stuck {
 		elevio.SetMotorDirection(elevio.MD_Down)
 	}
 }
