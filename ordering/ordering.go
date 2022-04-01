@@ -216,6 +216,11 @@ func send_command_helper(returnval chan bool, ID int, floor int, direction int, 
 //a function that scores all the elevators based on two inputs: floor and direction
 func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	//resets scoring to prepare the tournament
+	for i := 0; i < count; i++ {
+		fmt.Printf("floor of elev %d is %d \n", i, lighthouse[i].Floor)
+		fmt.Printf("direction of elev %d is %d \n", i, lighthouse[i].Direction)
+	}
+
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 		placement[i].score = 0
 		placement[i].elevator_number = 0
