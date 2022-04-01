@@ -252,7 +252,7 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 			if success {
 				break
 			}
-		} else if i == config.NUMBER_OF_ELEVATORS {
+		} else if i == config.NUMBER_OF_ELEVATORS-1 {
 			button_calls := a //as the message needs to be passed between two channels we need a middle man
 			ch_self_command <- button_calls
 		}
