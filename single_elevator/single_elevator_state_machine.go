@@ -38,6 +38,7 @@ func SingleElevatorFSM(
 	ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall,
 	ch_net_command chan elevio.ButtonEvent,
 	ch_self_command chan elevio.ButtonEvent,
+	ch_take_calls chan int,
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
@@ -149,6 +150,7 @@ func SingleElevatorFSM(
 			}
 		case <-ch_elev_stuck_timer_out:
 			fmt.Println("Elevator: I'm stuck, please call Vakt & Service")
+			ch_take_calls <- config.ELEVATOR_ID
 			ch_update_elevator_node_placement <- "status"
 		}
 	}
@@ -227,8 +229,10 @@ func Update_elevator_node(
 				updated_elevator_node.Direction = elevator_command.direction
 			case "destination":
 				updated_elevator_node.Destination = elevator_command.floor
-			case "status":
+			case "set_error":
 				updated_elevator_node.Status = 1
+			case "reset_error":
+				updated_elevator_node.Status = 0
 			}
 			updated_elevator_node.ID = config.ELEVATOR_ID
 			ch_write_data <- updated_elevator_node
@@ -253,3 +257,22 @@ func Update_elevator_node(
 		}
 	}
 }
+
+/*
+func init_elevator() {
+	for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
+		elevio.SetButtonLamp(0, i, false)
+		elevio.SetButtonLamp(1, i, false)
+		elevio.SetButtonLamp(2, i, false)
+	}
+	elevator.direction = 0
+	elevator.floor = 0
+	current_state = idle
+	last_floor = -1
+    info, err := os.Stat("../cab_calls.txt")
+    if os.IsNotExist(err) {
+        os.Create("../cab_calls.txt")
+    }
+
+}
+*/
