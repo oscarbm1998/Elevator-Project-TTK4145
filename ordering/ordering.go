@@ -6,6 +6,7 @@ import (
 	networking "PROJECT-GROUP-10/networking"
 	"fmt"
 	"math"
+	"sync"
 )
 
 type score_tracker struct { //this struct keeps track of the score and what elevator the socre belongs to
@@ -122,8 +123,14 @@ func Pass_to_network(
 								ch_self_command <- button_calls
 								break
 							} else {
-								if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
+								returnval := make(chan bool)
+								go send_command_helper(returnval ,elev_overview[placement[c].elevator_number].ID, floor, dir)
+								if returnval {
+									close(returnval)
 									break
+								} else {
+									close(returnval)
+								}
 									/*********************************
 									*		Welcome to Hell
 												───▄▄▄
@@ -141,6 +148,17 @@ func Pass_to_network(
 			}
 		}
 	}
+}
+
+func send_command_helper(returnval chan bool, ID int, floor int, direction int){
+	mutex.Lock()
+	if networking.Send_command(ID, floor, direction){
+		returnval <- true
+	} else {
+		returnval <- false
+	}
+	mutex.Unlock()
+	return
 }
 
 //a function that scores all the elevators based on two inputs: floor and direction
@@ -181,9 +199,14 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 				ch_self_command <- button_calls
 				break
 			} else { //if the call is not going to itself
-				if networking.Send_command(elev_overview[placement[i].elevator_number].ID, a.Floor, dir) { //send command to suitable external elevator
+				returnval := make(chan bool)
+				go send_command_helper(returnval ,elev_overview[placement[c].elevator_number].ID, floor, dir)
+				if returnval {
 					fmt.Printf("external elevator won\n")
-					break //if it succeds break the loop
+					close(returnval)
+					break
+				} else {
+					close(returnval)
 				}
 			}
 		}
