@@ -56,59 +56,12 @@ func Pass_to_network(
 		select {
 		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
 			go cab_call_hander(ch_self_command, a, elev_overview)
-			/*
-				switch a.Button {
-				case 0: //up
-					master_tournament(a.Floor, int(elevio.MD_Up))
-					dir := 1
-					if number_of_alive_elevs >= 2 {
-						Send_to_best_elevator(ch_self_command, a, dir)
-					} else {
-						ch_self_command <- a
-
-					}
-				case 1: //down
-					master_tournament(a.Floor, elevio.MD_Down)
-					dir := -1
-					if number_of_alive_elevs >= 2 {
-						Send_to_best_elevator(ch_self_command, a, dir)
-					} else {
-						ch_self_command <- a
-					}
-				case 2: //cab
-					fmt.Print("Cab call found\n")
-					ch_self_command <- a
-				}
-			*/
 			//if a death or stall occurs
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
 			number_of_alive_elevs--
 			fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
 			go death_call_hander(death_id, ch_self_command, elev_overview)
-			/*
-				number_of_alive_elevs--
-				fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
-				for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died in the internal overwiew struct
-					if elev_overview[i].ID == death_id { //found the elevator
-						var temp_button_event elevio.ButtonEvent //defines a temporary button event in order to reuse a command
-						for e := 0; e < config.NUMBER_OF_FLOORS; e++ {
-							if elev_overview[i].HallCalls[e].Up {
-								master_tournament(e, 1) //runs a tournament with the parametres for up
-								temp_button_event.Button = 1
-								temp_button_event.Floor = e
-								Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
-							}
-							//has to be this way otherwise it wont catch both instances
-							if elev_overview[i].HallCalls[e].Down {
-								master_tournament(e, -1) //runs a tournament with the parametres for up
-								temp_button_event.Button = -1
-								temp_button_event.Floor = e
-								Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
-							}
-						}
-					}
-				}
-			*/
+
 		}
 	}
 }
@@ -173,42 +126,6 @@ func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthou
 	m.Unlock()
 }
 
-/*
-			Monke mode
-              ██████
-            ██▒▒▒▒▒▒██
-          ██▓▓▓▓▓▓▒▒██
-          ██▓▓▒▒▒▒▒▒▒▒██
-        ██░░      ▒▒    ██
-        ██░░  ████░░██  ░░██
-      ████░░  ████░░██  ░░██
-      ██▓▓▒▒▒▒░░░░▒▒░░▓▓▒▒██
-      ██▓▓▒▒▒▒▒▒░░░░░░▓▓▒▒██
-    ██▓▓████████░░░░░░████
-  ██▓▓▓▓██▓▓▓▓████████▓▓██
-██▓▓▓▓██▓▓▒▒▒▒██▓▓▓▓▓▓██▓▓██
-██▓▓██▓▓▒▒▒▒▒▒██▒▒▒▒░░▓▓▒▒▓▓██
-██▓▓██▓▓▒▒▒▒▒▒██▒▒░░██▓▓▒▒▓▓██
-██▓▓██▓▓▒▒▒▒▒▒▒▒████▓▓▓▓▒▒▓▓██
-██▓▓██▓▓▒▒▒▒▒▒▒▒▒▒██░░▒▒▒▒▓▓██
-██░░██░░▒▒▒▒░░░░░░████░░░░░░██
-  ██████░░░░░░██░░██  ██████
-        ██████████
-*/
-
-/*
-func send_command_helper(returnval chan bool, ID int, floor int, direction int, m *sync.Mutex) {
-	m.Lock()
-	if networking.Send_command(ID, floor, direction) {
-		returnval <- true
-	} else {
-		returnval <- false
-	}
-	m.Unlock()
-	return
-}
-*/
-
 //a function that scores all the elevators based on two inputs: floor and direction
 func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	//resets scoring to prepare the tournament
@@ -226,7 +143,7 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 		if !(lighthouse[i].Status != 0) { //if the elevator is nonfunctional it is ignored
 			//direction scoring
 			if direction == lighthouse[i].Direction { //if the elevators direction matches the input
-				placement[i].score += 3 //give 3 good boy points
+				placement[i].score += 2 //give 3 good boy points
 			}
 			//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
 			//this means that the closer the elevator is the higher the score
@@ -236,36 +153,33 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	return placement
 }
 
-func Send_to_best_elevator(
-	ch_self_command chan elevio.ButtonEvent,
-	a elevio.ButtonEvent,
-	dir int,
-	lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node,
-	placement [config.NUMBER_OF_ELEVATORS]score_tracker, m *sync.Mutex) {
+func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker, m *sync.Mutex) {
 
-	m.Lock()
 	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement) //calls the sorting algorithm to sort the elevator placements
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {                                      //will automatically cycle the scoreboard and attempt to send from best to worst
-		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID && lighthouse[temporary_placement[i].elevator_number].Status == 0 { //if the winning ID is the elevators own
 			fmt.Printf("own elevator won\n")
-			button_calls := a //as the message needs to be passed between two channels we need a middle man
-			ch_self_command <- button_calls
+			ch_self_command <- a
 			break
-		} else { //if the call is not going to itself
-			if networking.Send_command(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir) {
+		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 { //if the call is not going to itself
+			m.Lock()
+			success := networking.Send_command(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir)
+			m.Unlock()
+			if success {
 				break
 			}
+		} else if i == config.NUMBER_OF_ELEVATORS-1 {
+			ch_self_command <- a
 		}
 	}
-	m.Unlock()
 }
 
 //a sorting algorithm responsible for updating the placement struct from highest to lowest score
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	var temp_placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	for p := 0; p < config.NUMBER_OF_ELEVATORS; p++ { //runs thrice
-		var roundbest_index int = 0                       //the strongest placement for this round
-		var bestscore int = 0                             //the strongest placement for this round
+		var roundbest_index int                           //the strongest placement for this round
+		var bestscore int                                 //the strongest placement for this round
 		for i := p; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
 			if placement[i].score > bestscore { //if the score surpasses the others
 				roundbest_index = i            //sets the new index
@@ -280,40 +194,3 @@ func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placem
 	}
 	return temp_placement
 }
-
-/*
-for e := 0; e < 6; e++ { //checks all calls by running a
-	var dir int //creates temp variables
-	var floor int
-	if elev_overview[i].HallCalls[e].Up {
-		master_tournament(e, 1) //runs a tournament with the parametres for up
-		dir = 1
-	} else if elev_overview[i].HallCalls[e].Down {
-		master_tournament(e, -1) //runs a tournament with the parametres for up
-		dir = -1
-	}
-	sorting() //runs the sorting algorithm
-	//again tries to send the results to the elevators
-	for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-		if elev_overview[placement[c].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-			button_calls := <-ch_drv_buttons //again the convertion is needed as it is between channels
-			ch_self_command <- button_calls
-			break
-		} else {
-			if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
-				break
-			} else { //if the call is not going to itself
-				returnval := make(chan bool)
-				go send_command_helper(returnval ,elev_overview[placement[c].elevator_number].ID, floor, dir)
-				if returnval {
-					fmt.Printf("external elevator won\n")
-					close(returnval)
-					break
-				} else {
-					close(returnval)
-				}
-			}
-		}
-	}
-}
-*/

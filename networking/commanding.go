@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var commandLogger bool = false
+var commandLogger bool = true
 
 //Commands and elevator with ID, to service a specified hallcall command. Returns true if successfull
 func Send_command(ID, floor, direction int) (success bool) {
@@ -35,7 +35,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 	cmd_con, _ := net.DialUDP("udp", nil, network)
 
 	//Initiate readback connection and timer
-	ch_rbc_msg := make(chan string)
+	ch_rbc_msg := make(chan string, 5)
 	ch_rbc_listen := make(chan bool)
 	ch_rbc_close := make(chan bool)
 	go command_readback_listener(ch_rbc_msg, ch_rbc_close, ch_rbc_listen)
@@ -91,41 +91,45 @@ func Send_command(ID, floor, direction int) (success bool) {
 	}
 Exit:
 	//Work done
+	fmt.Println("Networking: trying to exit")
 	ch_rbc_close <- true //close readback listener listener
+	fmt.Println("Networking: done sending, exited")
 	return success
 }
 
-func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen <-chan bool) {
+func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan bool) {
 	buf := make([]byte, 1024)
 	for {
 		select {
 		case <-ch_rbc_listen: //Will listen when told to
-			var loop bool = true
-			for loop {
-				con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
-				con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
-				n, _, err := con.ReadFrom(buf)
+			fmt.Println("RBC: Starting connection")
+			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
+			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
+			n, _, err := con.ReadFrom(buf)
 
-				if err != nil {
-					if e, ok := err.(net.Error); !ok || e.Timeout() {
-						printError("Networking: command readback net error: ", err)
-					} else {
-						fmt.Println("Networking: Getting nothing on readback channel, so quitting")
-					}
-					loop = false
-					ch_msg <- "ERROR"
+			if err != nil {
+				if e, ok := err.(net.Error); !ok || e.Timeout() {
+					printError("Networking: command readback net error: ", err)
 				} else {
-					msg := string(buf[0:n])
-					data := strings.Split(msg, "_")
-					ID, _ := strconv.Atoi(data[0])
-					if ID == config.ELEVATOR_ID {
-						ch_msg <- msg
-						loop = false
-					}
+					fmt.Println("Networking: Getting nothing on readback channel, so quitting")
 				}
-				con.Close()
+				ch_msg <- strconv.Itoa(config.ELEVATOR_ID) + "_ERROR"
+				fmt.Println("sent error")
+			} else {
+				msg := string(buf[0:n])
+				data := strings.Split(msg, "_")
+				ID, _ := strconv.Atoi(data[0])
+				if ID == config.ELEVATOR_ID {
+					ch_msg <- msg
+				} else {
+					ch_rbc_listen <- true //Message not for me, read again
+				}
 			}
+			fmt.Println("RBC: closing connection")
+			con.Close()
+
 		case <-ch_exit:
+			fmt.Println("RBC: commanded to exit")
 			goto Exit
 		}
 	}
