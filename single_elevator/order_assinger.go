@@ -85,9 +85,6 @@ func Hall_order(
 	ch_update_elevator_node_order chan update_elevator_node,
 	ch_remove_elevator_node_order chan update_elevator_node,
 ) {
-	if restoring_cab_calls {
-		ch_new_order <- true
-	}
 	for {
 		select {
 		case a := <-ch_net_command:

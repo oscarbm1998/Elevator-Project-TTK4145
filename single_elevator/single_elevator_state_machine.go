@@ -56,7 +56,7 @@ func SingleElevatorFSM(
 	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_net_command, ch_self_command, ch_update_elevator_node_order, ch_remove_elevator_node_order)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
-	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_update_elevator_node_placement)
+	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_update_elevator_node_placement, ch_new_order)
 	go Update_hall_lights(ch_hallCallsTot_updated)
 	go Update_elevator_node(ch_req_ID, ch_req_data, ch_write_data, ch_update_elevator_node_placement, ch_update_elevator_node_order, ch_remove_elevator_node_order)
 	for {
@@ -65,6 +65,7 @@ func SingleElevatorFSM(
 			switch current_state {
 			case idle:
 				if Request_next_action(elevator.direction) {
+					fmt.Printf("Direction is %+v\n", elevator_command.direction)
 					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 					ch_update_elevator_node_placement <- "direction"
@@ -157,7 +158,7 @@ func SingleElevatorFSM(
 
 func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 	ch_elevator_has_arrived chan bool,
-	ch_update_elevator_node_placement chan string) {
+	ch_update_elevator_node_placement chan string, ch_new_order chan bool) {
 	for {
 		select {
 		case msg := <-ch_drv_floors:
@@ -166,6 +167,9 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 			elevio.SetFloorIndicator(msg)
 			if last_floor == -1 {
 				last_floor = elevator.floor
+			}
+			if restoring_cab_calls {
+				ch_new_order <- true
 			}
 			if msg == 3 {
 				elevator_command.direction = -1
