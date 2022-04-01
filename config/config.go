@@ -11,9 +11,6 @@ const (
 	NUMBER_OF_FLOORS              = 4
 	NUMBER_OF_BUTTONS             = 3
 
-	UDP_S_R_PORT   = 20007
-	UDP_PEERS_PORT = 30007
-
 	ELEVATOR_STUCK_TIMOUT   = time.Second * 10
 	ELEVATOR_DOOR_OPEN_TIME = time.Second * 3
 
@@ -26,5 +23,5 @@ const (
 	COMMAND_PORT        = 7272
 	COMMAND_RBC_PORT    = 7373
 	REVIVE_PORT         = 7474
-	NUMBER_OF_ELEVATORS = 1
+	NUMBER_OF_ELEVATORS = 2
 )

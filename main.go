@@ -62,7 +62,8 @@ func main() {
 		ch_write_data[1],
 		ch_hallCallsTot_updated,
 		ch_net_command,
-		ch_self_command)
+		ch_self_command,
+		ch_take_calls)
 	go ordering.Pass_to_network(
 		ch_drv_buttons,
 		ch_new_order,
