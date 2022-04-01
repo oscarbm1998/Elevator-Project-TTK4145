@@ -123,7 +123,6 @@ func Pass_to_network(
 
 *********************************/
 func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
-	m.Lock()
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	switch a.Button {
 	case 0: //up
@@ -146,7 +145,6 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 		fmt.Print("Cab call found\n")
 		ch_self_command <- a
 	}
-	m.Unlock()
 }
 
 func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
