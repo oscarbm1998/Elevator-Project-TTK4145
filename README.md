@@ -1,6 +1,10 @@
 Elevator Project
 ================
 
+
+
+The Task
+=========
 Create software for controlling `n` elevators working in parallel across `m` floors.
 
 Be reasonable: There may be semantic hoops that you can jump through to create something that is "technically correct". Do not hesitate to contact us if you feel that something is ambiguous or missing from these requirements.

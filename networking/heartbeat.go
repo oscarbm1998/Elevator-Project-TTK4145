@@ -91,11 +91,12 @@ func heartBeathandler(
 	for {
 		select {
 		case msg := <-ch_heartbeatmsg:
-			//Parsing the received heartbeat message
+
+			//Parsing/translating the received heartbeat message
 			data := strings.Split(msg, "_")
-			ID, _ := strconv.Atoi(data[1])
+
 			node_data.Last_seen = data[0]
-			node_data.ID = ID
+			node_data.ID, _ = strconv.Atoi(data[1])
 			node_data.Direction, _ = strconv.Atoi(data[2])
 			node_data.Destination, _ = strconv.Atoi(data[3])
 			node_data.Floor, _ = strconv.Atoi(data[4])
@@ -106,12 +107,14 @@ func heartBeathandler(
 				k++
 				down, _ := strconv.Atoi(data[6+k])
 				k++
+
 				switch up {
 				case 1:
 					node_data.HallCalls[i].Up = true
 				case 0:
 					node_data.HallCalls[i].Up = false
 				}
+
 				switch down {
 				case 1:
 					node_data.HallCalls[i].Down = true
@@ -120,14 +123,14 @@ func heartBeathandler(
 				}
 			}
 			if HeartBeatLogger {
-				fmt.Println("Networking: Got heartbeat msg from elevator " + strconv.Itoa(ID) + ": " + msg)
-				fmt.Println("Elevator " + strconv.Itoa(ID) + " at floor: " + strconv.Itoa(node_data.Floor))
+				fmt.Println("Networking: Got heartbeat msg from elevator " + strconv.Itoa(node_data.ID) + ": " + msg)
+				fmt.Println("Elevator " + strconv.Itoa(node_data.ID) + " at floor: " + strconv.Itoa(node_data.Floor))
 			}
 
 			ch_write_data <- node_data                                             //Write the node data
-			ch_timerReset[ID-1] <- true                                            //Reset the appropriate timer
+			ch_timerReset[node_data.ID-1] <- true                                  //Reset the appropriate timer
 			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data) //Find out what hallcalls are being served and send result to SingleElevator
-			ch_new_data <- ID                                                      //Tell cost function that there is new data on this ID
+			ch_new_data <- node_data.ID                                            //Tell cost function that there is new data on this ID
 
 		case msg_ID := <-ch_foundDead:
 			var msg, broadcast string
@@ -176,7 +179,6 @@ func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timerStop c
 			timer.Reset(time_TIMEOUT)
 		case <-ch_timerStop:
 			timer.Stop()
-
 		}
 	}
 }
