@@ -3,7 +3,6 @@ package singleElevator
 import (
 	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
-	"fmt"
 )
 
 type elevator_status struct {
@@ -84,8 +83,6 @@ func Hall_order(
 		case a := <-ch_net_command:
 			if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
 				ch_elevator_has_arrived <- true
-			} else if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || (a.Floor == elevator.floor)) && current_state == moving {
-				fmt.Printf("Just left from that floor")
 			} else {
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
@@ -99,32 +96,34 @@ func Hall_order(
 					add_order_to_node.update_value = a.Floor
 					ch_update_elevator_node_order <- add_order_to_node
 				}
-				ch_new_order <- true //forteller at en ny order er tilgjengelig
+				if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
+					ch_new_order <- true //forteller at en ny order er tilgjengelig
+				}
 			}
 		case a := <-ch_self_command:
 			if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
 				ch_elevator_has_arrived <- true
-			} else if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || (a.Floor == elevator.floor)) && current_state == moving {
-				fmt.Printf("Just left from that floor")
-			} else { //do shit
+			} else {
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
 					floor[a.Floor].up = true
 					add_order_to_node.command = "update order up"
 					add_order_to_node.update_value = a.Floor
 					ch_update_elevator_node_order <- add_order_to_node
-					elevio.SetButtonLamp(elevio.BT_HallUp, a.Floor, true) //turns off light
+					elevio.SetButtonLamp(elevio.BT_HallUp, a.Floor, true)
 				case elevio.BT_HallDown: //ned
 					floor[a.Floor].down = true
 					add_order_to_node.command = "update order down"
 					add_order_to_node.update_value = a.Floor
 					ch_update_elevator_node_order <- add_order_to_node
-					elevio.SetButtonLamp(elevio.BT_HallDown, a.Floor, true) //turns off light
+					elevio.SetButtonLamp(elevio.BT_HallDown, a.Floor, true)
 				case elevio.BT_Cab: //cab call
 					floor[a.Floor].cab = true
-					elevio.SetButtonLamp(elevio.BT_Cab, a.Floor, true) //turns off light
+					elevio.SetButtonLamp(elevio.BT_Cab, a.Floor, true)
 				}
-				ch_new_order <- true //forteller at en ny order er tilgjengelig
+				if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
+					ch_new_order <- true
+				}
 			}
 		}
 	}
@@ -161,57 +160,6 @@ func request_below() bool { //checks if there are any active calls below the ele
 	return false
 }
 
-func request_cab() bool { //tad unshure if this is needed or not but its used for internal calls
-
-	//Skrive en funksjon som gjør et par ting:
-	//1. Hvis rettning er oppover, sjekk fra current floor og så opp
-	//2. Hvis rettning er ned sjekk nedover fra current floor og så videre ned
-
-	// fmt.Printf("Direction is %v", elevator_command.direction)
-	// if elevator_command.direction == int(elevio.MD_Up) {
-	// 	for i := elevator.floor; i < config.NUMBER_OF_FLOORS; i++ {
-	// 		if floor[i].cab { //if a floor with call up is found
-	// 			elevator_command.floor = i                     //updates the command value
-	// 			elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
-	// 			return true
-	// 		}
-	// 	}
-	// }
-	// if elevator_command.direction == int(elevio.MD_Down) {
-	// 	for i := elevator.floor; i >= 0; i-- {
-	// 		if floor[i].cab { //if a floor with call up is found
-	// 			elevator_command.floor = i                       //updates the command value
-	// 			elevator_command.direction = int(elevio.MD_Down) //sets the direction up just in case
-	// 			return true
-	// 		}
-	// 	}
-	// }
-	// if elevator_command.direction == int(elevio.MD_Stop) {
-	// 	for i := elevator.floor; i < config.NUMBER_OF_FLOORS; i++ {
-	// 		if floor[i].cab { //if a floor with call up is found
-	// 			elevator_command.floor = i                     //updates the command value
-	// 			elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
-	// 			return true
-	// 		}
-	// 	}
-	// }
-	// return false
-
-	for i := 0; i < config.NUMBER_OF_FLOORS; i++ { //checks the entire struct for calls
-		if floor[i].cab { //if a call is found
-			elevator_command.floor = i //update command struct
-			if i > elevator.floor {    //set direction
-				elevator_command.direction = int(elevio.MD_Up)
-			} else {
-				elevator_command.direction = int(elevio.MD_Down)
-			}
-			return true
-		}
-	}
-	return false
-
-}
-
 func Request_next_action(direction int) bool {
 	switch direction {
 	case int(elevio.MD_Up): //up
@@ -233,9 +181,9 @@ func Request_next_action(direction int) bool {
 		}
 
 	case elevio.MD_Stop: // here
-		if request_cab() {
+		if request_above() {
 			return true
-		} else if request_above() {
+		} else if request_here() {
 			return true
 		} else if request_below() {
 			return true
