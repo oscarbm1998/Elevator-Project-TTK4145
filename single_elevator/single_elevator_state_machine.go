@@ -4,7 +4,9 @@ import (
 	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
 	"PROJECT-GROUP-10/networking"
+	"encoding/json"
 	"fmt"
+	"os"
 )
 
 type elevator_state int
@@ -54,7 +56,7 @@ func SingleElevatorFSM(
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_update_elevator_node_placement)
 	go Update_hall_lights(ch_hallCallsTot_updated)
 	go Update_elevator_node(ch_req_ID, ch_req_data, ch_write_data, ch_update_elevator_node_placement, ch_update_elevator_node_order, ch_remove_elevator_node_order)
-	Reset_all_lights()
+	init_elevator(ch_new_order)
 	//Init elevator
 	elevator.direction = 0
 	elevator.floor = 0
@@ -258,8 +260,7 @@ func Update_elevator_node(
 	}
 }
 
-/*
-func init_elevator() {
+func init_elevator(ch_new_order chan<- bool) {
 	for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
 		elevio.SetButtonLamp(0, i, false)
 		elevio.SetButtonLamp(1, i, false)
@@ -269,10 +270,15 @@ func init_elevator() {
 	elevator.floor = 0
 	current_state = idle
 	last_floor = -1
-    info, err := os.Stat("../cab_calls.txt")
-    if os.IsNotExist(err) {
-        os.Create("../cab_calls.txt")
-    }
-
+	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
+	cabCalls := make([]bool, 4)
+	bytes := make([]byte, 50)
+	n, _ := file.ReadAt(bytes, 0)
+	_ = json.Unmarshal(bytes[:n], &cabCalls)
+	for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
+		if cabCalls[i] {
+			floor[i].cab = true
+			elevio.SetButtonLamp(2, i, true)
+		}
+	}
 }
-*/

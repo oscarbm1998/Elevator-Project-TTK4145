@@ -3,6 +3,8 @@ package singleElevator
 import (
 	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
+	"encoding/json"
+	"os"
 )
 
 type elevator_status struct {
@@ -23,7 +25,14 @@ var elevator_command elevator_status //where elevator should go
 func Remove_order(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) { //removes an order
 	floor[level].cab = false              //removes here call as the elevator has arrived there
 	elevio.SetButtonLamp(2, level, false) //turns off cab light
-	if direction == int(elevio.MD_Up) {   //if the direction is up or there are no orders below and orders above
+	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
+	cabCalls := make([]bool, 4)
+	cabCalls[level] = false
+	bytes, _ := json.Marshal(cabCalls)
+	file.Truncate(0)
+	file.WriteAt(bytes, 0)
+	file.Close()
+	if direction == int(elevio.MD_Up) { //if the direction is up or there are no orders below and orders above
 		if !floor[level].up {
 			floor[level].down = false
 			remove_order_from_node.command = "remove order down"
@@ -120,6 +129,13 @@ func Hall_order(
 				case elevio.BT_Cab: //cab call
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(elevio.BT_Cab, a.Floor, true)
+					file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
+					cabCalls := make([]bool, 4)
+					cabCalls[a.Floor] = true
+					bytes, _ := json.Marshal(cabCalls)
+					file.Truncate(1)
+					file.WriteAt(bytes, 0)
+					file.Close()
 				}
 				if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
 					ch_new_order <- true
