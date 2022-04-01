@@ -13,6 +13,7 @@ var HeartBeatLogger bool = false
 
 func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) (err error) {
+		
 	var msg, date, clock, broadcast string
 	var ID int = config.ELEVATOR_ID
 	var node Elevator_node
