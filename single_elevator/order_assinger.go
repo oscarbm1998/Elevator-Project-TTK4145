@@ -124,7 +124,9 @@ func Hall_order(
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(elevio.BT_Cab, a.Floor, true) //turns off light
 				}
-				ch_new_order <- true //forteller at en ny order er tilgjengelig
+				if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || (a.Floor == elevator.floor)) && current_state != moving {
+					ch_new_order <- true //forteller at en ny order er tilgjengelig
+				}
 			}
 		}
 	}
