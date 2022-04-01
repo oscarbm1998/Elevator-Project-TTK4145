@@ -65,7 +65,6 @@ func SingleElevatorFSM(
 			switch current_state {
 			case idle:
 				if Request_next_action(elevator.direction) {
-					fmt.Printf("Direction is %+v\n", elevator_command.direction)
 					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 					ch_update_elevator_node_placement <- "direction"
@@ -170,11 +169,6 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 			}
 			if restoring_cab_calls {
 				ch_new_order <- true
-			}
-			if msg == 3 {
-				elevator_command.direction = -1
-			} else if msg == 0 {
-				elevator_command.direction = 1
 			}
 			if elevator_command.floor == msg && last_floor != elevator_command.floor {
 				last_floor = elevator_command.floor
