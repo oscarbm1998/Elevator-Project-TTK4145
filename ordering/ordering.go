@@ -6,6 +6,7 @@ import (
 	networking "PROJECT-GROUP-10/networking"
 	"fmt"
 	"math"
+	"sync"
 )
 
 type score_tracker struct { //this struct keeps track of the score and what elevator the socre belongs to
@@ -111,12 +112,33 @@ func Pass_to_network(
 							temp_button_event.Floor = e
 							Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
 						}
-						//has to be this way otherwise it wont catch both instances
-						if elev_overview[i].HallCalls[e].Down {
-							master_tournament(e, -1) //runs a tournament with the parametres for up
-							temp_button_event.Button = -1
-							temp_button_event.Floor = e
-							Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
+						sorting() //runs the sorting algorithm
+						//again tries to send the results to the elevators
+						for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+							if elev_overview[placement[c].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+								button_calls := <-ch_drv_buttons //again the convertion is needed as it is between channels
+								ch_self_command <- button_calls
+								break
+							} else {
+								returnval := make(chan bool)
+								go send_command_helper(returnval ,elev_overview[placement[c].elevator_number].ID, floor, dir)
+								if returnval {
+									close(returnval)
+									break
+								} else {
+									close(returnval)
+								}
+									/*********************************
+									*		Welcome to Hell
+												───▄▄▄
+												─▄▀░▄░▀▄
+												─█░█▄▀░█
+												─█░▀▄▄▀█▄█▄▀
+												▄▄█▄▄▄▄███▀
+
+									*********************************/
+								}
+							}
 						}
 					}
 				}
@@ -125,15 +147,16 @@ func Pass_to_network(
 	}
 }
 
-/*********************************
-*		Welcome to Hell
-			───▄▄▄
-			─▄▀░▄░▀▄
-			─█░█▄▀░█
-			─█░▀▄▄▀█▄█▄▀
-			▄▄█▄▄▄▄███▀
-
-*********************************/
+func send_command_helper(returnval chan bool, ID int, floor int, direction int){
+	mutex.Lock()
+	if networking.Send_command(ID, floor, direction){
+		returnval <- true
+	} else {
+		returnval <- false
+	}
+	mutex.Unlock()
+	return
+}
 
 //a function that scores all the elevators based on two inputs: floor and direction
 func master_tournament(floor int, direction int) {
@@ -194,7 +217,16 @@ for e := 0; e < 6; e++ { //checks all calls by running a
 		} else {
 			if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
 				break
-
+			} else { //if the call is not going to itself
+				returnval := make(chan bool)
+				go send_command_helper(returnval ,elev_overview[placement[c].elevator_number].ID, floor, dir)
+				if returnval {
+					fmt.Printf("external elevator won\n")
+					close(returnval)
+					break
+				} else {
+					close(returnval)
+				}
 			}
 		}
 	}
