@@ -11,7 +11,8 @@ import (
 
 var HeartBeatLogger bool = false
 
-func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (err error) {
+func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
+	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) (err error) {
 	var msg, date, clock, broadcast string
 	var ID int = config.ELEVATOR_ID
 	var node Elevator_node
@@ -59,7 +60,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 		}
 		con.Write([]byte(msg)) //Sending the message
 		timer.Reset(config.HEARTBEAT_TIME)
-
+		ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 	}
 }
 
@@ -151,12 +152,13 @@ func heartBeathandler(
 			con.Close()
 
 			ch_take_calls <- msg_ID //Tell the ordering package to take the hall calls of the dead elevator
-
+			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 		case msg_ID := <-ch_ext_dead: //Set status to 404 and stop the timer
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
 			node_data.Status = 404
 			ch_write_data <- node_data
 			ch_timerStop[msg_ID-1] <- true //Stop the timer of the dead elevator
+			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 		}
 	}
 }
@@ -210,7 +212,7 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) {
 
 //Returns an array of all the hallcalls currently being served
 func update_HallCallsTot(ch_req_ID chan int, ch_req_data chan Elevator_node) (HallCallsTot [config.NUMBER_OF_FLOORS]HallCall) {
-	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ { //For each elevaotr
+	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ { //For each elevator
 		Elevator := Node_get_data(i, ch_req_ID, ch_req_data) //Get data
 		if Elevator.Status == 0 {                            //Ignore elevators with error
 			for k := range Elevator.HallCalls {
