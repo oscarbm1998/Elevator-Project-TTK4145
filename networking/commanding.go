@@ -87,7 +87,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 	}
 Exit:
 	//Work done
-	ch_rbc_close <- true //closing readback listener listener
+	ch_rbc_close <- true //close readback listener listener
 	return success
 }
 
@@ -150,9 +150,11 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 
 				//Accept the command by reading it back
 				rbc_con.Write([]byte(rbc))
+
 				//Wait for OK
 				n, _, _ = cmd_con.ReadFrom(buf)
 				msg = string(buf[0:n])
+
 				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
 					//Pass the command to the elevator
 					switch direction {
@@ -192,7 +194,3 @@ func reject_command(floor, direction int) (reject bool) {
 		return false
 	}
 }
-
-//else if floor == Elevator_nodes[config.ELEVATOR_ID-1].Floor {
-//fmt.Println("Reason for reject: I'm allready there")
-//return true
