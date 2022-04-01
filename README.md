@@ -1,10 +1,20 @@
 Elevator Project
 ================
+Welcome to our Elevator Project.
 
+## Starting up
+Before starting up, make sure that the contents of `config/config.go` matches your setup. 
+- `NUMBER_OF_ELEVATORS` must equal the number of elevators in the network. This is not hard coded, it is simply necessary for the memory adn asset allocation, this should equal the maximum numbers of elevators you should expect on the network. 
+
+Run the program by typing: `go run main.go --ID *ID of the elevator*` in a terminal within the project folder. 
+
+## About
+
+# Topological overview
 
 
 The Task
-=========
+========
 Create software for controlling `n` elevators working in parallel across `m` floors.
 
 Be reasonable: There may be semantic hoops that you can jump through to create something that is "technically correct". Do not hesitate to contact us if you feel that something is ambiguous or missing from these requirements.

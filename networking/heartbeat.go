@@ -53,11 +53,10 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node) (e
 			msg = msg + "_" + strconv.Itoa(up) + "_"
 			msg = msg + strconv.Itoa(down)
 		}
-		/*
-			if HeartBeatLogger {Ma
-				fmt.Println("Networking: sending HB message " + msg)
-			}
-		*/
+
+		if HeartBeatLogger {
+			fmt.Println("Networking: sending HB message " + msg)
+		}
 		con.Write([]byte(msg)) //Sending the message
 		timer.Reset(config.HEARTBEAT_TIME)
 
@@ -130,7 +129,7 @@ func heartBeathandler(
 			ch_write_data <- node_data                                             //Write the node data
 			ch_timerReset[node_data.ID-1] <- true                                  //Reset the appropriate timer
 			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data) //Find out what hallcalls are being served and send result to SingleElevator
-			ch_new_data <- node_data.ID                                            //Tell cost function that there is new data on this ID
+			ch_new_data <- node_data.ID                                            //Tell ordering that there is new data on this ID
 
 		case msg_ID := <-ch_foundDead:
 			var msg, broadcast string
