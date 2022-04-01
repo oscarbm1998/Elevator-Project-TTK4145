@@ -180,8 +180,8 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	var temp_placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	for p := 0; p < config.NUMBER_OF_ELEVATORS; p++ { //runs thrice
-		var roundbest_index int = 0                       //the strongest placement for this round
-		var bestscore int = 0                             //the strongest placement for this round
+		var roundbest_index int                           //the strongest placement for this round
+		var bestscore int                                 //the strongest placement for this round
 		for i := p; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
 			if placement[i].score > bestscore { //if the score surpasses the others
 				roundbest_index = i            //sets the new index
