@@ -130,7 +130,7 @@ func heartBeathandler(
 			ch_write_data <- node_data                                             //Write the node data
 			ch_timerReset[node_data.ID-1] <- true                                  //Reset the appropriate timer
 			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data) //Find out what hallcalls are being served and send result to SingleElevator
-			ch_new_data <- node_data.ID                                            //Tell cost function that there is new data on this ID
+			ch_new_data <- node_data.ID                                            //Tell ordering that there is new data on this ID
 
 		case msg_ID := <-ch_foundDead:
 			var msg, broadcast string

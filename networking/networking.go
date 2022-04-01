@@ -30,11 +30,11 @@ var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 
 func Main(
 	ch_req_ID [3]chan int,
-	ch_new_data, ch_ext_dead, ch_take_calls chan int,
+	ch_new_data, ch_take_calls chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
 	ch_net_command chan elevio.ButtonEvent,
 	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) {
-
+	ch_ext_dead := make(chan int)
 	//Initiating the Elevator_nodes data with values
 	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
 		if i != config.ELEVATOR_ID {
@@ -47,7 +47,7 @@ func Main(
 	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
 	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0], ch_hallCallsTot_updated)
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
-	go command_listener(ch_net_command)
+	go command_listener(ch_net_command, ch_ext_dead)
 }
 
 //Function responsible for the Elevator_node resource
