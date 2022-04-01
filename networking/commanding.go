@@ -35,7 +35,8 @@ func Send_command(ID, floor, direction int) (success bool) {
 	//Initiate readback connection and timer
 	ch_rbc_msg := make(chan string)
 	ch_rbc_listen := make(chan bool)
-	go command_readback_listener(ch_rbc_msg, ch_rbc_listen)
+	ch_rbc_close := make(chan bool)
+	go command_readback_listener(ch_rbc_msg, ch_rbc_close, ch_rbc_listen)
 
 	//Send command
 	fmt.Println("Network: sending command " + cmd)
@@ -52,26 +53,26 @@ func Send_command(ID, floor, direction int) (success bool) {
 			data := strings.Split(msg, "_")
 			fmt.Println("Readback: " + msg + " expected: " + rbc)
 			rbc_id, _ := strconv.Atoi(data[0])
-			//Sending again if the readback is wrong
+			//Readback message for me
 			if rbc_id == config.ELEVATOR_ID {
 				timer.Reset(timOut)
-				if msg == rbc {
+				if msg == rbc { //Good readback. Successfully commanded, exit
 					fmt.Println("Networking: readback OK")
 					cmd_con.Write([]byte(strconv.Itoa(ID) + "_CMD_OK"))
 					success = true
 					goto Exit
-				} else if rbc == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_REJECT" { //Command rejected
-					fmt.Printf("Network: elevator rejected the command")
+				} else if rbc == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_REJECT" { //Command rejected, unsuccessfully commanded, exit
+					fmt.Printf("Networking: elevator rejected the command")
 					success = false
 					goto Exit
-				} else {
+				} else { //Bad readback, or no readback. Send the command again
 					fmt.Println("Networking: bad readback, sending command again")
 					_, err = cmd_con.Write([]byte(cmd))
 					ch_rbc_listen <- true
 					printError("Networking: Error sending command: ", err)
 					attempts++
 				}
-				if attempts > 3 {
+				if attempts > 3 { //Tried readback too many times, exit
 					fmt.Println("Networking: too many command readback attemps")
 					success = false
 					goto Exit
@@ -86,34 +87,38 @@ func Send_command(ID, floor, direction int) (success bool) {
 	}
 Exit:
 	//Work done
-	fmt.Println("Networking: send_command exiting")
+	ch_rbc_close <- true //closing readback listener listener
 	return success
 }
 
-func command_readback_listener(ch_msg chan<- string, ch_rbc_listen <-chan bool) {
+func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen <-chan bool) {
 	buf := make([]byte, 1024)
 	for {
-		<-ch_rbc_listen
-		con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
-		con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
-		n, _, err := con.ReadFrom(buf)
-		if err != nil {
-			if e, ok := err.(net.Error); !ok || e.Timeout() {
-				printError("Networking: command readback net error: ", err)
-			} else {
-				fmt.Println("Networking: Getting nothing on readback channel, so quitting")
+		select {
+		case <-ch_rbc_listen: //Will listen when told to
+			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
+			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
+			n, _, err := con.ReadFrom(buf)
+			msg := string(buf[0:n])
+			if err != nil {
+				if e, ok := err.(net.Error); !ok || e.Timeout() {
+					printError("Networking: command readback net error: ", err)
+				} else {
+					fmt.Println("Networking: Getting nothing on readback channel, so quitting")
+				}
+				msg = "ERROR"
 			}
+			ch_msg <- msg
+			con.Close()
+		case <-ch_exit:
 			goto Exit
 		}
-		msg := string(buf[0:n])
-		ch_msg <- msg
-		con.Close()
 	}
 Exit:
 	fmt.Println("Networking: closing readback listener")
 }
 
-func command_listener(ch_netcommand chan elevio.ButtonEvent) {
+func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- int) {
 	var button_command elevio.ButtonEvent
 	var rbc string
 	buf := make([]byte, 1024)
@@ -163,11 +168,12 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 			}
 		} else if ID == 98 { //Announcement to everyone from someone
 			code := data[2]
-			if code == "DEAD" {
+			if code == "DEAD" { //Someone is announced dead, update status
 				dead_ID, _ := strconv.Atoi(data[1])
 				reportedBy_ID, _ := strconv.Atoi(data[3])
 				if reportedBy_ID != config.ELEVATOR_ID {
 					fmt.Println("Networking: elevator " + strconv.Itoa(dead_ID) + " was found dead by elevator " + strconv.Itoa(reportedBy_ID))
+					ch_ext_dead <- dead_ID
 				}
 			}
 		}
@@ -177,10 +183,10 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent) {
 
 func reject_command(floor, direction int) (reject bool) {
 	if Elevator_nodes[config.ELEVATOR_ID-1].Status != 0 {
-		fmt.Println("Reason for reject: my status is not 0")
+		fmt.Println("Reason for cmd reject: my status is not 0")
 		return true
 	} else if floor < 0 || floor > config.NUMBER_OF_FLOORS {
-		fmt.Println("Reason for reject: illigal floor, can't go to floor " + strconv.Itoa(floor))
+		fmt.Println("Reason for cmd reject: illigal floor, can't go to floor " + strconv.Itoa(floor))
 		return true
 	} else {
 		return false
