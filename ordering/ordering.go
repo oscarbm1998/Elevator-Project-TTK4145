@@ -122,7 +122,7 @@ func death_caller(e, ID int, ch_self_command chan elevio.ButtonEvent, lighthouse
 	}
 	//has to be this way otherwise it wont catch both instances
 	if lighthouse[ID-1].HallCalls[e].Down {
-		placement = master_tournament(e, -1, placement, lighthouse) //runs a tournament with the parametres for up
+		placement = master_tournament(e, -1, placement, lighthouse) //runs a tournament with the parametres for down
 		temp_button_event.Button = -1
 		temp_button_event.Floor = e
 		Send_to_best_elevator(ch_self_command, temp_button_event, -1, lighthouse, placement, &m)
@@ -145,12 +145,18 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
 		if !(lighthouse[i].Status != 0) { //if the elevator is nonfunctional it is ignored
 			//direction scoring
+			if direction == 0 {
+				placement[i].score += 3
+			}
 			if direction == lighthouse[i].Direction { //if the elevators direction matches the input
 				placement[i].score += 2 //give 3 good boy points
 			}
+			if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
+				placement[i].score += 5
+			}
 			//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
 			//this means that the closer the elevator is the higher the score
-			placement[i].score += (3 - int(math.Abs(float64(lighthouse[i].Floor-floor))))
+			placement[i].score += (4 - int(math.Abs(float64(lighthouse[i].Floor-floor))))
 		}
 	}
 	return placement
@@ -179,7 +185,6 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 
 //a sorting algorithm responsible for updating the placement struct from highest to lowest score
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
-	var temp_placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	for p := 0; p < config.NUMBER_OF_ELEVATORS; p++ { //runs thrice
 		var roundbest_index int                           //the strongest placement for this round
 		var bestscore int                                 //the strongest placement for this round
@@ -189,11 +194,11 @@ func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placem
 				bestscore = placement[i].score //sets the new best score
 			}
 		}
-		temp_placement[p].elevator_number = roundbest_index //sets the index of the highest scorer
+		placement[p].elevator_number = roundbest_index //sets the index of the highest scorer
 	}
 	//printing the sorting
 	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
-		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", temp_placement[x].elevator_number, x, temp_placement[x].score)
+		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
 	}
-	return temp_placement
+	return placement
 }
