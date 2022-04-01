@@ -251,9 +251,9 @@ func Send_to_best_elevator(
 			button_calls := a //as the message needs to be passed between two channels we need a middle man
 			ch_self_command <- button_calls
 			break
-		} else { //if the call is not going to itself
+		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 { //if the call is not going to itself
 			if networking.Send_command(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir) {
-				break
+
 			}
 		}
 	}
