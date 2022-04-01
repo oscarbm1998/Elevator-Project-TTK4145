@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+//Commands and elevator with ID, to service a specified hallcall command. Returns true if successfull
 func Send_command(ID, floor, direction int) (success bool) {
 	//(NB!!) This function does not check if the node is alive before attempting transmission.
 	var attempts int = 1
