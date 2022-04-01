@@ -41,7 +41,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 	go command_readback_listener(ch_rbc_msg, ch_rbc_close, ch_rbc_listen)
 
 	//Send command
-	fmt.Println("Network: sending command " + cmd)
+	fmt.Println("Network: sending command to elevator " + strconv.Itoa(ID))
 	_, err := cmd_con.Write([]byte(cmd))
 	ch_rbc_listen <- true
 	printError("Networking: Error sending command: ", err)

@@ -30,8 +30,8 @@ func main() {
 	ch_drv_stop := make(chan bool)                  //of what
 	ch_elevator_has_arrived := make(chan bool)      //do
 
-	ch_net_command := make(chan elevio.ButtonEvent)  //pls
-	ch_self_command := make(chan elevio.ButtonEvent) //ppl
+	ch_net_command := make(chan elevio.ButtonEvent)      //pls
+	ch_self_command := make(chan elevio.ButtonEvent, 10) //ppl
 
 	//Networking
 	ch_new_order := make(chan bool)                                                    //Message here if there is a new order
