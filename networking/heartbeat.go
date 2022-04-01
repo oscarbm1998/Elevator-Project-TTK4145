@@ -151,7 +151,7 @@ func heartBeathandler(
 			con, _ := net.DialUDP("udp", nil, network)
 			con.Write([]byte(msg))
 			con.Close()
-
+			ch_new_data <- msg_ID
 			ch_take_calls <- msg_ID //Tell the ordering package to take the hall calls of the dead elevator
 			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead, redistributing his/her hall calls")
 			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
@@ -159,8 +159,10 @@ func heartBeathandler(
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
 			node_data.Status = 404
 			ch_write_data <- node_data
+			ch_new_data <- msg_ID
 			ch_timerStop[msg_ID-1] <- true //Stop the timer of the dead elevator
 			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
+
 		}
 	}
 }
