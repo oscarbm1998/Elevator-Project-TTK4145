@@ -127,7 +127,7 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	switch a.Button {
 	case 0: //up
-		placement := master_tournament(a.Floor, int(elevio.MD_Up), placement)
+		placement := master_tournament(a.Floor, int(elevio.MD_Up), placement, lighthouse)
 		dir := 1
 		if number_of_alive_elevs >= 2 {
 			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
@@ -135,7 +135,7 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 			ch_self_command <- a
 		}
 	case 1: //down
-		placement := master_tournament(a.Floor, elevio.MD_Down, placement)
+		placement := master_tournament(a.Floor, elevio.MD_Down, placement, lighthouse)
 		dir := -1
 		if number_of_alive_elevs >= 2 {
 			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
@@ -158,14 +158,14 @@ func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthou
 			var temp_button_event elevio.ButtonEvent //defines a temporary button event in order to reuse a command
 			for e := 0; e < config.NUMBER_OF_FLOORS; e++ {
 				if lighthouse[i].HallCalls[e].Up {
-					placement = master_tournament(e, 1, placement) //runs a tournament with the parametres for up
+					placement = master_tournament(e, 1, placement, lighthouse) //runs a tournament with the parametres for up
 					temp_button_event.Button = 1
 					temp_button_event.Floor = e
 					Send_to_best_elevator(ch_self_command, temp_button_event, 1, lighthouse, placement)
 				}
 				//has to be this way otherwise it wont catch both instances
 				if lighthouse[i].HallCalls[e].Down {
-					placement = master_tournament(e, -1, placement) //runs a tournament with the parametres for up
+					placement = master_tournament(e, -1, placement, lighthouse) //runs a tournament with the parametres for up
 					temp_button_event.Button = -1
 					temp_button_event.Floor = e
 					Send_to_best_elevator(ch_self_command, temp_button_event, -1, lighthouse, placement)
@@ -214,7 +214,7 @@ func send_command_helper(returnval chan bool, ID int, floor int, direction int, 
 */
 
 //a function that scores all the elevators based on two inputs: floor and direction
-func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
+func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	//resets scoring to prepare the tournament
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 		placement[i].score = 0
@@ -222,30 +222,29 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
-		if !(elev_overview[i].Status != 0) { //if the elevator is nonfunctional it is ignored
+		if !(lighthouse[i].Status != 0) { //if the elevator is nonfunctional it is ignored
 			//direction scoring
-			if direction == elev_overview[i].Direction { //if the elevators direction matches the input
+			if direction == lighthouse[i].Direction { //if the elevators direction matches the input
 				placement[i].score += 3 //give 3 good boy points
 			}
 			//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
 			//this means that the closer the elevator is the higher the score
-			placement[i].score += (3 - int(math.Abs(float64(elev_overview[i].Floor-floor))))
+			placement[i].score += (3 - int(math.Abs(float64(lighthouse[i].Floor-floor))))
 		}
 	}
 	return placement
 }
 
 func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
-
 	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement) //calls the sorting algorithm to sort the elevator placements
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {                                      //will automatically cycle the scoreboard and attempt to send from best to worst
-		if elev_overview[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
 			fmt.Printf("own elevator won\n")
 			button_calls := a //as the message needs to be passed between two channels we need a middle man
 			ch_self_command <- button_calls
 			break
 		} else { //if the call is not going to itself
-			if networking.Send_command(elev_overview[placement[i].elevator_number].ID, a.Floor, dir) {
+			if networking.Send_command(lighthouse[placement[i].elevator_number].ID, a.Floor, dir) {
 				break
 			}
 		}
@@ -267,7 +266,7 @@ func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placem
 	}
 	//printing the sorting
 	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
-		//fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
+		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
 	}
 	return placement
 }
