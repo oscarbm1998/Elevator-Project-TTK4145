@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-var commandLogger bool = true
+var commandLogger bool = false
 
 //Commands and elevator with ID, to service a specified hallcall command. Returns true if successfull
 func Send_command(ID, floor, direction int) (success bool) {
@@ -91,9 +91,16 @@ func Send_command(ID, floor, direction int) (success bool) {
 	}
 Exit:
 	//Work done
-	fmt.Println("Networking: trying to exit")
+	if commandLogger {
+		fmt.Println("Networking: trying to exit")
+	}
+
 	ch_rbc_close <- true //close readback listener listener
-	fmt.Println("Networking: done sending, exited")
+
+	if commandLogger {
+		fmt.Println("Networking: done sending command, exited")
+	}
+
 	return success
 }
 
