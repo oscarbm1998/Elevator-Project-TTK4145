@@ -69,10 +69,9 @@ func Pass_to_network(
 			go cab_call_hander(ch_self_command, a, elev_overview)
 			//if a death or stall occurs
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
-			fmt.Print("Death id recorded\n")
-			number_of_alive_elevs--
-			fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
-			go death_call_hander(death_id, ch_self_command, elev_overview)
+			for e := 0; e < config.NUMBER_OF_FLOORS; e++ {
+				go death_caller(e, death_id, ch_self_command, elev_overview)
+			}
 
 		}
 	}
@@ -112,27 +111,21 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 	}
 }
 
-func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
+func death_caller(e, ID int, ch_self_command chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died in the internal overwiew struct
-		if lighthouse[i].ID == ID { //found the elevator
-			var temp_button_event elevio.ButtonEvent //defines a temporary button event in order to reuse a command
-			for e := 0; e < config.NUMBER_OF_FLOORS; e++ {
-				if lighthouse[i].HallCalls[e].Up {
-					placement = master_tournament(e, 1, placement, lighthouse) //runs a tournament with the parametres for up
-					temp_button_event.Button = 1
-					temp_button_event.Floor = e
-					Send_to_best_elevator(ch_self_command, temp_button_event, 1, lighthouse, placement, &m)
-				}
-				//has to be this way otherwise it wont catch both instances
-				if lighthouse[i].HallCalls[e].Down {
-					placement = master_tournament(e, -1, placement, lighthouse) //runs a tournament with the parametres for up
-					temp_button_event.Button = -1
-					temp_button_event.Floor = e
-					Send_to_best_elevator(ch_self_command, temp_button_event, -1, lighthouse, placement, &m)
-				}
-			}
-		}
+	var temp_button_event elevio.ButtonEvent //defines a temporary button event in order to reuse a command
+	if lighthouse[ID-1].HallCalls[e].Up {
+		placement = master_tournament(e, 1, placement, lighthouse) //runs a tournament with the parametres for up
+		temp_button_event.Button = 1
+		temp_button_event.Floor = e
+		Send_to_best_elevator(ch_self_command, temp_button_event, 1, lighthouse, placement, &m)
+	}
+	//has to be this way otherwise it wont catch both instances
+	if lighthouse[ID-1].HallCalls[e].Down {
+		placement = master_tournament(e, -1, placement, lighthouse) //runs a tournament with the parametres for up
+		temp_button_event.Button = -1
+		temp_button_event.Floor = e
+		Send_to_best_elevator(ch_self_command, temp_button_event, -1, lighthouse, placement, &m)
 	}
 }
 

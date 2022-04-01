@@ -13,7 +13,7 @@ var HeartBeatLogger bool = false
 
 func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) (err error) {
-		
+
 	var msg, date, clock, broadcast string
 	var ID int = config.ELEVATOR_ID
 	var node Elevator_node
@@ -23,7 +23,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 	con, _ := net.DialUDP("udp", nil, network)
 
 	fmt.Println("Networking: starting heartbeat transmision")
-
+	ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 	timer := time.NewTimer(config.HEARTBEAT_TIME) //Timer to define when to broadcast heartbeat data
 	//Routine
 	for {
@@ -138,7 +138,7 @@ func heartBeathandler(
 			ch_timerStop[msg_ID-1] <- true //Stop the timer of the dead elevator
 
 			//Timer has run out, update status
-			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead, redistributing his/her hall calls")
+
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data) //Get the latest data to avoid overwrite
 			node_data.ID = msg_ID                                     //ID
 			node_data.Status = 404                                    //Set status to unreachable elevator
@@ -153,6 +153,7 @@ func heartBeathandler(
 			con.Close()
 
 			ch_take_calls <- msg_ID //Tell the ordering package to take the hall calls of the dead elevator
+			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead, redistributing his/her hall calls")
 			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 		case msg_ID := <-ch_ext_dead: //Set status to 404 and stop the timer
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
