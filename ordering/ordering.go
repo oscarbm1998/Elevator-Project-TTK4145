@@ -29,6 +29,14 @@ func heartbeat_monitor(
 	ch_req_ID chan int,
 	ch_req_data chan networking.Elevator_node,
 ) {
+	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
+		if i != config.ELEVATOR_ID {
+			elev_overview[i-1].ID = i
+			elev_overview[i-1].Status = 2 //Status = 2: have not heard from it yet
+		} else {
+			elev_overview[i-1].ID = i
+		}
+	}
 	for {
 		id := <-ch_new_data                                                                                        //new data arrives
 		elev_overview[id-1] = networking.Node_get_data(id, ch_req_ID, ch_req_data)                                 //updates elev_overview with the new data
@@ -51,13 +59,17 @@ func Pass_to_network(
 		ch_req_ID,
 		ch_req_data,
 	)
+
 	number_of_alive_elevs = config.NUMBER_OF_ELEVATORS
+	fmt.Println("Ordering: starting up")
 	for {
 		select {
 		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
+			fmt.Printf("Button press registered %d with the floor num %d\n", a.Button, a.Floor)
 			go cab_call_hander(ch_self_command, a, elev_overview)
 			//if a death or stall occurs
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
+			fmt.Print("Death id recorded\n")
 			number_of_alive_elevs--
 			fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
 			go death_call_hander(death_id, ch_self_command, elev_overview)
