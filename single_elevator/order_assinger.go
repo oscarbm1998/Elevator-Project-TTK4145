@@ -217,22 +217,18 @@ func Request_next_action(direction int) bool {
 	case int(elevio.MD_Up): //up
 		if request_above() {
 			return true
-			// } else if request_cab() {
-			// 	return true
-		} else if request_below() {
-			return true
 		} else if request_here() {
+			return true
+		} else if request_below() {
 			return true
 		}
 
 	case elevio.MD_Down: //down
 		if request_below() {
 			return true
-			// } else if request_cab() {
-			// 	return true
-		} else if request_above() {
-			return true
 		} else if request_here() {
+			return true
+		} else if request_above() {
 			return true
 		}
 
