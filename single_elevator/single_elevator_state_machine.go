@@ -26,6 +26,7 @@ var add_order_to_node update_elevator_node
 var remove_order_from_node update_elevator_node
 var current_state elevator_state
 var last_floor int
+var restoring_cab_calls bool
 var elevator_door_blocked bool
 var cabCalls [4]bool
 
@@ -156,13 +157,11 @@ func SingleElevatorFSM(
 
 func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 	ch_elevator_has_arrived chan bool,
-	ch_update_elevator_node_placement chan string,
-) {
+	ch_update_elevator_node_placement chan string) {
 	for {
 		select {
 		case msg := <-ch_drv_floors:
 			elevator.floor = msg
-			fmt.Println(elevator.floor)
 			ch_update_elevator_node_placement <- "floor"
 			elevio.SetFloorIndicator(msg)
 			if last_floor == -1 {
@@ -267,6 +266,7 @@ func init_elevator() {
 		if cabCalls[i] {
 			floor[i].cab = true
 			elevio.SetButtonLamp(2, i, true)
+			restoring_cab_calls = true
 		}
 	}
 }
