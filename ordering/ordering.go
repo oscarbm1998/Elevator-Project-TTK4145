@@ -25,6 +25,8 @@ var number_of_alive_elevs int
 //a translator for when we need to pass info between two channels
 var button_calls elevio.ButtonEvent
 
+var m sync.Mutex
+
 //checks and alerts the system whenever a heartbeat ping occurs
 func heartbeat_monitor(
 	ch_new_data chan int,
@@ -112,33 +114,12 @@ func Pass_to_network(
 							temp_button_event.Floor = e
 							Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
 						}
-						sorting() //runs the sorting algorithm
-						//again tries to send the results to the elevators
-						for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-							if elev_overview[placement[c].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-								button_calls := <-ch_drv_buttons //again the convertion is needed as it is between channels
-								ch_self_command <- button_calls
-								break
-							} else {
-								returnval := make(chan bool)
-								go send_command_helper(returnval ,elev_overview[placement[c].elevator_number].ID, floor, dir)
-								if returnval {
-									close(returnval)
-									break
-								} else {
-									close(returnval)
-								}
-									/*********************************
-									*		Welcome to Hell
-												───▄▄▄
-												─▄▀░▄░▀▄
-												─█░█▄▀░█
-												─█░▀▄▄▀█▄█▄▀
-												▄▄█▄▄▄▄███▀
-
-									*********************************/
-								}
-							}
+						//has to be this way otherwise it wont catch both instances
+						if elev_overview[i].HallCalls[e].Down {
+							master_tournament(e, -1) //runs a tournament with the parametres for up
+							temp_button_event.Button = -1
+							temp_button_event.Floor = e
+							Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
 						}
 					}
 				}
@@ -147,14 +128,24 @@ func Pass_to_network(
 	}
 }
 
-func send_command_helper(returnval chan bool, ID int, floor int, direction int){
-	mutex.Lock()
-	if networking.Send_command(ID, floor, direction){
+/*********************************
+*		Welcome to Hell
+			───▄▄▄
+			─▄▀░▄░▀▄
+			─█░█▄▀░█
+			─█░▀▄▄▀█▄█▄▀
+			▄▄█▄▄▄▄███▀
+
+*********************************/
+
+func send_command_helper(returnval chan bool, ID int, floor int, direction int, m *sync.Mutex) {
+	m.Lock()
+	if networking.Send_command(ID, floor, direction) {
 		returnval <- true
 	} else {
 		returnval <- false
 	}
-	mutex.Unlock()
+	m.Unlock()
 	return
 }
 
@@ -188,9 +179,13 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 			ch_self_command <- button_calls
 			break
 		} else { //if the call is not going to itself
-			if networking.Send_command(elev_overview[placement[i].elevator_number].ID, a.Floor, dir) { //send command to suitable external elevator
-				fmt.Printf("external elevator won\n")
-				break //if it succeds break the loop
+			returnval := make(chan bool)
+			go send_command_helper(returnval, elev_overview[placement[c].elevator_number].ID, floor, dir, &m)
+			if returnval {
+				close(returnval)
+				break
+			} else {
+				close(returnval)
 			}
 		}
 	}
