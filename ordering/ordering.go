@@ -242,8 +242,7 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {                                      //will automatically cycle the scoreboard and attempt to send from best to worst
 		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
 			fmt.Printf("own elevator won\n")
-			button_calls := a //as the message needs to be passed between two channels we need a middle man
-			ch_self_command <- button_calls
+			ch_self_command <- a
 			break
 		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 { //if the call is not going to itself
 			m.Lock()
@@ -253,8 +252,7 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 				break
 			}
 		} else if i == config.NUMBER_OF_ELEVATORS-1 {
-			button_calls := a //as the message needs to be passed between two channels we need a middle man
-			ch_self_command <- button_calls
+			ch_self_command <- a
 		}
 	}
 }
