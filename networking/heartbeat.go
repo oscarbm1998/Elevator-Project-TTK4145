@@ -93,7 +93,6 @@ func heartBeathandler(
 
 			//Parsing/translating the received heartbeat message
 			data := strings.Split(msg, "_")
-
 			node_data.Last_seen = data[0]
 			node_data.ID, _ = strconv.Atoi(data[1])
 			node_data.Direction, _ = strconv.Atoi(data[2])
@@ -157,7 +156,7 @@ func heartBeathandler(
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
 			node_data.Status = 404
 			ch_write_data <- node_data
-			ch_timerStop[msg_ID-1] <- true
+			ch_timerStop[msg_ID-1] <- true //Stop the timer of the dead elevator
 		}
 	}
 }

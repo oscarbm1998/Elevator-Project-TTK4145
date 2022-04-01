@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+var commandLogger bool = false
+
 //Commands and elevator with ID, to service a specified hallcall command. Returns true if successfull
 func Send_command(ID, floor, direction int) (success bool) {
 	//(NB!!) This function does not check if the node is alive before attempting transmission.
@@ -51,7 +53,9 @@ func Send_command(ID, floor, direction int) (success bool) {
 		select {
 		case msg := <-ch_rbc_msg:
 			data := strings.Split(msg, "_")
-			fmt.Println("Readback: " + msg + " expected: " + rbc)
+			if commandLogger {
+				fmt.Println("Readback: " + msg + " expected: " + rbc)
+			}
 			rbc_id, _ := strconv.Atoi(data[0])
 			//Readback message for me
 			if rbc_id == config.ELEVATOR_ID {
@@ -126,7 +130,9 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen <-ch
 		}
 	}
 Exit:
-	fmt.Println("Networking: closing readback listener")
+	if commandLogger {
+		fmt.Println("Networking: closing readback listener")
+	}
 }
 
 func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- int) {
