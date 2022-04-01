@@ -23,7 +23,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 	con, _ := net.DialUDP("udp", nil, network)
 
 	fmt.Println("Networking: starting heartbeat transmision")
-
+	ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 	timer := time.NewTimer(config.HEARTBEAT_TIME) //Timer to define when to broadcast heartbeat data
 	//Routine
 	for {
