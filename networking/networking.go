@@ -84,7 +84,7 @@ func Node_get_data(ID int, ch_req_ID chan int, ch_req_data chan Elevator_node) (
 	return nodeData
 }
 
-//A gift from Andreas that avoids the problem of threads not closing connection when the thread is stopped
+//Linux version
 func DialBroadcastUDP(port int) net.PacketConn {
 	s, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
 	if err != nil {
@@ -112,6 +112,22 @@ func DialBroadcastUDP(port int) net.PacketConn {
 
 	return conn
 }
+
+//Windows version
+// func DialBroadcastUDP(port int) net.PacketConn {
+// 	config := &net.ListenConfig{Control: func(network, address string, conn syscall.RawConn) error {
+// 		return conn.Control(func(descriptor uintptr) {
+// 			syscall.SetsockoptInt(syscall.Handle(descriptor), syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+// 			syscall.SetsockoptInt(syscall.Handle(descriptor), syscall.SOL_SOCKET, syscall.SO_BROADCAST, 1)
+// 		})
+// 	},
+// 	}
+
+// 	conn, err := config.ListenPacket(context.Background(), "udp4", fmt.Sprintf(":%d", port))
+// 	fmt.Println(err)
+
+// 	return conn
+// }
 
 func printError(str string, err error) {
 	if err != nil {

@@ -15,10 +15,11 @@ import (
 
 func main() {
 	flag.IntVar(&config.ELEVATOR_ID, "id", 1, "id of this peer")
+	flag.StringVar(&config.ELEVATOR_LOCAL_HOST, "host", "localhost:15657", "host")
 	flag.Parse()
 
 	numFloors := 4
-	elevio.Init("localhost:15657", numFloors)
+	elevio.Init(config.ELEVATOR_LOCAL_HOST, numFloors)
 
 	//var d elevio.MotorDirection = elevio.MD_Up
 	//elevio.SetMotorDirection(d)

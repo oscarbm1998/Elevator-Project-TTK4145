@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+//Commands and elevator with ID, to service a specified hallcall command. Returns true if successfull
 func Send_command(ID, floor, direction int) (success bool) {
 	//(NB!!) This function does not check if the node is alive before attempting transmission.
 	var attempts int = 1
@@ -33,9 +34,8 @@ func Send_command(ID, floor, direction int) (success bool) {
 
 	//Initiate readback connection and timer
 	ch_rbc_msg := make(chan string)
-	ch_rbc_close := make(chan bool)
 	ch_rbc_listen := make(chan bool)
-	go command_readback_listener(ch_rbc_msg, ch_rbc_close, ch_rbc_listen)
+	go command_readback_listener(ch_rbc_msg, ch_rbc_listen)
 
 	//Send command
 	fmt.Println("Network: sending command " + cmd)
@@ -85,34 +85,29 @@ func Send_command(ID, floor, direction int) (success bool) {
 		}
 	}
 Exit:
-	//Stopping readback listener and returning the results
-	ch_rbc_close <- true
+	//Work done
 	fmt.Println("Networking: send_command exiting")
 	return success
 }
 
-func command_readback_listener(ch_msg chan<- string, ch_close, ch_rbc_listen <-chan bool) {
+func command_readback_listener(ch_msg chan<- string, ch_rbc_listen <-chan bool) {
 	buf := make([]byte, 1024)
 	for {
-		select {
-		case <-ch_close:
-			goto Exit
-		case <-ch_rbc_listen:
-			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
-			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
-			n, _, err := con.ReadFrom(buf)
-			if err != nil {
-				if e, ok := err.(net.Error); !ok || e.Timeout() {
-					printError("Networking: command readback net error: ", err)
-				} else {
-					fmt.Println("Networking: Getting nothing on readback channel, so quitting")
-				}
-				goto Exit
+		<-ch_rbc_listen
+		con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
+		con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
+		n, _, err := con.ReadFrom(buf)
+		if err != nil {
+			if e, ok := err.(net.Error); !ok || e.Timeout() {
+				printError("Networking: command readback net error: ", err)
+			} else {
+				fmt.Println("Networking: Getting nothing on readback channel, so quitting")
 			}
-			msg := string(buf[0:n])
-			ch_msg <- msg
-			con.Close()
+			goto Exit
 		}
+		msg := string(buf[0:n])
+		ch_msg <- msg
+		con.Close()
 	}
 Exit:
 	fmt.Println("Networking: closing readback listener")
@@ -187,10 +182,11 @@ func reject_command(floor, direction int) (reject bool) {
 	} else if floor < 0 || floor > config.NUMBER_OF_FLOORS {
 		fmt.Println("Reason for reject: illigal floor, can't go to floor " + strconv.Itoa(floor))
 		return true
-	} else if floor == Elevator_nodes[config.ELEVATOR_ID-1].Floor {
-		fmt.Println("Reason for reject: I'm allready there")
-		return true
 	} else {
 		return false
 	}
 }
+
+//else if floor == Elevator_nodes[config.ELEVATOR_ID-1].Floor {
+//fmt.Println("Reason for reject: I'm allready there")
+//return true

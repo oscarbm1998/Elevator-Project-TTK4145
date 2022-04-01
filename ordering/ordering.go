@@ -20,6 +20,8 @@ var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 //a copy of the elevator node struct to keep internal track of the elevators
 var elev_overview [config.NUMBER_OF_ELEVATORS]networking.Elevator_node
 
+var number_of_alive_elevs int
+
 //a translator for when we need to pass info between two channels
 var button_calls elevio.ButtonEvent
 
@@ -51,7 +53,7 @@ func sorting() {
 	}
 	//printing the sorting
 	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
-		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
+		//fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
 	}
 }
 
@@ -70,16 +72,10 @@ func Pass_to_network(
 		ch_req_ID,
 		ch_req_data,
 	)
-
+	number_of_alive_elevs = config.NUMBER_OF_ELEVATORS
 	for {
 		select {
 		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
-			var number_of_alive_elevs int                     //keeps track of the number of elevators alive
-			for y := 0; y < config.NUMBER_OF_ELEVATORS; y++ { //cycles all elevators
-				if elev_overview[y].Status != 404 { //if the elevator is not dead
-					number_of_alive_elevs++
-				}
-			}
 			switch a.Button {
 			case 0: //up
 				master_tournament(a.Floor, int(elevio.MD_Up))
@@ -88,6 +84,7 @@ func Pass_to_network(
 					Send_to_best_elevator(ch_self_command, a, dir)
 				} else {
 					ch_self_command <- a
+
 				}
 			case 1: //down
 				master_tournament(a.Floor, elevio.MD_Down)
@@ -103,17 +100,17 @@ func Pass_to_network(
 			}
 			//if a death or stall occurs
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
+			number_of_alive_elevs--
+			fmt.Printf("Number of alive elevators is now: %d", number_of_alive_elevs)
 			for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died in the internal overwiew struct
 				if elev_overview[i].ID == death_id { //found the elevator
-					for e := 0; e < 6; e++ { //checks all calls by running a
-						var dir int //creates temp variables
-						var floor int
+					var temp_button_event elevio.ButtonEvent //defines a temporary button event in order to reuse a command
+					for e := 0; e < config.NUMBER_OF_FLOORS; e++ {
 						if elev_overview[i].HallCalls[e].Up {
 							master_tournament(e, 1) //runs a tournament with the parametres for up
-							dir = 1
-						} else if elev_overview[i].HallCalls[e].Down {
-							master_tournament(e, -1) //runs a tournament with the parametres for up
-							dir = -1
+							temp_button_event.Button = 1
+							temp_button_event.Floor = e
+							Send_to_best_elevator(ch_self_command, temp_button_event, int(temp_button_event.Button))
 						}
 						sorting() //runs the sorting algorithm
 						//again tries to send the results to the elevators
@@ -177,26 +174,48 @@ func master_tournament(floor int, direction int) {
 			}
 			//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
 			//this means that the closer the elevator is the higher the score
-			placement[i].score += (4 - int(math.Abs(float64(elev_overview[i].Floor)-float64(floor))))
+			placement[i].score += (3 - int(math.Abs(float64(elev_overview[i].Floor-floor))))
 		}
 	}
 }
 
 func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int) {
-	sorting() //calls the sorting algorithm to sort the elevator placements
-	counter := 0
-	for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
-		if elev_overview[j].Floor == a.Floor {
-			counter++
-			fmt.Printf("One elevator is already here\n")
+	sorting()                                         //calls the sorting algorithm to sort the elevator placements
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+		if elev_overview[placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+			fmt.Printf("own elevator won\n")
+			button_calls := a //as the message needs to be passed between two channels we need a middle man
+			ch_self_command <- button_calls
+			break
+		} else { //if the call is not going to itself
+			if networking.Send_command(elev_overview[placement[i].elevator_number].ID, a.Floor, dir) { //send command to suitable external elevator
+				fmt.Printf("external elevator won\n")
+				break //if it succeds break the loop
+			}
 		}
 	}
-	if counter == 0 {
-		for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //will automatically cycle the scoreboard and attempt to send from best to worst
-			if elev_overview[placement[i].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
-				fmt.Printf("own elevator won\n")
-				button_calls := a //as the message needs to be passed between two channels we need a middle man
-				ch_self_command <- button_calls
+}
+
+/*
+for e := 0; e < 6; e++ { //checks all calls by running a
+	var dir int //creates temp variables
+	var floor int
+	if elev_overview[i].HallCalls[e].Up {
+		master_tournament(e, 1) //runs a tournament with the parametres for up
+		dir = 1
+	} else if elev_overview[i].HallCalls[e].Down {
+		master_tournament(e, -1) //runs a tournament with the parametres for up
+		dir = -1
+	}
+	sorting() //runs the sorting algorithm
+	//again tries to send the results to the elevators
+	for c := 0; c < config.NUMBER_OF_ELEVATORS; c++ { //will automatically cycle the scoreboard and attempt to send from best to worst
+		if elev_overview[placement[c].elevator_number].ID == config.ELEVATOR_ID { //if the winning ID is the elevators own
+			button_calls := <-ch_drv_buttons //again the convertion is needed as it is between channels
+			ch_self_command <- button_calls
+			break
+		} else {
+			if networking.Send_command(elev_overview[placement[c].elevator_number].ID, floor, dir) {
 				break
 			} else { //if the call is not going to itself
 				returnval := make(chan bool)
@@ -212,3 +231,28 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 		}
 	}
 }
+*/
+
+/*
+              ██████
+            ██▒▒▒▒▒▒██
+          ██▓▓▓▓▓▓▒▒██
+          ██▓▓▒▒▒▒▒▒▒▒██
+        ██░░      ▒▒    ██
+        ██░░  ████░░██  ░░██
+      ████░░  ████░░██  ░░██
+      ██▓▓▒▒▒▒░░░░▒▒░░▓▓▒▒██
+      ██▓▓▒▒▒▒▒▒░░░░░░▓▓▒▒██
+    ██▓▓████████░░░░░░████
+  ██▓▓▓▓██▓▓▓▓████████▓▓██
+██▓▓▓▓██▓▓▒▒▒▒██▓▓▓▓▓▓██▓▓██
+██▓▓██▓▓▒▒▒▒▒▒██▒▒▒▒░░▓▓▒▒▓▓██
+██▓▓██▓▓▒▒▒▒▒▒██▒▒░░██▓▓▒▒▓▓██
+██▓▓██▓▓▒▒▒▒▒▒▒▒████▓▓▓▓▒▒▓▓██
+██▓▓██▓▓▒▒▒▒▒▒▒▒▒▒██░░▒▒▒▒▓▓██
+██░░██░░▒▒▒▒░░░░░░████░░░░░░██
+  ██████░░░░░░██░░██  ██████
+        ██████████
+
+
+*/

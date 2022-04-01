@@ -3,9 +3,9 @@ package config
 import "time"
 
 var ELEVATOR_ID int = 1
+var ELEVATOR_LOCAL_HOST string = "localhost:15657"
 
 const (
-	//ELEVATOR_ID            int    = 1
 	SIMULATION             bool   = false
 	SIMULATION_IP_AND_PORT string = ""
 	NUMBER_OF_FLOORS              = 4

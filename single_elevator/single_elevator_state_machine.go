@@ -47,7 +47,7 @@ func SingleElevatorFSM(
 	ch_update_elevator_node_placement := make(chan string)
 	ch_update_elevator_node_order := make(chan update_elevator_node)
 	ch_remove_elevator_node_order := make(chan update_elevator_node)
-	go Hall_order(ch_new_order, ch_net_command, ch_self_command, ch_update_elevator_node_order, ch_remove_elevator_node_order)
+	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_net_command, ch_self_command, ch_update_elevator_node_order, ch_remove_elevator_node_order)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_update_elevator_node_placement)
@@ -79,18 +79,16 @@ func SingleElevatorFSM(
 				fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 				Request_next_action(elevator.direction)
 			case doorOpen:
-				if request_cab() {
-					elevio.SetDoorOpenLamp(false)
-					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
-					ch_update_elevator_node_placement <- "direction"
-					ch_update_elevator_node_placement <- "destnation"
-					current_state = moving
-				}
 			}
 		case <-ch_elevator_has_arrived:
-			fmt.Printf("Arrived at floor %+v\n", elevator_command.floor)
 			switch current_state {
+			case idle:
+				fmt.Printf("Elevator already here, opening door\n")
+				elevio.SetDoorOpenLamp(true)
+				ch_door_timer_reset <- true
+				current_state = doorOpen
 			case moving:
+				fmt.Printf("Arrived at floor %+v\n", elevator_command.floor)
 				elevio.SetMotorDirection(elevio.MD_Stop)
 				ch_update_elevator_node_placement <- "direction"
 				elevio.SetDoorOpenLamp(true)
@@ -98,8 +96,6 @@ func SingleElevatorFSM(
 				ch_elev_stuck_timer_stop <- true
 				Update_position(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order) //Bytt navn ?
 				current_state = doorOpen
-			default:
-				fmt.Printf("Arrived at floor outside of state moving. Something is wrong")
 			}
 		case <-ch_door_timer_out:
 			fmt.Printf("Door time out detected\n")
@@ -127,6 +123,8 @@ func SingleElevatorFSM(
 					} else {
 						fmt.Printf("No new orders, returning to idle\n")
 						current_state = idle
+						elevator_command.direction = 0
+						ch_update_elevator_node_placement <- "direction"
 					}
 				}
 			}
@@ -233,7 +231,6 @@ func Update_elevator_node(
 				updated_elevator_node.Status = 1
 			}
 			updated_elevator_node.ID = config.ELEVATOR_ID
-			//Samme for alt annet som må oppdaterers
 			ch_write_data <- updated_elevator_node
 		case msg := <-ch_update_elevator_node_order:
 			switch msg.command {
@@ -243,7 +240,6 @@ func Update_elevator_node(
 				updated_elevator_node.HallCalls[msg.update_value].Down = true
 			}
 			updated_elevator_node.ID = config.ELEVATOR_ID
-			//Samme for alt annet som må oppdaterers
 			ch_write_data <- updated_elevator_node
 		case msg := <-ch_remove_elevator_node_order:
 			switch msg.command {
@@ -253,7 +249,6 @@ func Update_elevator_node(
 				updated_elevator_node.HallCalls[msg.update_value].Down = false
 			}
 			updated_elevator_node.ID = config.ELEVATOR_ID
-			//Samme for alt annet som må oppdaterers
 			ch_write_data <- updated_elevator_node
 		}
 	}
