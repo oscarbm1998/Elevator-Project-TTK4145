@@ -109,7 +109,10 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 	for {
 		select {
 		case <-ch_rbc_listen: //Will listen when told to
-			fmt.Println("RBC: Starting connection")
+			if commandLogger {
+				fmt.Println("RBC: Starting connection")
+			}
+
 			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
 			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
 			n, _, err := con.ReadFrom(buf)
@@ -132,11 +135,13 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 					ch_rbc_listen <- true //Message not for me, read again
 				}
 			}
-			fmt.Println("RBC: closing connection")
 			con.Close()
 
 		case <-ch_exit:
-			fmt.Println("RBC: commanded to exit")
+			if commandLogger {
+				fmt.Println("RBC: commanded to exit")
+			}
+
 			goto Exit
 		}
 	}
