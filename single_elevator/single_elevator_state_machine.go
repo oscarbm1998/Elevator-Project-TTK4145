@@ -27,6 +27,7 @@ var remove_order_from_node update_elevator_node
 var current_state elevator_state
 var last_floor int
 var elevator_door_blocked bool
+var cabCalls [4]bool
 
 func SingleElevatorFSM(
 	ch_drv_floors <-chan int,
@@ -271,7 +272,6 @@ func init_elevator(ch_new_order chan<- bool) {
 	current_state = idle
 	last_floor = -1
 	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
-	cabCalls := make([]bool, 4)
 	bytes := make([]byte, 50)
 	n, _ := file.ReadAt(bytes, 0)
 	_ = json.Unmarshal(bytes[:n], &cabCalls)

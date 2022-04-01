@@ -130,10 +130,9 @@ func Hall_order(
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(elevio.BT_Cab, a.Floor, true)
 					file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
-					cabCalls := make([]bool, 4)
 					cabCalls[a.Floor] = true
 					bytes, _ := json.Marshal(cabCalls)
-					file.Truncate(1)
+					file.Truncate(0)
 					file.WriteAt(bytes, 0)
 					file.Close()
 				}
