@@ -11,3 +11,5 @@ på at heisen har en retning fra sist når
 Legg til buffer size 1 on channels so if 2 commands arrive at the same time it does not deadlock
 
 Forslag til endring på fredag, gjøre self-command og net-command til samme tingen siden de gjør 100% det samme (Penere ifølge anders)
+
+Skriv en readme fil på førstesiden av repoet
