@@ -51,18 +51,13 @@ func SingleElevatorFSM(
 	ch_update_elevator_node_placement := make(chan string)
 	ch_update_elevator_node_order := make(chan update_elevator_node)
 	ch_remove_elevator_node_order := make(chan update_elevator_node)
+	init_elevator()
 	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_net_command, ch_self_command, ch_update_elevator_node_order, ch_remove_elevator_node_order)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_update_elevator_node_placement)
 	go Update_hall_lights(ch_hallCallsTot_updated)
 	go Update_elevator_node(ch_req_ID, ch_req_data, ch_write_data, ch_update_elevator_node_placement, ch_update_elevator_node_order, ch_remove_elevator_node_order)
-	init_elevator(ch_new_order)
-	//Init elevator
-	elevator.direction = 0
-	elevator.floor = 0
-	current_state = idle
-	last_floor = -1
 	for {
 		select {
 		case <-ch_new_order:
@@ -167,6 +162,7 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 		select {
 		case msg := <-ch_drv_floors:
 			elevator.floor = msg
+			fmt.Println(elevator.floor)
 			ch_update_elevator_node_placement <- "floor"
 			elevio.SetFloorIndicator(msg)
 			if last_floor == -1 {
@@ -200,14 +196,6 @@ func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]
 				elevio.SetButtonLamp(elevio.BT_HallDown, i, false)
 			}
 		}
-	}
-}
-
-func Reset_all_lights() {
-	for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
-		elevio.SetButtonLamp(0, i, false)
-		elevio.SetButtonLamp(1, i, false)
-		elevio.SetButtonLamp(2, i, false)
 	}
 }
 
@@ -261,7 +249,7 @@ func Update_elevator_node(
 	}
 }
 
-func init_elevator(ch_new_order chan<- bool) {
+func init_elevator() {
 	for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
 		elevio.SetButtonLamp(0, i, false)
 		elevio.SetButtonLamp(1, i, false)

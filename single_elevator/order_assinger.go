@@ -26,7 +26,6 @@ func Remove_order(level int, direction int, ch_remove_elevator_node_order chan u
 	floor[level].cab = false              //removes here call as the elevator has arrived there
 	elevio.SetButtonLamp(2, level, false) //turns off cab light
 	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
-	cabCalls := make([]bool, 4)
 	cabCalls[level] = false
 	bytes, _ := json.Marshal(cabCalls)
 	file.Truncate(0)
@@ -86,7 +85,7 @@ func Hall_order(
 	ch_update_elevator_node_order chan update_elevator_node,
 	ch_remove_elevator_node_order chan update_elevator_node,
 ) {
-
+	ch_new_order <- true
 	for {
 		select {
 		case a := <-ch_net_command:

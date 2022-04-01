@@ -11,8 +11,9 @@ const (
 	NUMBER_OF_FLOORS              = 4
 	NUMBER_OF_BUTTONS             = 3
 
-	ELEVATOR_STUCK_TIMOUT   = time.Second * 10
-	ELEVATOR_DOOR_OPEN_TIME = time.Second * 3
+	ELEVATOR_STUCK_TIMOUT        = time.Second * 10
+	ELEVATOR_DOOR_OPEN_TIME      = time.Second * 3
+	ELEVATOR_BETWEEN_FLOORS_TIME = time.Second * 3
 
 	REMOVE_OLD_ORDER_TIME = time.Second * 2
 
