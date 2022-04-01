@@ -101,7 +101,6 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 }
 
 func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
-	m.Lock()
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //finds the elevator that has died in the internal overwiew struct
 		if lighthouse[i].ID == ID { //found the elevator
@@ -123,7 +122,6 @@ func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthou
 			}
 		}
 	}
-	m.Unlock()
 }
 
 //a function that scores all the elevators based on two inputs: floor and direction
