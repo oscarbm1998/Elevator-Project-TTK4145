@@ -69,7 +69,6 @@ func Pass_to_network(
 			go cab_call_hander(ch_self_command, a, elev_overview)
 			//if a death or stall occurs
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
-			fmt.Print("Death id recorded\n")
 			go death_call_hander(death_id, ch_self_command, elev_overview)
 
 		}
