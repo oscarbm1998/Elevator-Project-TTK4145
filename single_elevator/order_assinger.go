@@ -104,8 +104,6 @@ func Hall_order(
 		case a := <-ch_self_command:
 			if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
 				ch_elevator_has_arrived <- true
-			} else if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || (a.Floor == elevator.floor)) && current_state == moving {
-				fmt.Printf("Just left from that floor")
 			} else { //do shit
 				switch a.Button {
 				case elevio.BT_HallUp: //opp
