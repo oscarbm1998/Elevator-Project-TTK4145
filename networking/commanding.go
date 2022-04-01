@@ -56,7 +56,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 			//Readback message for me
 			if rbc_id == config.ELEVATOR_ID {
 				timer.Reset(timOut)
-				if msg == rbc { //Good readback. Successfully commanded, exit
+				if msg == rbc { //Good readback. Successfully commanded, Send OK and exit
 					fmt.Println("Networking: readback OK")
 					cmd_con.Write([]byte(strconv.Itoa(ID) + "_CMD_OK"))
 					success = true
@@ -96,20 +96,31 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen <-ch
 	for {
 		select {
 		case <-ch_rbc_listen: //Will listen when told to
-			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
-			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
-			n, _, err := con.ReadFrom(buf)
-			msg := string(buf[0:n])
-			if err != nil {
-				if e, ok := err.(net.Error); !ok || e.Timeout() {
-					printError("Networking: command readback net error: ", err)
+			var loop bool = true
+			for loop {
+				con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
+				con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
+				n, _, err := con.ReadFrom(buf)
+
+				if err != nil {
+					if e, ok := err.(net.Error); !ok || e.Timeout() {
+						printError("Networking: command readback net error: ", err)
+					} else {
+						fmt.Println("Networking: Getting nothing on readback channel, so quitting")
+					}
+					loop = false
+					ch_msg <- "ERROR"
 				} else {
-					fmt.Println("Networking: Getting nothing on readback channel, so quitting")
+					msg := string(buf[0:n])
+					data := strings.Split(msg, "_")
+					ID, _ := strconv.Atoi(data[0])
+					if ID == config.ELEVATOR_ID {
+						ch_msg <- msg
+						loop = false
+					}
 				}
-				msg = "ERROR"
+				con.Close()
 			}
-			ch_msg <- msg
-			con.Close()
 		case <-ch_exit:
 			goto Exit
 		}
