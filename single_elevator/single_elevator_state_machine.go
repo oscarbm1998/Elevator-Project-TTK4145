@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 )
 
 type elevator_state int
@@ -26,6 +27,7 @@ var add_order_to_node update_elevator_node
 var remove_order_from_node update_elevator_node
 var current_state elevator_state
 var last_floor int
+var elevator_stuck bool
 var restoring_cab_calls bool
 var elevator_door_blocked bool
 var cabCalls [4]bool
@@ -49,6 +51,7 @@ func SingleElevatorFSM(
 	ch_elev_stuck_timer_out := make(chan bool)
 	ch_elev_stuck_timer_start := make(chan bool)
 	ch_elev_stuck_timer_stop := make(chan bool)
+	ch_elevator_stuck_between := make(chan bool)
 	ch_update_elevator_node_placement := make(chan string)
 	ch_update_elevator_node_order := make(chan update_elevator_node)
 	ch_remove_elevator_node_order := make(chan update_elevator_node)
@@ -56,6 +59,7 @@ func SingleElevatorFSM(
 	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_net_command, ch_self_command, ch_update_elevator_node_order, ch_remove_elevator_node_order)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
+	go MoveNearestFloor(ch_elevator_stuck_between)
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_update_elevator_node_placement, ch_new_order)
 	go Update_hall_lights(ch_hallCallsTot_updated)
 	go Update_elevator_node(ch_req_ID, ch_req_data, ch_write_data, ch_update_elevator_node_placement, ch_update_elevator_node_order, ch_remove_elevator_node_order)
@@ -98,7 +102,6 @@ func SingleElevatorFSM(
 				current_state = doorOpen
 			}
 		case <-ch_door_timer_out:
-			fmt.Printf("Door time out detected\n")
 			switch current_state {
 			case doorOpen:
 				if elevator_door_blocked {
@@ -166,6 +169,8 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 			elevio.SetFloorIndicator(msg)
 			if last_floor == -1 {
 				last_floor = elevator.floor
+				elevio.SetMotorDirection(elevio.MD_Stop)
+				elevator_stuck = false
 			}
 			if restoring_cab_calls {
 				ch_new_order <- true
@@ -256,6 +261,8 @@ func init_elevator() {
 	elevator.floor = 0
 	current_state = idle
 	last_floor = -1
+	restoring_cab_calls = false
+	elevator_stuck = true
 	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
 	bytes := make([]byte, 50)
 	n, _ := file.ReadAt(bytes, 0)
@@ -266,5 +273,13 @@ func init_elevator() {
 			elevio.SetButtonLamp(2, i, true)
 			restoring_cab_calls = true
 		}
+	}
+}
+
+func MoveNearestFloor(ch_elevator_stuck_between chan bool) {
+	time.Sleep(1 * time.Second) //Kan være lurt å unngå sleep xD
+	if elevator_stuck == true {
+		fmt.Printf("lol is stucked")
+		elevio.SetMotorDirection(elevio.MD_Down)
 	}
 }
