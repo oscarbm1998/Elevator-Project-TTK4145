@@ -147,7 +147,6 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 		ch_self_command <- a
 	}
 	m.Unlock()
-	return
 }
 
 func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
@@ -174,7 +173,6 @@ func death_call_hander(ID int, ch_self_command chan elevio.ButtonEvent, lighthou
 		}
 	}
 	m.Unlock()
-	return
 }
 
 /*
