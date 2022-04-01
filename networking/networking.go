@@ -35,7 +35,15 @@ func Main(
 	ch_net_command chan elevio.ButtonEvent,
 	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) {
 
-	Elevator_nodes[config.ELEVATOR_ID-1].ID = config.ELEVATOR_ID
+	//Initiating the Elevator_nodes data with values
+	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
+		if i != config.ELEVATOR_ID {
+			Elevator_nodes[i-1].ID = i
+			Elevator_nodes[i-1].Status = 2 //Status = 2: have not heard from it yet
+		} else {
+			Elevator_nodes[i-1].ID = i
+		}
+	}
 	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data)
 	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0], ch_hallCallsTot_updated)
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0])
