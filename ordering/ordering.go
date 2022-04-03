@@ -6,6 +6,7 @@ import (
 	networking "PROJECT-GROUP-10/networking"
 	"fmt"
 	"math"
+	"sort"
 	"sync"
 )
 
@@ -207,25 +208,21 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 
 //a sorting algorithm responsible for updating the placement struct from highest to lowest score
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
-	var temp_placements [config.NUMBER_OF_ELEVATORS]score_tracker
-	for p := 0; p < config.NUMBER_OF_ELEVATORS; p++ { //runs thrice
-		var roundbest_index int                           //the strongest placement for this round
-		var bestscore int                                 //
-		bestscore = 10                                    //the strongest placement for this round
-		for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
-			if placement[i].score < bestscore { //if the score is lower than the others
-				roundbest_index = i            //sets the new index
-				bestscore = placement[i].score //sets the new best score
+	temp_placements := [config.NUMBER_OF_ELEVATORS]int{0, 0, 0}
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
+		temp_placements[i] = placement[i].score
+	}
+	sort.Ints(temp_placements[:])
+	for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
+		for k := 0; k < config.NUMBER_OF_ELEVATORS; k++ {
+			if temp_placements[j] == placement[k].score {
+				placement[j].elevator_number = k
+				placement[j].score = temp_placements[j]
 			}
 		}
-		placement[roundbest_index].score = 99
-		temp_placements[p].elevator_number = roundbest_index //sets the index of the highest scorer
-		temp_placements[roundbest_index].score = bestscore
 	}
-
-	//printing the sorting
-	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
-		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", temp_placements[x].elevator_number, x, temp_placements[x].score)
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
+		fmt.Println(placement[i])
 	}
-	return temp_placements
+	return placement
 }
