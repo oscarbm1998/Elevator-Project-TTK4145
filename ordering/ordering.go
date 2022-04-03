@@ -118,14 +118,14 @@ func death_caller(e, ID int, ch_self_command chan elevio.ButtonEvent, lighthouse
 		placement = master_tournament(e, 1, placement, lighthouse) //runs a tournament with the parametres for up
 		temp_button_event.Button = 1
 		temp_button_event.Floor = e
-		Send_to_best_elevator(ch_self_command, temp_button_event, 1, lighthouse, placement, &m)
+		Send_to_best_elevator(ch_self_command, temp_button_event, 1, lighthouse, placement)
 	}
 	//has to be this way otherwise it wont catch both instances
 	if lighthouse[ID-1].HallCalls[e].Down {
 		placement = master_tournament(e, -1, placement, lighthouse) //runs a tournament with the parametres for down
 		temp_button_event.Button = -1
 		temp_button_event.Floor = e
-		Send_to_best_elevator(ch_self_command, temp_button_event, -1, lighthouse, placement, &m)
+		Send_to_best_elevator(ch_self_command, temp_button_event, -1, lighthouse, placement)
 	}
 }
 
