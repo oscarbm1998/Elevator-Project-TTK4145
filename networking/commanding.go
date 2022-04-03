@@ -109,7 +109,10 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 	for {
 		select {
 		case <-ch_rbc_listen: //Will listen when told to
-			fmt.Println("RBC: Starting connection")
+			if commandLogger {
+				fmt.Println("RBC: Starting connection")
+			}
+
 			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
 			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
 			n, _, err := con.ReadFrom(buf)
@@ -132,11 +135,13 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 					ch_rbc_listen <- true //Message not for me, read again
 				}
 			}
-			fmt.Println("RBC: closing connection")
 			con.Close()
 
 		case <-ch_exit:
-			fmt.Println("RBC: commanded to exit")
+			if commandLogger {
+				fmt.Println("RBC: commanded to exit")
+			}
+
 			goto Exit
 		}
 	}
@@ -170,7 +175,10 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 			direction, _ := strconv.Atoi(data[2])
 			from_ID, _ := strconv.Atoi(data[3])
 			rbc = data[3] + "_" + data[1] + "_" + data[2] + "_" + strconv.Itoa(ID)
-			fmt.Println("Networking CMDL: got command")
+			if commandLogger {
+				fmt.Println("Networking CMDL: got command")
+			}
+
 			if reject_command(floor, direction) { //Check if i can perfrom the task
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
