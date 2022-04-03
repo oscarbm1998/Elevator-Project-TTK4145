@@ -22,7 +22,6 @@ func Send_command(ID, floor, direction int) (success bool) {
 	}
 
 	ch_deadlock_quit := make(chan bool)
-	go command_deadlockDetector(ch_deadlock_quit, 10, "Networking: sending command took too long. Possible deadlock")
 
 	//Generate command
 	//Format: ToElevatorID_ToFloor_InDirection_FromElevatorID
@@ -52,6 +51,8 @@ func Send_command(ID, floor, direction int) (success bool) {
 	//Starting a timer for timeout
 	timOut := time.Second
 	timer := time.NewTimer(timOut)
+
+	//go command_deadlockDetector(ch_deadlock_quit, 10, "Networking: sending command took too long. Possible deadlock")
 	for {
 		select {
 		case msg := <-ch_rbc_msg:
