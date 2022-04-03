@@ -154,6 +154,9 @@ func SingleElevatorFSM(
 			fmt.Println("Elevator: I'm stuck, please call Vakt & Service")
 			ch_take_calls <- config.ELEVATOR_ID
 			ch_update_elevator_node_placement <- "set error"
+			remove_order_from_node.command = "wipe orders"
+			remove_order_from_node.update_value = 0
+			ch_remove_elevator_node_order <- remove_order_from_node
 		}
 	}
 }
@@ -244,6 +247,11 @@ func Update_elevator_node(
 				updated_elevator_node.HallCalls[msg.update_value].Up = false
 			case "remove order down":
 				updated_elevator_node.HallCalls[msg.update_value].Down = false
+			case "wipe orders":
+				for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
+					updated_elevator_node.HallCalls[i].Up = false
+					updated_elevator_node.HallCalls[i].Down = false
+				}
 			}
 			updated_elevator_node.ID = config.ELEVATOR_ID
 			ch_write_data <- updated_elevator_node
