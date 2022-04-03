@@ -158,7 +158,7 @@ func printError(str string, err error) {
 
 //Function that gathers heartbeat messages from curtain threads to determine deadlocks, and the panics.
 func deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler <-chan bool) {
-	var timeOut time.Duration = 10 * time.Second
+	var timeOut time.Duration = time.Minute
 	var timers [4]*time.Timer
 	for i := 0; i < 4; i++ {
 		timers[i] = time.NewTimer(timeOut)

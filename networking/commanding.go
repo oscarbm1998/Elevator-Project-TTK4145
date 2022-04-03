@@ -50,7 +50,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 	timOut := time.Second
 	timer := time.NewTimer(timOut)
 	ch_deadlock_quit := make(chan bool)
-	go command_deadlockDetector(ch_deadlock_quit, 20*time.Second, "Networking: sending command took too long. Possible deadlock")
+	go command_deadlockDetector(ch_deadlock_quit, time.Minute, "Networking: sending command took too long. Possible deadlock")
 	for {
 		select {
 		case msg := <-ch_rbc_msg:
@@ -97,8 +97,8 @@ Exit:
 		fmt.Println("Networking: trying to exit")
 	}
 
-	ch_rbc_close <- true //close readback listener listener
-	//ch_deadlock_quit <- true //Stop the deadlock thread
+	ch_rbc_close <- true     //close readback listener listener
+	ch_deadlock_quit <- true //Stop the deadlock thread
 	if commandLogger {
 		fmt.Println("Networking: done sending command, exited")
 	}
@@ -109,7 +109,7 @@ Exit:
 func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan bool) {
 	buf := make([]byte, 1024)
 	ch_deadlock_quit := make(chan bool)
-	go command_deadlockDetector(ch_deadlock_quit, 10*time.Second, "Networking: possible deadlock on readback listener")
+	go command_deadlockDetector(ch_deadlock_quit, time.Minute, "Networking: possible deadlock on readback listener")
 	for {
 		select {
 		case <-ch_rbc_listen: //Will listen when told to
@@ -150,7 +150,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 		}
 	}
 Exit:
-	//ch_deadlock_quit <- true
+	ch_deadlock_quit <- true
 	if commandLogger {
 		fmt.Println("Networking: closing readback listener")
 	}
@@ -251,4 +251,7 @@ func command_deadlockDetector(ch_quit chan bool, timout time.Duration, msg strin
 		}
 	}
 Exit:
+	if commandLogger {
+		fmt.Println("Networking: DLD exiting")
+	}
 }
