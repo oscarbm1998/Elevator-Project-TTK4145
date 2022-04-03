@@ -93,7 +93,7 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 		placement := master_tournament(a.Floor, int(elevio.MD_Up), placement, lighthouse)
 		dir := 1
 		if number_of_alive_elevs >= 2 {
-			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement, &m)
+			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
 		} else {
 			ch_self_command <- a
 		}
@@ -101,7 +101,7 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 		placement := master_tournament(a.Floor, elevio.MD_Down, placement, lighthouse)
 		dir := -1
 		if number_of_alive_elevs >= 2 {
-			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement, &m)
+			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
 		} else {
 			ch_self_command <- a
 		}
@@ -182,7 +182,7 @@ func master_tournament_v2(placement [config.NUMBER_OF_ELEVATORS]score_tracker, l
 	}
 }
 
-func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker, m *sync.Mutex) {
+func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 
 	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement) //calls the sorting algorithm to sort the elevator placements
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {                                      //will automatically cycle the scoreboard and attempt to send from best to worst
@@ -222,7 +222,7 @@ func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placem
 		temp_placements[p].elevator_number = roundbest_index //sets the index of the highest scorer
 		temp_placements[roundbest_index].score = bestscore
 	}
-	
+
 	//printing the sorting
 	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
 		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", temp_placements[x].elevator_number, x, temp_placements[x].score)
