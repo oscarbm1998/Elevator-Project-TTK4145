@@ -173,7 +173,6 @@ func deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler <-chan 
 		case <-timers[0].C:
 			panic("Deadlock detected on heartbeat transmitter")
 		case <-ch_hb_rec:
-			fmt.Println("Networking: hb rec alive")
 			timers[1].Reset(timeOut)
 		case <-timers[1].C:
 			panic("Deadlock detected on heartbeat receiver")
