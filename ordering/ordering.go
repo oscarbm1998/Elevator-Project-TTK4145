@@ -132,11 +132,14 @@ func death_caller(floor int, dir int, ID int, ch_drv_buttons chan elevio.ButtonE
 func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	//resets scoring to prepare the tournament
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		placement[i].score = 0
+		placement[i].score = 1
 		placement[i].elevator_number = 0
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
+		if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
+			placement[i].score = -1
+		}
 		if !(lighthouse[i].Status != 0) { //if the elevator is nunfunctional it is ignored from the algo
 			placement[i].score = master_tournament_v2(placement, lighthouse[i]) //sives the score based upon postioning
 		} else { //and is given a very high score
@@ -150,9 +153,6 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 				}
 				if direction == lighthouse[i].Direction { //if the elevators direction matches the input
 					placement[i].score += 2 //give 3 good boy points
-				}
-				if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
-					placement[i].score += 5
 				}
 				//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
 				//this means that the closer the elevator is the higher the score
