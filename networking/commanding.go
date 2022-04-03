@@ -21,8 +21,6 @@ func Send_command(ID, floor, direction int) (success bool) {
 		panic("Networking: I do not need networking to command myself")
 	}
 
-	//ch_deadlock_quit := make(chan bool)
-
 	//Generate command
 	//Format: ToElevatorID_ToFloor_InDirection_FromElevatorID
 	cmd = strconv.Itoa(ID) + "_" + strconv.Itoa(floor) + "_" + strconv.Itoa(direction) + "_" + strconv.Itoa(config.ELEVATOR_ID)
@@ -51,8 +49,8 @@ func Send_command(ID, floor, direction int) (success bool) {
 	//Starting a timer for timeout
 	timOut := time.Second
 	timer := time.NewTimer(timOut)
-
-	//go command_deadlockDetector(ch_deadlock_quit, 20, "Networking: sending command took too long. Possible deadlock")
+	ch_deadlock_quit := make(chan bool)
+	go command_deadlockDetector(ch_deadlock_quit, 20*time.Second, "Networking: sending command took too long. Possible deadlock")
 	for {
 		select {
 		case msg := <-ch_rbc_msg:
@@ -110,8 +108,8 @@ Exit:
 
 func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan bool) {
 	buf := make([]byte, 1024)
-	//ch_deadlock_quit := make(chan bool)
-	//go command_deadlockDetector(ch_deadlock_quit, 10, "Networking: possible deadlock on readback listener")
+	ch_deadlock_quit := make(chan bool)
+	go command_deadlockDetector(ch_deadlock_quit, 10*time.Second, "Networking: possible deadlock on readback listener")
 	for {
 		select {
 		case <-ch_rbc_listen: //Will listen when told to
@@ -240,7 +238,7 @@ func reject_command(floor, direction int) (reject bool) {
 }
 
 //Simple timer routine that panics if the time limit is reached.
-func command_deadlockDetector(ch_quit <-chan bool, timout time.Duration, msg string) {
+func command_deadlockDetector(ch_quit chan bool, timout time.Duration, msg string) {
 	t := time.NewTimer(timout)
 	t.Reset(timout)
 	for {
