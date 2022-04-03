@@ -151,7 +151,7 @@ Exit:
 	}
 }
 
-func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- int) {
+func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- int, ch_cmd_rec chan<- bool) {
 	var button_command elevio.ButtonEvent
 	var rbc string
 	buf := make([]byte, 1024)
@@ -165,6 +165,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 	for {
 		//Listen for incomming commands on command reception port
 		n, _, err := cmd_con.ReadFrom(buf)
+		ch_cmd_rec <- true
 		printError("Networking: error from command listener: ", err)
 		msg := string(buf[0:n])
 		data := strings.Split(msg, "_")
@@ -215,6 +216,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 				}
 			}
 		}
+		ch_cmd_rec <- false
 	}
 }
 
