@@ -217,7 +217,6 @@ func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placem
 			final_placement[i].score = bestscore
 			final_placement[i].elevator_number = bestindex
 		}
-		return final_placement
 	}
 	/*
 		temp_placements := [config.NUMBER_OF_ELEVATORS]int{0, 0, 0}
@@ -238,6 +237,7 @@ func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placem
 		}
 		return placement
 	*/
+	return final_placement
 }
 
 func existence(index int, placement [config.NUMBER_OF_ELEVATORS]score_tracker) (existence bool) {
