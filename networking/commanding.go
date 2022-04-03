@@ -47,7 +47,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 	printError("Networking: Error sending command: ", err)
 
 	//Starting a timer for timeout
-	timOut := time.Second * 3
+	timOut := time.Second
 	timer := time.NewTimer(timOut)
 	for {
 		select {
@@ -114,7 +114,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 			}
 
 			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
-			con.SetReadDeadline(time.Now().Add(3 * time.Second)) //Will only wait for a response for 3 seconds
+			con.SetReadDeadline(time.Now().Add(time.Second)) //Will only wait for a response for 3 seconds
 			n, _, err := con.ReadFrom(buf)
 
 			if err != nil {
@@ -151,7 +151,7 @@ Exit:
 	}
 }
 
-func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- int) {
+func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- int, ch_cmd_rec chan<- bool) {
 	var button_command elevio.ButtonEvent
 	var rbc string
 	buf := make([]byte, 1024)
@@ -165,6 +165,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 	for {
 		//Listen for incomming commands on command reception port
 		n, _, err := cmd_con.ReadFrom(buf)
+		ch_cmd_rec <- true
 		printError("Networking: error from command listener: ", err)
 		msg := string(buf[0:n])
 		data := strings.Split(msg, "_")
@@ -215,8 +216,8 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 				}
 			}
 		}
+		ch_cmd_rec <- false
 	}
-
 }
 
 func reject_command(floor, direction int) (reject bool) {

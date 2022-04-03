@@ -51,15 +51,14 @@ func SingleElevatorFSM(
 	ch_elev_stuck_timer_out := make(chan bool)
 	ch_elev_stuck_timer_start := make(chan bool)
 	ch_elev_stuck_timer_stop := make(chan bool)
-	ch_elevator_stuck_between := make(chan bool)
-	ch_update_elevator_node_placement := make(chan string)
-	ch_update_elevator_node_order := make(chan update_elevator_node)
-	ch_remove_elevator_node_order := make(chan update_elevator_node)
+	ch_update_elevator_node_placement := make(chan string, 4)
+	ch_update_elevator_node_order := make(chan update_elevator_node, 2)
+	ch_remove_elevator_node_order := make(chan update_elevator_node, 2)
 	init_elevator()
 	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_net_command, ch_self_command, ch_update_elevator_node_order, ch_remove_elevator_node_order)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
-	go MoveNearestFloor(ch_elevator_stuck_between)
+	go MoveNearestFloor()
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_update_elevator_node_placement, ch_new_order)
 	go Update_hall_lights(ch_hallCallsTot_updated)
 	go Update_elevator_node(ch_req_ID, ch_req_data, ch_write_data, ch_update_elevator_node_placement, ch_update_elevator_node_order, ch_remove_elevator_node_order)
@@ -131,29 +130,30 @@ func SingleElevatorFSM(
 					}
 				}
 			}
-		case msg := <-ch_drv_stop: //Maybe change the name on channel to make it more clear
+		case msg := <-ch_drv_stop:
 			if msg {
 				elevio.SetMotorDirection(elevio.MD_Stop)
 				fmt.Printf("Elevator stopped\n")
 				ch_update_elevator_node_placement <- "direction"
+				ch_update_elevator_node_placement <- "set error"
 			} else {
 				elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 				fmt.Printf("Elevator running\n")
 				ch_update_elevator_node_placement <- "direction"
-				ch_update_elevator_node_placement <- "status"
+				ch_update_elevator_node_placement <- "reset error"
 			}
 		case msg := <-ch_obstr_detected:
 			if msg {
 				elevator_door_blocked = true
-				ch_update_elevator_node_placement <- "status"
+				ch_update_elevator_node_placement <- "set error"
 			} else {
 				elevator_door_blocked = false
-				ch_update_elevator_node_placement <- "status" //Should be fix status here
+				ch_update_elevator_node_placement <- "reset error"
 			}
 		case <-ch_elev_stuck_timer_out:
 			fmt.Println("Elevator: I'm stuck, please call Vakt & Service")
 			ch_take_calls <- config.ELEVATOR_ID
-			ch_update_elevator_node_placement <- "status"
+			ch_update_elevator_node_placement <- "set error"
 		}
 	}
 }
@@ -183,7 +183,7 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 	}
 }
 
-func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) { //Might be better to go this to reduce amount of necessary code
+func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) {
 	for {
 		msg := <-ch_hallCallsTot_updated
 		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
@@ -276,7 +276,7 @@ func init_elevator() {
 	}
 }
 
-func MoveNearestFloor(ch_elevator_stuck_between chan bool) {
+func MoveNearestFloor() {
 	time.Sleep(1 * time.Second) //Kan være lurt å unngå sleep xD
 	if elevator_stuck {
 		elevio.SetMotorDirection(elevio.MD_Down)

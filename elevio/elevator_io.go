@@ -1,6 +1,7 @@
 package elevio
 
 import (
+	config "PROJECT-GROUP-10/config"
 	"fmt"
 	"net"
 	"sync"
@@ -35,15 +36,15 @@ type ButtonEvent struct {
 	Button ButtonType
 }
 
-func Init(addr string, numFloors int) {
+func Init() {
 	if _initialized {
 		fmt.Println("Driver already initialized!")
 		return
 	}
-	_numFloors = numFloors
+	_numFloors = config.NUMBER_OF_FLOORS
 	_mtx = sync.Mutex{}
 	var err error
-	_conn, err = net.Dial("tcp", addr)
+	_conn, err = net.Dial("tcp", config.ELEVATOR_LOCAL_HOST)
 	if err != nil {
 		panic(err.Error())
 	}

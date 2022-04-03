@@ -1,28 +1,24 @@
 package main
 
 import (
-	//"fmt"
 	config "PROJECT-GROUP-10/config"
 	elevio "PROJECT-GROUP-10/elevio"
 	networking "PROJECT-GROUP-10/networking"
 	ordering "PROJECT-GROUP-10/ordering"
 	singleElevator "PROJECT-GROUP-10/single_elevator"
 	"flag"
-	//"net"
 )
-
-//var current_floor int
 
 func main() {
 	flag.IntVar(&config.ELEVATOR_ID, "id", 1, "id of this peer")
 	flag.StringVar(&config.ELEVATOR_LOCAL_HOST, "host", "localhost:15657", "host")
 	flag.Parse()
 
-	numFloors := 4
-	elevio.Init(config.ELEVATOR_LOCAL_HOST, numFloors)
+	if config.ELEVATOR_ID > config.NUMBER_OF_ELEVATORS {
+		panic("Illegal ID, must be within the range of defined number of elevators")
+	}
 
-	//var d elevio.MotorDirection = elevio.MD_Up
-	//elevio.SetMotorDirection(d)
+	elevio.Init()
 
 	ch_drv_buttons := make(chan elevio.ButtonEvent) //Give
 	ch_drv_floors := make(chan int)                 //Some
