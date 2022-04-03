@@ -74,7 +74,7 @@ func Pass_to_network(
 				if elev_overview[death_id-1].HallCalls[e].Up {
 					go death_caller(e, 0, death_id, ch_drv_buttons, elev_overview)
 				}
-				if elev_overview[death_id-1].HallCalls[e].Up {
+				if elev_overview[death_id-1].HallCalls[e].Down {
 					go death_caller(e, 1, death_id, ch_drv_buttons, elev_overview)
 				}
 			}
