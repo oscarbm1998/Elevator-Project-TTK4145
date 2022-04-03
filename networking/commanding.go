@@ -45,8 +45,8 @@ func Send_command(ID, floor, direction int) (success bool) {
 
 	//Send command
 	fmt.Println("Network: sending command to elevator " + strconv.Itoa(ID))
-	_, err := cmd_con.Write([]byte(cmd))
 	ch_rbc_listen <- true
+	_, err := cmd_con.Write([]byte(cmd))
 	printError("Networking: Error sending command: ", err)
 
 	//Starting a timer for timeout
@@ -79,7 +79,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 					printError("Networking: Error sending command: ", err)
 					attempts++
 				}
-				if attempts > 3 { //Tried readback too many times, exit
+				if attempts > 3 { //Readback failed too many times, exit
 					fmt.Println("Networking: too many command readback attemps")
 					success = false
 					goto Exit
@@ -99,7 +99,7 @@ Exit:
 	}
 
 	ch_rbc_close <- true     //close readback listener listener
-	ch_deadlock_quit <- true //Stop the timer
+	ch_deadlock_quit <- true //Stop the deadlock thread
 	if commandLogger {
 		fmt.Println("Networking: done sending command, exited")
 	}
@@ -119,7 +119,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 			}
 
 			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
-			con.SetReadDeadline(time.Now().Add(time.Second)) //Will only wait for a response for 3 seconds
+			con.SetReadDeadline(time.Now().Add(time.Second)) //Will only wait for a response for 1 second
 			n, _, err := con.ReadFrom(buf)
 
 			if err != nil {
