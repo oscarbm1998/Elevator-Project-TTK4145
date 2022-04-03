@@ -20,11 +20,11 @@ func main() {
 
 	elevio.Init()
 
-	ch_drv_buttons := make(chan elevio.ButtonEvent) //Give
-	ch_drv_floors := make(chan int)                 //Some
-	ch_obstr_detected := make(chan bool)            //Explenation
-	ch_drv_stop := make(chan bool)                  //of what
-	ch_elevator_has_arrived := make(chan bool)      //do
+	ch_drv_buttons := make(chan elevio.ButtonEvent, 6) //Give
+	ch_drv_floors := make(chan int)                    //Some
+	ch_obstr_detected := make(chan bool)               //Explenation
+	ch_drv_stop := make(chan bool)                     //of what
+	ch_elevator_has_arrived := make(chan bool)         //do
 
 	ch_net_command := make(chan elevio.ButtonEvent, 6)   //pls
 	ch_self_command := make(chan elevio.ButtonEvent, 10) //ppl

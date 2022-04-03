@@ -71,9 +71,13 @@ func Pass_to_network(
 			//if a death or stall occurs
 		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
 			for e := 0; e < config.NUMBER_OF_FLOORS; e++ {
-				go death_caller(e, death_id, ch_self_command, elev_overview)
+				if elev_overview[death_id-1].HallCalls[e].Up {
+					go death_caller(e, 0, death_id, ch_drv_buttons, elev_overview)
+				}
+				if elev_overview[death_id-1].HallCalls[e].Up {
+					go death_caller(e, 1, death_id, ch_drv_buttons, elev_overview)
+				}
 			}
-
 		}
 	}
 }
@@ -112,22 +116,16 @@ func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEve
 	}
 }
 
-func death_caller(e, ID int, ch_self_command chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
-	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
-	var temp_button_event elevio.ButtonEvent //defines a temporary button event in order to reuse a command
-	if lighthouse[ID-1].HallCalls[e].Up {
-		placement = master_tournament(e, 1, placement, lighthouse) //runs a tournament with the parametres for up
-		temp_button_event.Button = 1
-		temp_button_event.Floor = e
-		Send_to_best_elevator(ch_self_command, temp_button_event, 1, lighthouse, placement)
+func death_caller(floor int, dir int, ID int, ch_drv_buttons chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
+	var button_event elevio.ButtonEvent
+	button_event.Floor = floor
+	switch dir {
+	case 0:
+		button_event.Button = elevio.BT_HallUp
+	case 1:
+		button_event.Button = elevio.BT_HallDown
 	}
-	//has to be this way otherwise it wont catch both instances
-	if lighthouse[ID-1].HallCalls[e].Down {
-		placement = master_tournament(e, -1, placement, lighthouse) //runs a tournament with the parametres for down
-		temp_button_event.Button = -1
-		temp_button_event.Floor = e
-		Send_to_best_elevator(ch_self_command, temp_button_event, -1, lighthouse, placement)
-	}
+	ch_drv_buttons <- button_event
 }
 
 //a function that scores all the elevators based on two inputs: floor and direction
