@@ -6,7 +6,6 @@ import (
 	networking "PROJECT-GROUP-10/networking"
 	"fmt"
 	"math"
-	"sort"
 	"sync"
 )
 
@@ -206,21 +205,46 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 
 //a sorting algorithm responsible for updating the placement struct from highest to lowest score
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
-	temp_placements := [config.NUMBER_OF_ELEVATORS]int{0, 0, 0}
+	var final_placement [config.NUMBER_OF_ELEVATORS]score_tracker
+	var bestscore int = 10
+	var bestindex int
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		temp_placements[i] = placement[i].score
+		for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
+			if placement[j].score < bestscore && !existence(placement[j].elevator_number, placement) {
+				placement[j].score = bestscore
+				placement[j].elevator_number = bestindex
+			}
+			final_placement[i].score = bestscore
+			final_placement[i].elevator_number = bestindex
+		}
+		return final_placement
 	}
-	sort.Ints(temp_placements[:])
-	for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
-		for k := 0; k < config.NUMBER_OF_ELEVATORS; k++ {
-			if temp_placements[j] == placement[k].score {
-				placement[j].elevator_number = k
-				placement[j].score = temp_placements[j]
+	/*
+		temp_placements := [config.NUMBER_OF_ELEVATORS]int{0, 0, 0}
+		for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
+			temp_placements[i] = placement[i].score
+		}
+		sort.Ints(temp_placements[:])
+		for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
+			for k := 0; k < config.NUMBER_OF_ELEVATORS; k++ {
+				if temp_placements[j] == placement[k].score {
+					placement[j].elevator_number = k
+					placement[j].score = temp_placements[j]
+				}
 			}
 		}
-	}
+		for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
+			fmt.Println(placement[i])
+		}
+		return placement
+	*/
+}
+
+func existence(index int, placement [config.NUMBER_OF_ELEVATORS]score_tracker) (existence bool) {
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		fmt.Println(placement[i])
+		if placement[i].elevator_number == index {
+			return true
+		}
 	}
-	return placement
+	return false
 }
