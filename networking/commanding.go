@@ -21,7 +21,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 		panic("Networking: I do not need networking to command myself")
 	}
 
-	ch_deadlock_quit := make(chan bool)
+	//ch_deadlock_quit := make(chan bool)
 
 	//Generate command
 	//Format: ToElevatorID_ToFloor_InDirection_FromElevatorID
@@ -99,8 +99,8 @@ Exit:
 		fmt.Println("Networking: trying to exit")
 	}
 
-	ch_rbc_close <- true     //close readback listener listener
-	ch_deadlock_quit <- true //Stop the deadlock thread
+	ch_rbc_close <- true //close readback listener listener
+	//ch_deadlock_quit <- true //Stop the deadlock thread
 	if commandLogger {
 		fmt.Println("Networking: done sending command, exited")
 	}
@@ -110,8 +110,8 @@ Exit:
 
 func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan bool) {
 	buf := make([]byte, 1024)
-	ch_deadlock_quit := make(chan bool)
-	go command_deadlockDetector(ch_deadlock_quit, 10, "Networking: possible deadlock on readback listener")
+	//ch_deadlock_quit := make(chan bool)
+	//go command_deadlockDetector(ch_deadlock_quit, 10, "Networking: possible deadlock on readback listener")
 	for {
 		select {
 		case <-ch_rbc_listen: //Will listen when told to
@@ -152,7 +152,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 		}
 	}
 Exit:
-	ch_deadlock_quit <- true
+	//ch_deadlock_quit <- true
 	if commandLogger {
 		fmt.Println("Networking: closing readback listener")
 	}
