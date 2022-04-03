@@ -3,9 +3,9 @@ package networking
 import (
 	config "PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
-	"context"
 	"fmt"
 	"net"
+	"os"
 	"strconv"
 	"syscall"
 	"time"
@@ -104,35 +104,36 @@ func Node_get_data(ID int, ch_req_ID chan int, ch_req_data chan Elevator_node) (
 }
 
 //Linux version
-// func DialBroadcastUDP(port int) net.PacketConn {
-// 	s, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
-// 	if err != nil {
-// 		fmt.Println("Error: Socket:", err)
-// 	}
-// 	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
-// 	if err != nil {
-// 		fmt.Println("Error: SetSockOpt REUSEADDR:", err)
-// 	}
-// 	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_BROADCAST, 1)
-// 	if err != nil {
-// 		fmt.Println("Error: SetSockOpt BROADCAST:", err)
-// 	}
-// 	syscall.Bind(s, &syscall.SockaddrInet4{Port: port})
-// 	if err != nil {
-// 		fmt.Println("Error: Bind:", err)
-// 	}
+func DialBroadcastUDP(port int) net.PacketConn {
+	s, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
+	if err != nil {
+		fmt.Println("Error: Socket:", err)
+	}
+	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+	if err != nil {
+		fmt.Println("Error: SetSockOpt REUSEADDR:", err)
+	}
+	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_BROADCAST, 1)
+	if err != nil {
+		fmt.Println("Error: SetSockOpt BROADCAST:", err)
+	}
+	syscall.Bind(s, &syscall.SockaddrInet4{Port: port})
+	if err != nil {
+		fmt.Println("Error: Bind:", err)
+	}
 
-// 	f := os.NewFile(uintptr(s), "")
-// 	conn, err := net.FilePacketConn(f)
-// 	if err != nil {
-// 		fmt.Println("Error: FilePacketConn:", err)
-// 	}
-// 	f.Close()
+	f := os.NewFile(uintptr(s), "")
+	conn, err := net.FilePacketConn(f)
+	if err != nil {
+		fmt.Println("Error: FilePacketConn:", err)
+	}
+	f.Close()
 
-// 	return conn
-// }
+	return conn
+}
 
 //Windows version
+/*
 func DialBroadcastUDP(port int) net.PacketConn {
 	config := &net.ListenConfig{Control: func(network, address string, conn syscall.RawConn) error {
 		return conn.Control(func(descriptor uintptr) {
@@ -146,7 +147,7 @@ func DialBroadcastUDP(port int) net.PacketConn {
 	fmt.Println(err)
 
 	return conn
-}
+}*/
 
 func printError(str string, err error) {
 	if err != nil {
