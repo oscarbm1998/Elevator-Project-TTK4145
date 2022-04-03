@@ -143,23 +143,44 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
-		if !(lighthouse[i].Status != 0) { //if the elevator is nonfunctional it is ignored
-			//direction scoring
-			if direction == 0 {
-				placement[i].score += 3
+		placement[i].score = master_tournament_v2(placement, lighthouse[i]) //sives the score based upon postioning
+		/*
+			if !(lighthouse[i].Status != 0) { //if the elevator is nonfunctional it is ignored
+				//direction scoring
+				if direction == 0 {
+					placement[i].score += 3
+				}
+				if direction == lighthouse[i].Direction { //if the elevators direction matches the input
+					placement[i].score += 2 //give 3 good boy points
+				}
+				if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
+					placement[i].score += 5
+				}
+				//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
+				//this means that the closer the elevator is the higher the score
+				placement[i].score += (4 - int(math.Abs(float64(lighthouse[i].Floor-floor))))
 			}
-			if direction == lighthouse[i].Direction { //if the elevators direction matches the input
-				placement[i].score += 2 //give 3 good boy points
-			}
-			if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
-				placement[i].score += 5
-			}
-			//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
-			//this means that the closer the elevator is the higher the score
-			placement[i].score += (4 - int(math.Abs(float64(lighthouse[i].Floor-floor))))
-		}
+		*/
 	}
 	return placement
+}
+
+func master_tournament_v2(placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse networking.Elevator_node) (duration int) {
+	var time int
+	switch lighthouse.Direction {
+	case 0: //elevator is idle so it is the best suited
+		return time
+	default:
+		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
+			if lighthouse.HallCalls[i].Up {
+				time = int(math.Abs(float64(lighthouse.Floor - i)))
+			}
+			if lighthouse.HallCalls[i].Down {
+				time = int(math.Abs(float64(lighthouse.Floor - i)))
+			}
+		}
+		return time
+	}
 }
 
 func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker, m *sync.Mutex) {
@@ -189,7 +210,7 @@ func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placem
 		var roundbest_index int                           //the strongest placement for this round
 		var bestscore int                                 //the strongest placement for this round
 		for i := p; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
-			if placement[i].score > bestscore { //if the score surpasses the others
+			if placement[i].score < bestscore { //if the score is lower than the others
 				roundbest_index = i            //sets the new index
 				bestscore = placement[i].score //sets the new best score
 			}

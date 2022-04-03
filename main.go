@@ -18,6 +18,9 @@ func main() {
 	flag.StringVar(&config.ELEVATOR_LOCAL_HOST, "host", "localhost:15657", "host")
 	flag.Parse()
 
+	if config.ELEVATOR_ID > config.NUMBER_OF_ELEVATORS {
+		panic("Illegal ID, must be within the range of defined number of elevators")
+	}
 	numFloors := 4
 	elevio.Init(config.ELEVATOR_LOCAL_HOST, numFloors)
 
