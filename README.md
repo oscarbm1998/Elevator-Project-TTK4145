@@ -4,13 +4,28 @@ Welcome to our Elevator Project.
 
 ## Starting up
 Before starting up, make sure that the contents of `config/config.go` matches your setup. 
-- `NUMBER_OF_ELEVATORS` must equal the number of elevators in the network. This is not hard coded, it is simply necessary for the memory adn asset allocation, this should equal the maximum numbers of elevators you should expect on the network. 
-
-Run the program by typing: `go run main.go --ID *ID of the elevator*` in a terminal within the project folder. 
+- `NUMBER_OF_ELEVATORS` must equal the number of elevators in the network. This is not hard coded, it is simply necessary for the memory and asset allocation, this should equal the maximum numbers of elevators on the network. 
+- Also make sure that the 3 required network ports in `config/config.go` are unoccupied by other processes.   
+- Run the program by typing: `go run main.go --ID *ID of the elevator*` in a terminal within the project folder. 
 
 ## About
+- Method of communication: Broadcasting over UDP
+- Communicational hierarky: Peer-to-peer
 
-# Topological overview
+A peer-to-peer system with the elevator who had its hallcall panel pushed being responsible for the most effective execusion of said task, it may take it itself or
+command another elevator to handle said hallcall. 
+
+All elevators are periodically broadcasting a heartbeat message containing information about their health, where they are, where they are going and what hallcalls
+they are currently serving. If an elevator gets stuck, or for some reason cannot perform their own hallcalls anymore it will attempt to redistribute them. And if an elevator becomes unreachable, this will be discovered by the heartbeat functionality when a timer runs out, and the elevator who made the discovery will try to redistribute the hallcalls of the unreachable elevator, and also allert all other elevators. The elevators has an asynchronous heartbeat timeout time based on their ID so that only one elevator will try to revive the hallcalls of an unreachable elevator. 
+Cab calls are being saved to a .json file, that is read on startup in case of a primature shutdown. This way, no calls are ever lost.
+
+The ordering package is responsible for effective execution of said elevator requests. It does this by calculating a score to find out which elevator who can perform the task the most efficiently. The scoring algorithm takes this into account
+- Position
+- Direction
+- Number of hallcalls 
+
+### Topological overview
+![plot](./Fat_presentasjon/oversikt.drawio.png)
 
 
 The Task
