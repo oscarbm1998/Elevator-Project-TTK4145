@@ -133,11 +133,6 @@ func death_caller(e, ID int, ch_self_command chan elevio.ButtonEvent, lighthouse
 func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	//resets scoring to prepare the tournament
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		fmt.Printf("floor of elev %d is %d \n", i, lighthouse[i].Floor)
-		fmt.Printf("direction of elev %d is %d \n", i, lighthouse[i].Direction)
-	}
-
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 		placement[i].score = 0
 		placement[i].elevator_number = 0
 	}
@@ -177,10 +172,10 @@ func master_tournament_v2(placement [config.NUMBER_OF_ELEVATORS]score_tracker, l
 	default:
 		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
 			if lighthouse.HallCalls[i].Up {
-				time = int(math.Abs(float64(lighthouse.Floor - i)))
+				time += int(math.Abs(float64(lighthouse.Floor - i)))
 			}
 			if lighthouse.HallCalls[i].Down {
-				time = int(math.Abs(float64(lighthouse.Floor - i)))
+				time += int(math.Abs(float64(lighthouse.Floor - i)))
 			}
 		}
 		return time
@@ -212,23 +207,29 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 
 //a sorting algorithm responsible for updating the placement struct from highest to lowest score
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
+	for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
+		fmt.Println("Contents of placement is: ", placement[j])
+	}
+	var temp_placements [config.NUMBER_OF_ELEVATORS]score_tracker
 	for p := 0; p < config.NUMBER_OF_ELEVATORS; p++ { //runs thrice
 		var roundbest_index int                           //the strongest placement for this round
-		var bestscore int                                 //the strongest placement for this round
-		for i := p; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
+		var bestscore int                                 //
+		bestscore = 10                                    //the strongest placement for this round
+		for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
 			fmt.Printf("score is %d\n", placement[i].score)
-			if placement[i].score > bestscore { //if the score is lower than the others
-				fmt.Printf("found new bestscore\n")
-				roundbest_index = i            //sets the new index
-				bestscore = placement[i].score //sets the new best score
+			if placement[i].score < bestscore { //if the score is lower than the others
+				roundbest_index = i                  //sets the new index
+				bestscore = temp_placements[i].score //sets the new best score
+				fmt.Println("Best score is ", bestscore)
 			}
 		}
-		placement[p].elevator_number = roundbest_index //sets the index of the highest scorer
-		fmt.Printf("%d and %d\n", placement[p].elevator_number, roundbest_index)
+		placement[roundbest_index].score = 99
+		temp_placements[p].elevator_number = roundbest_index //sets the index of the highest scorer
+		temp_placements[roundbest_index].score = bestscore
 	}
 	//printing the sorting
 	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
-		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", placement[x].elevator_number, x, placement[x].score)
+		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", temp_placements[x].elevator_number, x, temp_placements[x].score)
 	}
-	return placement
+	return temp_placements
 }
