@@ -137,11 +137,11 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
-		if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
-			placement[i].score = -1
-		}
 		if !(lighthouse[i].Status != 0) { //if the elevator is nunfunctional it is ignored from the algo
 			placement[i].score = master_tournament_v2(placement, lighthouse[i]) //sives the score based upon postioning
+			if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
+				placement[i].score = -1
+			}
 		} else { //and is given a very high score
 			placement[i].score = 11
 		}
