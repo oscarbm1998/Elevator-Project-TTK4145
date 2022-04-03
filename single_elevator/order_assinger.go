@@ -22,61 +22,6 @@ var floor [config.NUMBER_OF_FLOORS]floor_info
 var elevator elevator_status         //where elevator is
 var elevator_command elevator_status //where elevator should go
 
-func Remove_order(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) { //removes an order
-	floor[level].cab = false              //removes here call as the elevator has arrived there
-	elevio.SetButtonLamp(2, level, false) //turns off cab light
-	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
-	cabCalls[level] = false
-	bytes, _ := json.Marshal(cabCalls)
-	file.Truncate(0)
-	file.WriteAt(bytes, 0)
-	file.Close()
-	if direction == int(elevio.MD_Up) { //if the direction is up or there are no orders below and orders above
-		if !floor[level].up {
-			floor[level].down = false
-			remove_order_from_node.command = "remove order down"
-			remove_order_from_node.update_value = level
-			ch_remove_elevator_node_order <- remove_order_from_node
-			elevio.SetButtonLamp(elevio.BT_HallDown, level, false)
-		} else {
-			floor[level].up = false
-			remove_order_from_node.command = "remove order up"
-			remove_order_from_node.update_value = level
-			ch_remove_elevator_node_order <- remove_order_from_node
-			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
-		}
-		//disables the up direction
-	} else if direction == int(elevio.MD_Down) { //if the direction is down or there are no orders above and orders below
-		if !floor[level].down {
-			floor[level].up = false
-			remove_order_from_node.command = "remove order up"
-			remove_order_from_node.update_value = level
-			ch_remove_elevator_node_order <- remove_order_from_node
-			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
-		} else {
-			floor[level].down = false
-			remove_order_from_node.command = "remove order down"
-			remove_order_from_node.update_value = level
-			ch_remove_elevator_node_order <- remove_order_from_node
-			elevio.SetButtonLamp(elevio.BT_HallDown, level, false)
-		}
-	} else if direction == int(elevio.MD_Stop) {
-		if !floor[level].down {
-			floor[level].up = false
-			remove_order_from_node.command = "remove order up"
-			remove_order_from_node.update_value = level
-			ch_remove_elevator_node_order <- remove_order_from_node
-			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
-		} else {
-			floor[level].down = false
-			remove_order_from_node.command = "remove order down"
-			remove_order_from_node.update_value = level
-			ch_remove_elevator_node_order <- remove_order_from_node
-			elevio.SetButtonLamp(elevio.BT_HallDown, level, false)
-		}
-	}
-}
-
 func Hall_order(
 	ch_new_order chan bool,
 	ch_elevator_has_arrived chan bool,
@@ -138,6 +83,61 @@ func Hall_order(
 					ch_new_order <- true
 				}
 			}
+		}
+	}
+}
+
+func Remove_order(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) { //removes an order
+	floor[level].cab = false              //removes here call as the elevator has arrived there
+	elevio.SetButtonLamp(2, level, false) //turns off cab light
+	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
+	cabCalls[level] = false
+	bytes, _ := json.Marshal(cabCalls)
+	file.Truncate(0)
+	file.WriteAt(bytes, 0)
+	file.Close()
+	if direction == int(elevio.MD_Up) { //if the direction is up or there are no orders below and orders above
+		if !floor[level].up {
+			floor[level].down = false
+			remove_order_from_node.command = "remove order down"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
+			elevio.SetButtonLamp(elevio.BT_HallDown, level, false)
+		} else {
+			floor[level].up = false
+			remove_order_from_node.command = "remove order up"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
+			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
+		}
+		//disables the up direction
+	} else if direction == int(elevio.MD_Down) { //if the direction is down or there are no orders above and orders below
+		if !floor[level].down {
+			floor[level].up = false
+			remove_order_from_node.command = "remove order up"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
+			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
+		} else {
+			floor[level].down = false
+			remove_order_from_node.command = "remove order down"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
+			elevio.SetButtonLamp(elevio.BT_HallDown, level, false)
+		}
+	} else if direction == int(elevio.MD_Stop) {
+		if !floor[level].down {
+			floor[level].up = false
+			remove_order_from_node.command = "remove order up"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
+			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
+		} else {
+			floor[level].down = false
+			remove_order_from_node.command = "remove order down"
+			remove_order_from_node.update_value = level
+			ch_remove_elevator_node_order <- remove_order_from_node
+			elevio.SetButtonLamp(elevio.BT_HallDown, level, false)
 		}
 	}
 }
