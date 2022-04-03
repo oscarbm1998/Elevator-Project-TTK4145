@@ -207,26 +207,22 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 
 //a sorting algorithm responsible for updating the placement struct from highest to lowest score
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
-	for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
-		fmt.Println("Contents of placement is: ", placement[j])
-	}
 	var temp_placements [config.NUMBER_OF_ELEVATORS]score_tracker
 	for p := 0; p < config.NUMBER_OF_ELEVATORS; p++ { //runs thrice
 		var roundbest_index int                           //the strongest placement for this round
 		var bestscore int                                 //
 		bestscore = 10                                    //the strongest placement for this round
 		for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
-			fmt.Printf("score is %d\n", placement[i].score)
 			if placement[i].score < bestscore { //if the score is lower than the others
-				roundbest_index = i                  //sets the new index
-				bestscore = temp_placements[i].score //sets the new best score
-				fmt.Println("Best score is ", bestscore)
+				roundbest_index = i            //sets the new index
+				bestscore = placement[i].score //sets the new best score
 			}
 		}
 		placement[roundbest_index].score = 99
 		temp_placements[p].elevator_number = roundbest_index //sets the index of the highest scorer
 		temp_placements[roundbest_index].score = bestscore
 	}
+	
 	//printing the sorting
 	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
 		fmt.Printf("Elevator%+v placed %+v with a score of %+v \n", temp_placements[x].elevator_number, x, temp_placements[x].score)
