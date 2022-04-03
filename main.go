@@ -21,8 +21,7 @@ func main() {
 	if config.ELEVATOR_ID > config.NUMBER_OF_ELEVATORS {
 		panic("Illegal ID, must be within the range of defined number of elevators")
 	}
-	numFloors := 4
-	elevio.Init(config.ELEVATOR_LOCAL_HOST, numFloors)
+	elevio.Init()
 
 	//var d elevio.MotorDirection = elevio.MD_Up
 	//elevio.SetMotorDirection(d)
