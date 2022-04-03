@@ -21,6 +21,9 @@ func Send_command(ID, floor, direction int) (success bool) {
 		panic("Networking: I do not need networking to command myself")
 	}
 
+	ch_deadlock_quit := make(chan bool)
+	go command_deadlockDetector(ch_deadlock_quit, 10, "Networking: sending command took too long. Possible deadlock")
+
 	//Generate command
 	//Format: ToElevatorID_ToFloor_InDirection_FromElevatorID
 	cmd = strconv.Itoa(ID) + "_" + strconv.Itoa(floor) + "_" + strconv.Itoa(direction) + "_" + strconv.Itoa(config.ELEVATOR_ID)
@@ -42,8 +45,8 @@ func Send_command(ID, floor, direction int) (success bool) {
 
 	//Send command
 	fmt.Println("Network: sending command to elevator " + strconv.Itoa(ID))
-	_, err := cmd_con.Write([]byte(cmd))
 	ch_rbc_listen <- true
+	_, err := cmd_con.Write([]byte(cmd))
 	printError("Networking: Error sending command: ", err)
 
 	//Starting a timer for timeout
@@ -76,7 +79,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 					printError("Networking: Error sending command: ", err)
 					attempts++
 				}
-				if attempts > 3 { //Tried readback too many times, exit
+				if attempts > 3 { //Readback failed too many times, exit
 					fmt.Println("Networking: too many command readback attemps")
 					success = false
 					goto Exit
@@ -95,8 +98,8 @@ Exit:
 		fmt.Println("Networking: trying to exit")
 	}
 
-	ch_rbc_close <- true //close readback listener listener
-
+	ch_rbc_close <- true     //close readback listener listener
+	ch_deadlock_quit <- true //Stop the deadlock thread
 	if commandLogger {
 		fmt.Println("Networking: done sending command, exited")
 	}
@@ -106,6 +109,8 @@ Exit:
 
 func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan bool) {
 	buf := make([]byte, 1024)
+	ch_deadlock_quit := make(chan bool)
+	go command_deadlockDetector(ch_deadlock_quit, 10, "Networking: possible deadlock on readback listener")
 	for {
 		select {
 		case <-ch_rbc_listen: //Will listen when told to
@@ -114,7 +119,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 			}
 
 			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
-			con.SetReadDeadline(time.Now().Add(time.Second)) //Will only wait for a response for 3 seconds
+			con.SetReadDeadline(time.Now().Add(time.Second)) //Will only wait for a response for 1 second
 			n, _, err := con.ReadFrom(buf)
 
 			if err != nil {
@@ -146,6 +151,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 		}
 	}
 Exit:
+	ch_deadlock_quit <- true
 	if commandLogger {
 		fmt.Println("Networking: closing readback listener")
 	}
@@ -230,4 +236,20 @@ func reject_command(floor, direction int) (reject bool) {
 	} else {
 		return false
 	}
+}
+
+//Simple timer routine that panics if the time limit is reached.
+func command_deadlockDetector(ch_quit <-chan bool, timout time.Duration, msg string) {
+	t := time.NewTimer(timout)
+	t.Reset(timout)
+	for {
+		select {
+		case <-ch_quit:
+			t.Stop()
+			goto Exit
+		case <-t.C:
+			panic("Networking: sending command took too long. Possible deadlock")
+		}
+	}
+Exit:
 }
