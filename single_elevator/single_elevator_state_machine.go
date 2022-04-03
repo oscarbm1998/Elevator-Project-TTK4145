@@ -251,6 +251,8 @@ func Update_elevator_node(
 				for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
 					updated_elevator_node.HallCalls[i].Up = false
 					updated_elevator_node.HallCalls[i].Down = false
+					floor[i].down = false
+					floor[i].up = false
 				}
 			}
 			updated_elevator_node.ID = config.ELEVATOR_ID
