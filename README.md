@@ -39,7 +39,7 @@ Main requirements
 
 ### The button lights are a service guarantee
  - Once the light on a hall call button (buttons for calling an elevator to that floor; top 6 buttons on the control panel) is turned on, an elevator should arrive at that floor
- - Similarly for a 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 call (for telling the elevator what floor you want to exit at; front 4 buttons on the control panel), but only the elevator at that specific workspace should take the order
+ - Similarly for a call (for telling the elevator what floor you want to exit at; front 4 buttons on the control panel), but only the elevator at that specific workspace should take the order
 
 ### No calls are lost
  - Failure states are anything that prevents the elevator from communicating with other elevators or servicing calls
