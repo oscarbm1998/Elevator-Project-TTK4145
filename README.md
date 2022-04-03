@@ -6,7 +6,7 @@ Welcome to our Elevator Project.
 Before starting up, make sure that the contents of `config/config.go` matches your setup. 
 - `NUMBER_OF_ELEVATORS` must equal the number of elevators in the network. This is not hard coded, it is simply necessary for the memory and asset allocation, this should equal the maximum numbers of elevators on the network. 
 - Also make sure that the 3 required network ports in `config/config.go` are unoccupied by other processes.   
-Run the program by typing: `go run main.go --ID *ID of the elevator*` in a terminal within the project folder. 
+- Run the program by typing: `go run main.go --ID *ID of the elevator*` in a terminal within the project folder. 
 
 ## About
 - Method of communication: Broadcasting over UDP
