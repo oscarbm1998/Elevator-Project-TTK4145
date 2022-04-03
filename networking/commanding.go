@@ -216,7 +216,6 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 			}
 		}
 	}
-
 }
 
 func reject_command(floor, direction int) (reject bool) {
