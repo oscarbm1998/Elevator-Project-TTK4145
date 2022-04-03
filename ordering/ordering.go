@@ -143,7 +143,11 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
-		placement[i].score = master_tournament_v2(placement, lighthouse[i]) //sives the score based upon postioning
+		if !(lighthouse[i].Status != 0) { //if the elevator is nunfunctional it is ignored from the algo
+			placement[i].score = master_tournament_v2(placement, lighthouse[i]) //sives the score based upon postioning
+		} else { //and is given a very high score
+			placement[i].score = 11
+		}
 		/*
 			if !(lighthouse[i].Status != 0) { //if the elevator is nonfunctional it is ignored
 				//direction scoring
@@ -192,13 +196,15 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 			ch_self_command <- a
 			break
 		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 { //if the call is not going to itself
+			fmt.Printf("trying to send to elevator %d\n", placement[i].elevator_number)
 			m.Lock()
 			success := networking.Send_command(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir)
 			m.Unlock()
 			if success {
+				fmt.Printf("managed to send to elevator %d\n", placement[i].elevator_number)
 				break
 			}
-		} else if i == config.NUMBER_OF_ELEVATORS-1 {
+		} else if i == config.NUMBER_OF_ELEVATORS-1 { //last dithc effort elevator sends to itself
 			ch_self_command <- a
 		}
 	}
@@ -210,12 +216,15 @@ func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placem
 		var roundbest_index int                           //the strongest placement for this round
 		var bestscore int                                 //the strongest placement for this round
 		for i := p; i < config.NUMBER_OF_ELEVATORS; i++ { //ignores the stuff that has already been positioned
-			if placement[i].score < bestscore { //if the score is lower than the others
+			fmt.Printf("score is %d\n", placement[i].score)
+			if placement[i].score > bestscore { //if the score is lower than the others
+				fmt.Printf("found new bestscore\n")
 				roundbest_index = i            //sets the new index
 				bestscore = placement[i].score //sets the new best score
 			}
 		}
 		placement[p].elevator_number = roundbest_index //sets the index of the highest scorer
+		fmt.Printf("%d and %d\n", placement[p].elevator_number, roundbest_index)
 	}
 	//printing the sorting
 	for x := 0; x < config.NUMBER_OF_ELEVATORS; x++ {
