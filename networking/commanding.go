@@ -21,6 +21,9 @@ func Send_command(ID, floor, direction int) (success bool) {
 		panic("Networking: I do not need networking to command myself")
 	}
 
+	ch_deadlock_quit := make(chan bool)
+	go command_deadlockDetector(ch_deadlock_quit, "Networking: sending command took too long. Possible deadlock")
+
 	//Generate command
 	//Format: ToElevatorID_ToFloor_InDirection_FromElevatorID
 	cmd = strconv.Itoa(ID) + "_" + strconv.Itoa(floor) + "_" + strconv.Itoa(direction) + "_" + strconv.Itoa(config.ELEVATOR_ID)
@@ -95,8 +98,8 @@ Exit:
 		fmt.Println("Networking: trying to exit")
 	}
 
-	ch_rbc_close <- true //close readback listener listener
-
+	ch_rbc_close <- true     //close readback listener listener
+	ch_deadlock_quit <- true //Stop the timer
 	if commandLogger {
 		fmt.Println("Networking: done sending command, exited")
 	}
@@ -106,6 +109,8 @@ Exit:
 
 func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan bool) {
 	buf := make([]byte, 1024)
+	ch_deadlock_quit := make(chan bool)
+	go command_deadlockDetector(ch_deadlock_quit, "Networking: possible deadlock on readback listener")
 	for {
 		select {
 		case <-ch_rbc_listen: //Will listen when told to
@@ -146,6 +151,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 		}
 	}
 Exit:
+	ch_deadlock_quit <- true
 	if commandLogger {
 		fmt.Println("Networking: closing readback listener")
 	}
@@ -230,4 +236,19 @@ func reject_command(floor, direction int) (reject bool) {
 	} else {
 		return false
 	}
+}
+
+func command_deadlockDetector(ch_quit <-chan bool, msg string) {
+	t := time.NewTimer(20 * time.Second)
+	t.Reset(20 * time.Second)
+	for {
+		select {
+		case <-ch_quit:
+			t.Stop()
+			goto Exit
+		case <-t.C:
+			panic("Networking: sending command took too long. Possible deadlock")
+		}
+	}
+Exit:
 }
