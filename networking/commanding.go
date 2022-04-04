@@ -14,7 +14,6 @@ var commandLogger bool = false
 
 //Commands and elevator with ID, to service a specified hallcall command. Returns true if successfull
 func Send_command(ID, floor, direction int) (success bool) {
-	//(NB!!) This function does not check if the node is alive before attempting transmission.
 	var attempts int = 1
 	var cmd, rbc, broadcast string
 	if ID == config.ELEVATOR_ID {
@@ -59,26 +58,25 @@ func Send_command(ID, floor, direction int) (success bool) {
 				fmt.Println("Readback: " + msg + " expected: " + rbc)
 			}
 			rbc_id, _ := strconv.Atoi(data[0])
-			//Readback message for me
 			if rbc_id == config.ELEVATOR_ID {
 				timer.Reset(timOut)
-				if msg == rbc { //Good readback. Successfully commanded, Send OK and exit
+				if msg == rbc {
 					fmt.Println("Networking: readback OK")
 					cmd_con.Write([]byte(strconv.Itoa(ID) + "_CMD_OK"))
 					success = true
 					goto Exit
-				} else if rbc == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_REJECT" { //Command rejected, unsuccessfully commanded, exit
+				} else if rbc == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_REJECT" {
 					fmt.Printf("Networking: elevator rejected the command")
 					success = false
 					goto Exit
-				} else { //Bad readback, or no readback. Send the command again
+				} else {
 					fmt.Println("Networking: bad readback, sending command again")
 					_, err = cmd_con.Write([]byte(cmd))
 					ch_rbc_listen <- true
 					printError("Networking: Error sending command: ", err)
 					attempts++
 				}
-				if attempts > 3 { //Readback failed too many times, exit
+				if attempts > 3 {
 					fmt.Println("Networking: too many command readback attemps")
 					success = false
 					goto Exit
@@ -92,13 +90,13 @@ func Send_command(ID, floor, direction int) (success bool) {
 		}
 	}
 Exit:
-	//Work done
 	if commandLogger {
 		fmt.Println("Networking: trying to exit")
 	}
 
-	ch_rbc_close <- true     //close readback listener listener
-	ch_deadlock_quit <- true //Stop the deadlock thread
+	ch_rbc_close <- true
+	ch_deadlock_quit <- true
+
 	if commandLogger {
 		fmt.Println("Networking: done sending command, exited")
 	}
@@ -112,7 +110,8 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 	go command_deadlockDetector(ch_deadlock_quit, time.Minute, "Networking: possible deadlock on readback listener")
 	for {
 		select {
-		case <-ch_rbc_listen: //Will listen when told to
+		case <-ch_rbc_listen:
+		ReadAgain:
 			if commandLogger {
 				fmt.Println("RBC: Starting connection")
 			}
@@ -135,8 +134,9 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 				if ID == config.ELEVATOR_ID {
 					ch_msg <- msg
 				} else {
-					ch_rbc_listen <- true //Message not for me, read again
+					goto ReadAgain
 				}
+
 			}
 			con.Close()
 
@@ -159,8 +159,6 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 	var button_command elevio.ButtonEvent
 	var rbc string
 	buf := make([]byte, 1024)
-	//adr, _ := net.ResolveUDPAddr("udp", ":"+strconv.Itoa(config.COMMAND_PORT))
-	//cmd_con, _ := net.ListenUDP("udp", adr) //Listening to the command port
 	cmd_con := DialBroadcastUDP(config.COMMAND_PORT)
 	adr, _ := net.ResolveUDPAddr("udp", "255.255.255.255:"+strconv.Itoa(config.COMMAND_RBC_PORT))
 	rbc_con, _ := net.DialUDP("udp", nil, adr) //Broadcasting on the readback port
