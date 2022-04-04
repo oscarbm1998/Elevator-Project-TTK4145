@@ -20,7 +20,8 @@ func OpenAndCloseDoorsTimer(ch_door_timer_out chan<- bool, ch_door_timer_reset <
 	}
 }
 
-func ElevatorStuckTimer(ch_elev_stuck_timer_out chan<- bool, ch_elev_stuck_timer_start <-chan bool, ch_elev_stuck_timer_stop <-chan bool) {
+func ElevatorStuckTimer(ch_elev_stuck_timer_out chan<- bool, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop <-chan bool) {
+
 	timer := time.NewTimer(config.ELEVATOR_STUCK_TIMOUT)
 	timer.Stop()
 
