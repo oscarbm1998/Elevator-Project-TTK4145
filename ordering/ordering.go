@@ -56,8 +56,6 @@ func Pass_to_network(
 		ch_req_ID,
 		ch_req_data,
 	)
-
-	number_of_alive_elevs = config.NUMBER_OF_ELEVATORS
 	fmt.Println("Ordering: starting up")
 	for {
 		select {
