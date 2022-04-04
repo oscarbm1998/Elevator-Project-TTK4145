@@ -144,16 +144,16 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement)
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //Cycle the scoreboard and attempt to send from best to worst
 		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID && lighthouse[temporary_placement[i].elevator_number].Status == 0 {
-			fmt.Printf("own elevator won\n")
+			fmt.Printf("Own elevator won\n")
 			ch_self_command <- a
 			break
 		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 {
-			fmt.Printf("trying to send to elevator %d\n", placement[i].elevator_number)
+			fmt.Printf("Trying to send to elevator %d\n", placement[i].elevator_number)
 			m.Lock()
 			success := networking.Send_command(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir)
 			m.Unlock()
 			if success {
-				fmt.Printf("managed to send to elevator %d\n", placement[i].elevator_number)
+				fmt.Printf("Managed to send to elevator %d\n", placement[i].elevator_number)
 				break
 			}
 		}
@@ -166,9 +166,6 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 //Quicksort for struct
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	sort.Sort(score_tracker_list(placement[:]))
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		fmt.Println(placement[i])
-	}
 	return placement
 }
 

@@ -94,7 +94,7 @@ func SingleElevatorFSM(
 				elevio.SetDoorOpenLamp(true)
 				ch_door_timer_reset <- true
 				ch_elev_stuck_timer_stop <- true
-				Update_position(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order) //Bytt navn ?
+				Update_position(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order) 
 				current_state = doorOpen
 			}
 		case <-ch_door_timer_out:
@@ -130,12 +130,10 @@ func SingleElevatorFSM(
 		case msg := <-ch_drv_stop:
 			if msg {
 				elevio.SetMotorDirection(elevio.MD_Stop)
-				fmt.Printf("Elevator stopped\n")
 				ch_update_elevator_node_placement <- "direction"
 				ch_update_elevator_node_placement <- "set error"
 			} else {
 				elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
-				fmt.Printf("Elevator running\n")
 				ch_update_elevator_node_placement <- "direction"
 				ch_update_elevator_node_placement <- "reset error"
 			}
