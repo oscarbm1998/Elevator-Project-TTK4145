@@ -10,6 +10,7 @@ const (
 	SIMULATION_IP_AND_PORT string = ""
 	NUMBER_OF_FLOORS              = 4
 	NUMBER_OF_BUTTONS             = 3
+	NUMBER_OF_ELEVATORS = 3
 
 	//Timers
 	ELEVATOR_STUCK_TIMOUT   = time.Second * 10
@@ -22,5 +23,4 @@ const (
 	COMMAND_PORT        = 7272
 	COMMAND_RBC_PORT    = 7373
 	REVIVE_PORT         = 7474
-	NUMBER_OF_ELEVATORS = 3
 )
