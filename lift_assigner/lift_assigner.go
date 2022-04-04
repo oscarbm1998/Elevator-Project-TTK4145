@@ -56,7 +56,7 @@ func Pass_to_network(
 		ch_req_ID,
 		ch_req_data,
 	)
-	fmt.Println("Ordering: starting up")
+	fmt.Println("Lift assigner: starting up")
 	for {
 		select {
 		case a := <-ch_drv_buttons: //Assigns a thread for each incomming call
