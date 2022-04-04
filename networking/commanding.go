@@ -182,7 +182,6 @@ func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan
 			if commandLogger {
 				fmt.Println("Networking CMDL: got command")
 			}
-
 			if reject_command(floor, direction) { //Check if i can perfrom the task
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
@@ -196,13 +195,11 @@ func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan
 				if ID != config.ELEVATOR_ID {
 					goto ReadAgain
 				}
-
 				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
-					//Pass the command to the elevator
 					switch direction {
-					case -1:
+					case int(elevio.MD_Down):
 						button_command.Button = elevio.BT_HallDown
-					case 1:
+					case int(elevio.MD_Up):
 						button_command.Button = elevio.BT_HallUp
 					}
 					button_command.Floor = floor
@@ -217,7 +214,7 @@ func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan
 				reportedBy_ID, _ := strconv.Atoi(data[3])
 				if reportedBy_ID != config.ELEVATOR_ID {
 					fmt.Println("Networking: elevator " + strconv.Itoa(dead_ID) + " was found dead by elevator " + strconv.Itoa(reportedBy_ID))
-					ch_ext_dead <- dead_ID //Allert heartbeat-handler
+					ch_ext_dead <- dead_ID //Alert heartbeat-handler
 				}
 			}
 		}
@@ -237,7 +234,6 @@ func reject_command(floor, direction int) (reject bool) {
 	}
 }
 
-//Simple timer routine that panics if the time limit is reached.
 func command_deadlockDetector(ch_quit chan bool, timout time.Duration, msg string) {
 	t := time.NewTimer(timout)
 	t.Reset(timout)
