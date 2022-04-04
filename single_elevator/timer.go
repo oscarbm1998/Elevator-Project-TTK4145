@@ -6,7 +6,6 @@ import (
 )
 
 func OpenAndCloseDoorsTimer(ch_door_timer_out chan<- bool, ch_door_timer_reset <-chan bool) {
-	//Initiatie the timer
 	timer := time.NewTimer(config.ELEVATOR_DOOR_OPEN_TIME)
 	timer.Stop()
 
