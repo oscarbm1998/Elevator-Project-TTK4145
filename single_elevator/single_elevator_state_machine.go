@@ -94,7 +94,7 @@ func SingleElevatorFSM(
 				elevio.SetDoorOpenLamp(true)
 				ch_door_timer_reset <- true
 				ch_elev_stuck_timer_stop <- true
-				Update_position(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order) 
+				Update_position(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order)
 				current_state = doorOpen
 			}
 		case <-ch_door_timer_out:

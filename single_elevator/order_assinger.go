@@ -19,8 +19,8 @@ type floor_info struct {
 }
 
 var floor [config.NUMBER_OF_FLOORS]floor_info
-var elevator elevator_status         //where elevator is
-var elevator_command elevator_status //where elevator should go
+var elevator elevator_status
+var elevator_command elevator_status
 
 func Hall_order(
 	ch_new_order chan bool,
