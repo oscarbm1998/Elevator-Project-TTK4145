@@ -93,7 +93,7 @@ func Pass_to_network(
 			▄▄█▄▄▄▄███▀
 
 *********************************/
-func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
+func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) { //Kan alt dette flyttes opp til der det brukes?
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	switch a.Button {
 	case 0: //up
