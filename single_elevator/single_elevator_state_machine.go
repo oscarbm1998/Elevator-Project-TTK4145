@@ -23,13 +23,10 @@ type update_elevator_node struct {
 	update_value int
 }
 
-var add_order_to_node update_elevator_node
-var remove_order_from_node update_elevator_node
+var add_order_to_node, remove_order_from_node update_elevator_node
 var current_state elevator_state
 var last_floor int
-var elevator_stuck bool
-var restoring_cab_calls bool
-var elevator_door_blocked bool
+var elevator_stuck, restoring_cab_calls, elevator_door_blocked bool
 var cabCalls [4]bool
 
 func SingleElevatorFSM(
