@@ -25,10 +25,9 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 
 	fmt.Println("Networking: starting heartbeat transmision")
 	ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
-	timer := time.NewTimer(config.HEARTBEAT_TIME) //Timer to define when to broadcast heartbeat data
-	//Routine
+	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	for {
-		<-timer.C //Loop every second
+		<-timer.C
 		timer.Reset(config.HEARTBEAT_TIME)
 		//Sampling date and time, and making it nice european style
 		year, month, day := time.Now().Date()
@@ -37,7 +36,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 		clock = strconv.Itoa(hour) + ":" + strconv.Itoa(minute) + ":" + strconv.Itoa(second)
 		msg = date + " " + clock + "_"
 
-		node = Node_get_data(ID, ch_req_ID, ch_req_data) //Requesting to acquire the latest elevator data
+		node = Node_get_data(ID, ch_req_ID, ch_req_data)
 
 		//Generating the heartbeat message
 		msg = msg + strconv.Itoa(ID) + "_"
@@ -61,7 +60,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 		if HeartBeatLogger {
 			fmt.Println("Networking: sending HB message " + msg)
 		}
-		con.Write([]byte(msg)) //Sending the message
+		con.Write([]byte(msg))
 
 		ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 		ch_hb_trans <- true
@@ -77,9 +76,8 @@ func heartBeathandler(
 	var ch_timerReset, ch_timerStop [config.NUMBER_OF_ELEVATORS]chan bool
 
 	ch_heartbeatmsg := make(chan string) //Channel for received heartbeat messages
-	ch_foundDead := make(chan int)       //A timer that runs out will send it's ID here
+	ch_found_dead := make(chan int)      //A timer that runs out will send it's ID here
 
-	//Initiate the UDP listener
 	fmt.Println("Networking: HB starting listening thread")
 	go heartbeat_UDPListener(ch_heartbeatmsg)
 
@@ -89,7 +87,7 @@ func heartBeathandler(
 		if i != config.ELEVATOR_ID {
 			ch_timerReset[i-1] = make(chan bool)
 			ch_timerStop[i-1] = make(chan bool)
-			go heartbeatTimer(i, ch_foundDead, ch_timerReset[i-1], ch_timerStop[i-1])
+			go heartbeatTimer(i, ch_found_dead, ch_timerReset[i-1], ch_timerStop[i-1])
 		}
 	}
 
@@ -136,22 +134,20 @@ func heartBeathandler(
 				fmt.Println("Elevator " + strconv.Itoa(node_data.ID) + " at floor: " + strconv.Itoa(node_data.Floor))
 			}
 
-			ch_write_data <- node_data                                             //Write the node data
-			ch_timerReset[node_data.ID-1] <- true                                  //Reset the appropriate timer
-			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data) //Find out what hallcalls are being served and send result to SingleElevator
-			ch_new_data <- node_data.ID                                            //Tell ordering that there is new data on this ID
+			ch_write_data <- node_data
+			ch_timerReset[node_data.ID-1] <- true
+			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
+			ch_new_data <- node_data.ID //Tell ordering that there is new data on this ID
 
-		case msg_ID := <-ch_foundDead:
+		case msg_ID := <-ch_found_dead: //I found a dead elevator
 			var msg, broadcast string
 
-			ch_timerStop[msg_ID-1] <- true //Stop the timer of the dead elevator
-
+			ch_timerStop[msg_ID-1] <- true
 			//Update status
-
-			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data) //Get the latest data to avoid overwrite
-			node_data.ID = msg_ID                                     //ID
-			node_data.Status = 404                                    //Set status to unreachable elevator
-			ch_write_data <- node_data                                //write
+			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
+			node_data.ID = msg_ID
+			node_data.Status = 404
+			ch_write_data <- node_data
 
 			//Tell everyone that an elevator has died and that you are taking responsibility
 			msg = "98_" + strconv.Itoa(msg_ID) + "_DEAD_" + strconv.Itoa(config.ELEVATOR_ID)
@@ -161,7 +157,7 @@ func heartBeathandler(
 			con.Write([]byte(msg))
 			con.Close()
 			ch_new_data <- msg_ID
-			ch_take_calls <- msg_ID //Tell the ordering package to take the hall calls of the dead elevator
+			ch_take_calls <- msg_ID
 			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead, redistributing his/her hall calls")
 			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 		case msg_ID := <-ch_ext_dead: //Set status to 404 and stop the timer
@@ -169,14 +165,13 @@ func heartBeathandler(
 			node_data.Status = 404
 			ch_write_data <- node_data
 			ch_new_data <- msg_ID
-			ch_timerStop[msg_ID-1] <- true //Stop the timer of the dead elevator
+			ch_timerStop[msg_ID-1] <- true
 			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 
 		}
 	}
 }
 
-//Timer, waiting for something to timeout. Run as a go routine, accessed through channels
 func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timerStop chan bool) {
 	//Offset timeout based on elevator ID
 	var time_TIMEOUT = config.HEARTBEAT_TIMEOUT + 100*time.Millisecond*time.Duration(config.ELEVATOR_ID)
@@ -196,7 +191,6 @@ func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timerStop c
 	}
 }
 
-//Listening for UDP heartbeat messages on port defined in config
 func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) {
 	buf := make([]byte, 1024)
 	var msg string
@@ -215,19 +209,17 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) {
 		if err != nil {
 			fmt.Println("Networking: got a bad heartbeat message " + msg)
 			printError("Got error: ", err)
-		} else {
-			if ID != config.ELEVATOR_ID && ID <= config.NUMBER_OF_ELEVATORS {
-				ch_heartbeatmsg <- msg
-			}
+		} else if ID != config.ELEVATOR_ID && ID <= config.NUMBER_OF_ELEVATORS {
+			ch_heartbeatmsg <- msg
 		}
 	}
 }
 
 //Returns an array of all the hallcalls currently being served
 func update_HallCallsTot(ch_req_ID chan int, ch_req_data chan Elevator_node) (HallCallsTot [config.NUMBER_OF_FLOORS]HallCall) {
-	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ { //For each elevator
-		Elevator := Node_get_data(i, ch_req_ID, ch_req_data) //Get data
-		if Elevator.Status == 0 {                            //Ignore elevators with error
+	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
+		Elevator := Node_get_data(i, ch_req_ID, ch_req_data)
+		if Elevator.Status == 0 { //Ignore elevators with error
 			for k := range Elevator.HallCalls {
 				if Elevator.HallCalls[k].Up {
 					HallCallsTot[k].Up = true

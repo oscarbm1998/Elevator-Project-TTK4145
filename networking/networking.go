@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"net"
 	"os"
-
-	//"os"
 	"strconv"
 	"syscall"
 	"time"
@@ -58,7 +56,6 @@ func Main(
 	go deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler)
 }
 
-//Function responsible for the Elevator_node resource
 func node_data_handler(
 	ch_req_ID [3]chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
@@ -151,14 +148,6 @@ func DialBroadcastUDP(port int) net.PacketConn {
 	return conn
 }*/
 
-func printError(str string, err error) {
-	if err != nil {
-		fmt.Print(str)
-		fmt.Println(err)
-	}
-}
-
-//Function that gathers heartbeat messages from curtain threads to determine deadlocks, and then panics.
 func deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler <-chan bool) {
 	var timeOut time.Duration = time.Minute
 	var timers [4]*time.Timer
@@ -193,5 +182,12 @@ func deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler <-chan 
 			panic("Deadlock detected on data handler")
 
 		}
+	}
+}
+
+func printError(str string, err error) {
+	if err != nil {
+		fmt.Print(str)
+		fmt.Println(err)
 	}
 }
