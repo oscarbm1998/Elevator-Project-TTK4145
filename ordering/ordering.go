@@ -15,6 +15,8 @@ type score_tracker struct { //this struct keeps track of the score and what elev
 	elevator_number int
 } //uses the score tracker struct to make a sort of scoreboard the first array is the podium itself whilst the internal "elevator number" keeps track of which elevator is which
 
+type score_tracker_list []score_tracker
+
 //a copy of the elevator node struct to keep internal track of the elevators
 var elev_overview [config.NUMBER_OF_ELEVATORS]networking.Elevator_node
 
@@ -140,7 +142,7 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 		placement[i].elevator_number = i
 		if !(lighthouse[i].Status != 0) { //if the elevator is nunfunctional it is ignored from the algo
 			placement[i].score = master_tournament_v2(placement, lighthouse[i]) //sives the score based upon postioning
-			if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
+			if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) {
 				placement[i].score = -1
 			}
 		} else { //and is given a very high score
@@ -205,29 +207,32 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 	}
 }
 
-//a sorting algorithm responsible for updating the placement struct from highest to lowest score
+//Quicksort for struct
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
-	var final_placement [config.NUMBER_OF_ELEVATORS]score_tracker
-	var temp_placements_1 [3]int
-	map_1 := make(map[int]int)
+	sort.Sort(score_tracker_list(placement[:]))
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		map_1[placement[i].score] = placement[i].elevator_number
-		temp_placements_1[i] = placement[i].score
+		fmt.Println(placement[i])
 	}
-	sort.Ints(temp_placements_1[:])
-	for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
-		final_placement[j].score = temp_placements_1[j]
-		final_placement[j].elevator_number = map_1[temp_placements_1[j]]
-		delete(map_1, temp_placements_1[j])
-	}
-
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		fmt.Println(final_placement[i])
-	}
-	return final_placement
+	return placement
 }
 
-func existence(index int, placement [config.NUMBER_OF_ELEVATORS]score_tracker) (existence bool) {
+//Functions for quicksort
+//==============================================================
+func (temp_score score_tracker_list) Len() int {
+	return len(temp_score)
+}
+
+func (temp_score score_tracker_list) Less(i, j int) bool {
+	return temp_score[i].score < temp_score[j].score
+}
+
+func (temp_score score_tracker_list) Swap(i, j int) {
+	temp_score[i], temp_score[j] = temp_score[j], temp_score[i]
+}
+
+//==============================================================
+
+func existence(index int, placement [config.NUMBER_OF_ELEVATORS]score_tracker) (existence bool) { //Brukes denne?
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 		if placement[i].elevator_number == index {
 			return true
