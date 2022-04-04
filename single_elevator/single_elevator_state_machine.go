@@ -282,7 +282,7 @@ func init_elevator() {
 }
 
 func MoveNearestFloor() {
-	time.Sleep(1 * time.Second) //Kan være lurt å unngå sleep xD
+	time.Sleep(1 * time.Second)
 	if elevator_stuck {
 		elevio.SetMotorDirection(elevio.MD_Down)
 	}
