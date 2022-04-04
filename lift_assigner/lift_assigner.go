@@ -74,15 +74,6 @@ func Pass_to_network(
 	}
 }
 
-/*********************************
-		   Hello there
-			───▄▄▄
-			─▄▀░▄░▀▄
-			─█░█▄▀░█
-			─█░▀▄▄▀█▄█▄▀
-			▄▄█▄▄▄▄███▀
-
-*********************************/
 func call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	switch a.Button {
