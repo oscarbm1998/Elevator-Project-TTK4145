@@ -149,7 +149,7 @@ func DialBroadcastUDP(port int) net.PacketConn {
 }*/
 
 func deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler <-chan bool) {
-	var timeOut time.Duration = time.Minute
+	var timeOut time.Duration = time.Minute * 2
 	var timers [4]*time.Timer
 	for i := 0; i < 4; i++ {
 		timers[i] = time.NewTimer(timeOut)
