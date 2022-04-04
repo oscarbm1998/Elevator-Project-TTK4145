@@ -165,23 +165,21 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 	ch_elevator_has_arrived chan bool,
 	ch_update_elevator_node_placement chan string, ch_new_order chan bool) {
 	for {
-		select {
-		case msg := <-ch_drv_floors:
-			elevator.floor = msg
-			ch_update_elevator_node_placement <- "floor"
-			elevio.SetFloorIndicator(msg)
-			if last_floor == -1 {
-				last_floor = elevator.floor
-				elevio.SetMotorDirection(elevio.MD_Stop)
-				elevator_stuck = false
-			}
-			if restoring_cab_calls {
-				ch_new_order <- true
-			}
-			if elevator_command.floor == msg && last_floor != elevator_command.floor {
-				last_floor = elevator_command.floor
-				ch_elevator_has_arrived <- true
-			}
+		msg := <-ch_drv_floors
+		elevator.floor = msg
+		ch_update_elevator_node_placement <- "floor"
+		elevio.SetFloorIndicator(msg)
+		if last_floor == -1 {
+			last_floor = elevator.floor
+			elevio.SetMotorDirection(elevio.MD_Stop)
+			elevator_stuck = false
+		}
+		if restoring_cab_calls {
+			ch_new_order <- true
+		}
+		if elevator_command.floor == msg && last_floor != elevator_command.floor {
+			last_floor = elevator_command.floor
+			ch_elevator_has_arrived <- true
 		}
 	}
 }
