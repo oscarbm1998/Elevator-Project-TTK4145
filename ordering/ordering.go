@@ -21,7 +21,7 @@ var elev_overview [config.NUMBER_OF_ELEVATORS]networking.Elevator_node
 var number_of_alive_elevs int
 var m sync.Mutex
 
-//checks and alerts the system whenever a heartbeat ping occurs
+//Checks and alerts the system whenever a heartbeat ping occurs
 func heartbeat_monitor(
 	ch_new_data chan int,
 	ch_req_ID chan int,
@@ -36,13 +36,12 @@ func heartbeat_monitor(
 		}
 	}
 	for {
-		id := <-ch_new_data                                                                                        //new data arrives
+		id := <-ch_new_data
 		elev_overview[id-1] = networking.Node_get_data(id, ch_req_ID, ch_req_data)                                 //updates elev_overview with the new data
 		elev_overview[config.ELEVATOR_ID-1] = networking.Node_get_data(config.ELEVATOR_ID, ch_req_ID, ch_req_data) //update myself
 	}
 }
 
-//meldigen som infoer victors modul om hva som skal sendes (main)
 func Pass_to_network(
 	ch_drv_buttons chan elevio.ButtonEvent,
 	ch_new_order chan bool,
@@ -114,7 +113,7 @@ func death_call_handler(floor int, dir int, ID int, ch_drv_buttons chan elevio.B
 	ch_drv_buttons <- button_event
 }
 
-//a function that scores all the elevators based on two inputs: floor and direction
+//A function that scores all the elevators based on two inputs: floor and direction
 func master_tournament(floor, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 		placement[i].score = 1
@@ -136,7 +135,7 @@ func master_tournament(floor, direction int, placement [config.NUMBER_OF_ELEVATO
 func calculate_score(placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse networking.Elevator_node) (duration int) {
 	var time int = 0
 	switch lighthouse.Direction {
-	case elevio.MD_Stop: //elevator is idle so it is the best suited
+	case elevio.MD_Stop: //Elevator is idle so it is the best suited
 		return time
 	default:
 		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
@@ -153,13 +152,13 @@ func calculate_score(placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighth
 
 func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 
-	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement) //calls the sorting algorithm to sort the elevator placements
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {                                      //will automatically cycle the scoreboard and attempt to send from best to worst
-		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID && lighthouse[temporary_placement[i].elevator_number].Status == 0 { //if the winning ID is the elevators own
+	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement)
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //Cycle the scoreboard and attempt to send from best to worst
+		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID && lighthouse[temporary_placement[i].elevator_number].Status == 0 {
 			fmt.Printf("own elevator won\n")
 			ch_self_command <- a
 			break
-		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 { //if the call is not going to itself
+		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 {
 			fmt.Printf("trying to send to elevator %d\n", placement[i].elevator_number)
 			m.Lock()
 			success := networking.Send_command(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir)
@@ -168,7 +167,8 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 				fmt.Printf("managed to send to elevator %d\n", placement[i].elevator_number)
 				break
 			}
-		} else if i == config.NUMBER_OF_ELEVATORS-1 { //last dithc effort elevator sends to itself
+		}
+		if i == config.NUMBER_OF_ELEVATORS-1 { //Send to self if no one is avaliable
 			ch_self_command <- a
 		}
 	}
