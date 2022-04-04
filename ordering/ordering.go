@@ -10,20 +10,15 @@ import (
 	"sync"
 )
 
-type score_tracker struct { //this struct keeps track of the score and what elevator the socre belongs to
+type score_tracker struct {
 	score           int
 	elevator_number int
-} //uses the score tracker struct to make a sort of scoreboard the first array is the podium itself whilst the internal "elevator number" keeps track of which elevator is which
+}
 
 type score_tracker_list []score_tracker
 
-//a copy of the elevator node struct to keep internal track of the elevators
 var elev_overview [config.NUMBER_OF_ELEVATORS]networking.Elevator_node
-
 var number_of_alive_elevs int
-
-//a translator for when we need to pass info between two channels
-
 var m sync.Mutex
 
 //checks and alerts the system whenever a heartbeat ping occurs
@@ -67,17 +62,15 @@ func Pass_to_network(
 	fmt.Println("Ordering: starting up")
 	for {
 		select {
-		case a := <-ch_drv_buttons: //takes the new data and runs a tournament to determine what the most suitable elevator is
-			fmt.Printf("Button press registered %d with the floor num %d\n", a.Button, a.Floor)
-			go cab_call_hander(ch_self_command, a, elev_overview)
-			//if a death or stall occurs
-		case death_id := <-ch_take_calls: //id of the elevator in question is transmitted as an event
-			for e := 0; e < config.NUMBER_OF_FLOORS; e++ {
-				if elev_overview[death_id-1].HallCalls[e].Up {
-					go death_caller(e, 0, death_id, ch_drv_buttons, elev_overview)
+		case a := <-ch_drv_buttons: //Assigns a thread for each incomming call
+			go call_hander(ch_self_command, a, elev_overview)
+		case death_id := <-ch_take_calls: //Assigns a thread for each redistributed call from dead elevator
+			for floor := 0; floor < config.NUMBER_OF_FLOORS; floor++ {
+				if elev_overview[death_id-1].HallCalls[floor].Up {
+					go death_call_handler(floor, 0, death_id, ch_drv_buttons, elev_overview)
 				}
-				if elev_overview[death_id-1].HallCalls[e].Down {
-					go death_caller(e, 1, death_id, ch_drv_buttons, elev_overview)
+				if elev_overview[death_id-1].HallCalls[floor].Down {
+					go death_call_handler(floor, 1, death_id, ch_drv_buttons, elev_overview)
 				}
 			}
 		}
@@ -85,7 +78,7 @@ func Pass_to_network(
 }
 
 /*********************************
-*		Welcome to Hell
+		   Hello there
 			───▄▄▄
 			─▄▀░▄░▀▄
 			─█░█▄▀░█
@@ -93,32 +86,23 @@ func Pass_to_network(
 			▄▄█▄▄▄▄███▀
 
 *********************************/
-func cab_call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) { //Kan alt dette flyttes opp til der det brukes?
+func call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	switch a.Button {
-	case 0: //up
+	case elevio.BT_HallUp:
 		placement := master_tournament(a.Floor, int(elevio.MD_Up), placement, lighthouse)
-		dir := 1
-		if number_of_alive_elevs >= 2 {
-			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
-		} else {
-			ch_self_command <- a
-		}
-	case 1: //down
+		dir := int(elevio.MD_Up)
+		Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
+	case elevio.BT_HallDown:
 		placement := master_tournament(a.Floor, elevio.MD_Down, placement, lighthouse)
-		dir := -1
-		if number_of_alive_elevs >= 2 {
-			Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
-		} else {
-			ch_self_command <- a
-		}
-	case 2: //cab
-		fmt.Print("Cab call found\n")
+		dir := int(elevio.MD_Down)
+		Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
+	case elevio.BT_Cab:
 		ch_self_command <- a
 	}
 }
 
-func death_caller(floor int, dir int, ID int, ch_drv_buttons chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
+func death_call_handler(floor int, dir int, ID int, ch_drv_buttons chan elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
 	var button_event elevio.ButtonEvent
 	button_event.Floor = floor
 	switch dir {
@@ -131,45 +115,28 @@ func death_caller(floor int, dir int, ID int, ch_drv_buttons chan elevio.ButtonE
 }
 
 //a function that scores all the elevators based on two inputs: floor and direction
-func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
-	//resets scoring to prepare the tournament
+func master_tournament(floor, direction int, placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
 		placement[i].score = 1
-		placement[i].elevator_number = 0
-	}
-	//filters out the nonworking and scores them
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
 		placement[i].elevator_number = i
-		if !(lighthouse[i].Status != 0) { //if the elevator is nunfunctional it is ignored from the algo
-			placement[i].score = master_tournament_v2(placement, lighthouse[i]) //sives the score based upon postioning
+	}
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
+		if !(lighthouse[i].Status != 0) {
+			placement[i].score = calculate_score(placement, lighthouse[i])
 			if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) {
 				placement[i].score = -1
 			}
-		} else { //and is given a very high score
+		} else { //Gives bad score if elevator is unreachable/unusable
 			placement[i].score = 11
 		}
-		/*
-			if !(lighthouse[i].Status != 0) { //if the elevator is nonfunctional it is ignored
-				//direction scoring
-				if direction == 0 {
-					placement[i].score += 3
-				}
-				if direction == lighthouse[i].Direction { //if the elevators direction matches the input
-					placement[i].score += 2 //give 3 good boy points
-				}
-				//placement scoring (with alot of conversion) basically takes the floor difference of where the elevator is and where it is supposed to go and then subtracts it with 4
-				//this means that the closer the elevator is the higher the score
-				placement[i].score += (4 - int(math.Abs(float64(lighthouse[i].Floor-floor))))
-			}
-		*/
 	}
 	return placement
 }
 
-func master_tournament_v2(placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse networking.Elevator_node) (duration int) {
-	var time int
+func calculate_score(placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighthouse networking.Elevator_node) (duration int) {
+	var time int = 0
 	switch lighthouse.Direction {
-	case 0: //elevator is idle so it is the best suited
+	case elevio.MD_Stop: //elevator is idle so it is the best suited
 		return time
 	default:
 		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
@@ -231,12 +198,3 @@ func (temp_score score_tracker_list) Swap(i, j int) {
 }
 
 //==============================================================
-
-func existence(index int, placement [config.NUMBER_OF_ELEVATORS]score_tracker) (existence bool) { //Brukes denne?
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		if placement[i].elevator_number == index {
-			return true
-		}
-	}
-	return false
-}
