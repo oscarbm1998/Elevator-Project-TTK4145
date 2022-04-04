@@ -104,7 +104,7 @@ Exit:
 	return success
 }
 
-func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan bool) {
+func command_readback_listener(ch_msg chan<- string, ch_rbc_close, ch_rbc_listen chan bool) {
 	buf := make([]byte, 1024)
 	ch_deadlock_quit := make(chan bool)
 	go command_deadlockDetector(ch_deadlock_quit, time.Minute, "Networking: possible deadlock on readback listener")
@@ -141,7 +141,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 			}
 			con.Close()
 
-		case <-ch_exit:
+		case <-ch_rbc_close:
 			if commandLogger {
 				fmt.Println("RBC: commanded to exit")
 			}
@@ -156,7 +156,7 @@ Exit:
 	}
 }
 
-func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- int, ch_cmd_rec chan<- bool) {
+func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan<- int, ch_dl_timer_cmd_rec chan<- bool) {
 	var button_command elevio.ButtonEvent
 	var rbc string
 	buf := make([]byte, 1024)
@@ -168,7 +168,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 	for {
 		//Listen for incomming commands on command reception port
 		n, _, err := cmd_con.ReadFrom(buf)
-		ch_cmd_rec <- true //Deadlock timer start
+		ch_dl_timer_cmd_rec <- true
 		printError("Networking: error from command listener: ", err)
 		msg := string(buf[0:n])
 		data := strings.Split(msg, "_")
@@ -187,12 +187,8 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
 			} else {
-
-				//Accept the command by reading it back
-				rbc_con.Write([]byte(rbc))
-
-				//Wait for OK
-				n, _, _ = cmd_con.ReadFrom(buf)
+				rbc_con.Write([]byte(rbc))      //Accept the command by reading it back
+				n, _, _ = cmd_con.ReadFrom(buf) //Wait for OK
 				msg = string(buf[0:n])
 
 				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
@@ -204,7 +200,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 						button_command.Button = elevio.BT_HallUp
 					}
 					button_command.Floor = floor
-					ch_netcommand <- button_command
+					ch_net_command <- button_command
 					fmt.Println("Networking: got a command from elevator " + strconv.Itoa(from_ID))
 				}
 			}
@@ -219,7 +215,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 				}
 			}
 		}
-		ch_cmd_rec <- false //Deadlock timer stop
+		ch_dl_timer_cmd_rec <- false //Deadlock timer stop
 	}
 }
 
