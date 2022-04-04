@@ -134,6 +134,7 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 				if ID == config.ELEVATOR_ID {
 					ch_msg <- msg
 				} else {
+					con.Close()
 					goto ReadAgain
 				}
 
