@@ -57,19 +57,19 @@ func Hall_order(
 				ch_elevator_has_arrived <- true
 			} else {
 				switch a.Button {
-				case elevio.BT_HallUp: //opp
+				case elevio.BT_HallUp:
 					floor[a.Floor].up = true
 					add_order_to_node.command = "update order up"
 					add_order_to_node.update_value = a.Floor
 					ch_update_elevator_node_order <- add_order_to_node
 					elevio.SetButtonLamp(elevio.BT_HallUp, a.Floor, true)
-				case elevio.BT_HallDown: //ned
+				case elevio.BT_HallDown:
 					floor[a.Floor].down = true
 					add_order_to_node.command = "update order down"
 					add_order_to_node.update_value = a.Floor
 					ch_update_elevator_node_order <- add_order_to_node
 					elevio.SetButtonLamp(elevio.BT_HallDown, a.Floor, true)
-				case elevio.BT_Cab: //cab call
+				case elevio.BT_Cab:
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(elevio.BT_Cab, a.Floor, true)
 					file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
@@ -87,16 +87,16 @@ func Hall_order(
 	}
 }
 
-func Remove_order(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) { //removes an order
-	floor[level].cab = false              //removes here call as the elevator has arrived there
-	elevio.SetButtonLamp(2, level, false) //turns off cab light
+func Remove_order(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) {
+	floor[level].cab = false
+	elevio.SetButtonLamp(2, level, false)
 	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
 	cabCalls[level] = false
 	bytes, _ := json.Marshal(cabCalls)
 	file.Truncate(0)
 	file.WriteAt(bytes, 0)
 	file.Close()
-	if direction == int(elevio.MD_Up) { //if the direction is up or there are no orders below and orders above
+	if direction == int(elevio.MD_Up) {
 		if !floor[level].up {
 			floor[level].down = false
 			remove_order_from_node.command = "remove order down"
@@ -110,8 +110,7 @@ func Remove_order(level int, direction int, ch_remove_elevator_node_order chan u
 			ch_remove_elevator_node_order <- remove_order_from_node
 			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
 		}
-		//disables the up direction
-	} else if direction == int(elevio.MD_Down) { //if the direction is down or there are no orders above and orders below
+	} else if direction == int(elevio.MD_Down) {
 		if !floor[level].down {
 			floor[level].up = false
 			remove_order_from_node.command = "remove order up"
@@ -142,11 +141,11 @@ func Remove_order(level int, direction int, ch_remove_elevator_node_order chan u
 	}
 }
 
-func request_above() bool { //checks if there are any active calls above the elevator and updates the "command struct"
-	for i := elevator.floor + 1; i < config.NUMBER_OF_FLOORS; i++ { //checks from the last known floor of the elevator to the top
-		if floor[i].up || floor[i].down || floor[i].cab { //if a floor with call up is found
-			elevator_command.floor = i                     //updates the command value
-			elevator_command.direction = int(elevio.MD_Up) //sets the direction up just in case
+func request_above() bool {
+	for i := elevator.floor + 1; i < config.NUMBER_OF_FLOORS; i++ {
+		if floor[i].up || floor[i].down || floor[i].cab {
+			elevator_command.floor = i
+			elevator_command.direction = int(elevio.MD_Up)
 			return true
 		}
 	}
@@ -155,18 +154,18 @@ func request_above() bool { //checks if there are any active calls above the ele
 
 func request_here() bool {
 	if floor[elevator.floor].up || floor[elevator.floor].down || floor[elevator.floor].cab {
-		elevator_command.floor = elevator.floor //updates the command value
-		elevator_command.direction = 0          //sets the direction down just in case
+		elevator_command.floor = elevator.floor
+		elevator_command.direction = 0
 		return true
 	}
 	return false
 }
 
-func request_below() bool { //checks if there are any active calls below the elevator and updates the "command struct"
-	for i := elevator.floor - 1; i >= 0; i-- { //checks from the last known floor of the elevator to the botton
-		if floor[i].down || floor[i].up || floor[i].cab { //if a floor with call down is found
-			elevator_command.floor = i                       //updates the command value
-			elevator_command.direction = int(elevio.MD_Down) //sets the direction down just in case
+func request_below() bool {
+	for i := elevator.floor - 1; i >= 0; i-- {
+		if floor[i].down || floor[i].up || floor[i].cab {
+			elevator_command.floor = i
+			elevator_command.direction = int(elevio.MD_Down)
 			return true
 		}
 	}
@@ -175,7 +174,7 @@ func request_below() bool { //checks if there are any active calls below the ele
 
 func Request_next_action(direction int) bool {
 	switch direction {
-	case int(elevio.MD_Up): //up
+	case int(elevio.MD_Up):
 		if request_above() {
 			return true
 		} else if request_here() {
@@ -184,7 +183,7 @@ func Request_next_action(direction int) bool {
 			return true
 		}
 
-	case elevio.MD_Down: //down
+	case elevio.MD_Down:
 		if request_below() {
 			return true
 		} else if request_here() {
@@ -193,7 +192,7 @@ func Request_next_action(direction int) bool {
 			return true
 		}
 
-	case elevio.MD_Stop: // here
+	case elevio.MD_Stop:
 		if request_above() {
 			return true
 		} else if request_here() {
@@ -205,7 +204,7 @@ func Request_next_action(direction int) bool {
 	return false
 }
 
-func Update_position(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) { //Er denne nødvendig?
+func Update_position(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) {
 	elevator.floor = level
 	elevator.direction = direction
 	Remove_order(level, direction, ch_remove_elevator_node_order)
