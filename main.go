@@ -3,8 +3,8 @@ package main
 import (
 	config "PROJECT-GROUP-10/config"
 	elevio "PROJECT-GROUP-10/elevio"
+	lift_assigner "PROJECT-GROUP-10/lift_assigner"
 	networking "PROJECT-GROUP-10/networking"
-	ordering "PROJECT-GROUP-10/ordering"
 	singleElevator "PROJECT-GROUP-10/single_elevator"
 	"flag"
 )
@@ -18,29 +18,29 @@ func main() {
 		panic("Illegal ID, must be within the range of defined number of elevators")
 	}
 
+	//Elevator driver
 	elevio.Init()
-
-	ch_drv_buttons := make(chan elevio.ButtonEvent, 6) //Give
-	ch_drv_floors := make(chan int)                    //Some
-	ch_obstr_detected := make(chan bool)               //Explenation
-	ch_drv_stop := make(chan bool)                     //of what
-	ch_elevator_has_arrived := make(chan bool)         //do
-
-	ch_net_command := make(chan elevio.ButtonEvent, 6)   //pls
-	ch_self_command := make(chan elevio.ButtonEvent, 10) //ppl
+	ch_drv_buttons := make(chan elevio.ButtonEvent, 6)
+	ch_drv_floors := make(chan int)
+	ch_obstr_detected := make(chan bool)
+	ch_drv_stop := make(chan bool)
+	ch_elevator_has_arrived := make(chan bool)
+	ch_net_command := make(chan elevio.ButtonEvent, 6)
+	ch_self_command := make(chan elevio.ButtonEvent, 10)
 
 	//Networking
-	ch_new_order := make(chan bool)                                                    //Message here if there is a new order
-	ch_hallCallsTot_updated := make(chan [config.NUMBER_OF_FLOORS]networking.HallCall) //Serviced hallcalls for light panel
-	ch_take_calls := make(chan int)                                                    //Returns ID of a dead elevator to be handed over
-	ch_new_data := make(chan int)                                                      //The data handler will send the ID here if new data from HB to cost function
+	ch_new_order := make(chan bool)
+	ch_hallCallsTot_updated := make(chan [config.NUMBER_OF_FLOORS]networking.HallCall)
+	ch_take_calls := make(chan int)
+	ch_new_data := make(chan int)
+
 	//Multiple data modueles to avoid a deadlock
 	var ch_req_ID [3]chan int
 	var ch_req_data, ch_write_data [3]chan networking.Elevator_node
 	for i := range ch_req_ID {
-		ch_req_ID[i] = make(chan int)                          //Send the ID of the elevator you want data from here
-		ch_req_data[i] = make(chan networking.Elevator_node)   //... the data will be returned on this channel
-		ch_write_data[i] = make(chan networking.Elevator_node) //Write data on this channel
+		ch_req_ID[i] = make(chan int)
+		ch_req_data[i] = make(chan networking.Elevator_node)
+		ch_write_data[i] = make(chan networking.Elevator_node)
 	}
 
 	go elevio.PollButtons(ch_drv_buttons)
@@ -60,7 +60,7 @@ func main() {
 		ch_net_command,
 		ch_self_command,
 		ch_take_calls)
-	go ordering.Pass_to_network(
+	go lift_assigner.Pass_to_network(
 		ch_drv_buttons,
 		ch_new_order,
 		ch_take_calls,
@@ -69,6 +69,23 @@ func main() {
 		ch_req_ID[2],
 		ch_req_data[2],
 	)
-	go networking.Main(ch_req_ID, ch_new_data, ch_take_calls, ch_req_data, ch_write_data, ch_net_command, ch_hallCallsTot_updated)
+	go networking.Main(
+		ch_req_ID,
+		ch_new_data,
+		ch_take_calls,
+		ch_req_data,
+		ch_write_data,
+		ch_net_command,
+		ch_hallCallsTot_updated)
 	select {}
 }
+
+/*********************************
+		   Hello there
+			───▄▄▄
+			─▄▀░▄░▀▄
+			─█░█▄▀░█
+			─█░▀▄▄▀█▄█▄▀
+			▄▄█▄▄▄▄███▀
+
+*********************************/
