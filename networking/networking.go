@@ -36,10 +36,10 @@ func Main(
 	ch_net_command chan elevio.ButtonEvent,
 	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) {
 	ch_ext_dead := make(chan int)
-	ch_hb_trans := make(chan bool)
-	ch_hb_rec := make(chan bool)
-	ch_cmd_rec := make(chan bool)
-	ch_datahandler := make(chan bool)
+	ch_deadlock_hb_trans := make(chan bool)
+	ch_deadlock_hb_rec := make(chan bool)
+	ch_deadlock_cmd_rec := make(chan bool)
+	ch_deadlock_datahandler := make(chan bool)
 	//Initiating the Elevator_nodes data with values
 	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
 		if i != config.ELEVATOR_ID {
@@ -49,11 +49,11 @@ func Main(
 			Elevator_nodes[i-1].ID = i
 		}
 	}
-	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data, ch_datahandler)
-	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0], ch_hallCallsTot_updated, ch_hb_rec)
-	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0], ch_hallCallsTot_updated, ch_hb_trans)
-	go command_listener(ch_net_command, ch_ext_dead, ch_cmd_rec)
-	go deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler)
+	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data, ch_deadlock_datahandler)
+	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0], ch_hallCallsTot_updated, ch_deadlock_hb_rec)
+	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0], ch_hallCallsTot_updated, ch_deadlock_hb_trans)
+	go command_listener(ch_net_command, ch_ext_dead, ch_deadlock_cmd_rec)
+	go deadLockDetector(ch_deadlock_hb_trans, ch_deadlock_hb_rec, ch_deadlock_cmd_rec, ch_deadlock_datahandler)
 }
 
 func node_data_handler(
@@ -91,7 +91,7 @@ func node_data_handler(
 	}
 }
 
-func Node_get_data(ID int, ch_req_ID chan int, ch_req_data chan Elevator_node) (nodeData Elevator_node) {
+func Node_get_data(ID int, ch_req_ID chan<- int, ch_req_data <-chan Elevator_node) (nodeData Elevator_node) {
 	ch_req_ID <- ID
 	nodeData = <-ch_req_data
 	for nodeData.ID != ID {
@@ -148,8 +148,8 @@ func DialBroadcastUDP(port int) net.PacketConn {
 	return conn
 }*/
 
-func deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler <-chan bool) {
-	var timeOut time.Duration = time.Minute * 2
+func deadLockDetector(ch_deadlock_hb_trans, ch_deadlock_hb_rec, ch_deadlock_cmd_rec, ch_deadlock_datahandler <-chan bool) {
+	var timeOut time.Duration = time.Minute
 	var timers [4]*time.Timer
 	for i := 0; i < 4; i++ {
 		timers[i] = time.NewTimer(timeOut)
@@ -159,15 +159,15 @@ func deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler <-chan 
 
 	for {
 		select {
-		case <-ch_hb_trans:
+		case <-ch_deadlock_hb_trans:
 			timers[0].Reset(timeOut)
 		case <-timers[0].C:
 			panic("Deadlock detected on heartbeat transmitter")
-		case <-ch_hb_rec:
+		case <-ch_deadlock_hb_rec:
 			timers[1].Reset(timeOut)
 		case <-timers[1].C:
 			panic("Deadlock detected on heartbeat receiver")
-		case state := <-ch_cmd_rec:
+		case state := <-ch_deadlock_cmd_rec:
 			if state {
 				timers[2].Reset(timeOut)
 			} else {
@@ -176,7 +176,7 @@ func deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler <-chan 
 
 		case <-timers[2].C:
 			panic("Deadlock detected on command receiver")
-		case <-ch_datahandler:
+		case <-ch_deadlock_datahandler:
 			timers[3].Reset(timeOut)
 		case <-timers[3].C:
 			panic("Deadlock detected on data handler")
