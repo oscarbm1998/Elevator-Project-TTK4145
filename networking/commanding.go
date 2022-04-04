@@ -128,7 +128,6 @@ func command_readback_listener(ch_msg chan<- string, ch_exit, ch_rbc_listen chan
 					fmt.Println("Networking: Getting nothing on readback channel, so quitting")
 				}
 				ch_msg <- strconv.Itoa(config.ELEVATOR_ID) + "_ERROR"
-				fmt.Println("sent error")
 			} else {
 				msg := string(buf[0:n])
 				data := strings.Split(msg, "_")
@@ -170,7 +169,7 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 	for {
 		//Listen for incomming commands on command reception port
 		n, _, err := cmd_con.ReadFrom(buf)
-		ch_cmd_rec <- true
+		ch_cmd_rec <- true //Deadlock timer start
 		printError("Networking: error from command listener: ", err)
 		msg := string(buf[0:n])
 		data := strings.Split(msg, "_")
@@ -221,16 +220,16 @@ func command_listener(ch_netcommand chan elevio.ButtonEvent, ch_ext_dead chan<- 
 				}
 			}
 		}
-		ch_cmd_rec <- false
+		ch_cmd_rec <- false //Deadlock timer stop
 	}
 }
 
 func reject_command(floor, direction int) (reject bool) {
 	if Elevator_nodes[config.ELEVATOR_ID-1].Status != 0 {
-		fmt.Println("Reason for cmd reject: my status is not 0")
+		fmt.Println("Networking: Reason for cmd reject: my status is not 0")
 		return true
 	} else if floor < 0 || floor > config.NUMBER_OF_FLOORS {
-		fmt.Println("Reason for cmd reject: illigal floor, can't go to floor " + strconv.Itoa(floor))
+		fmt.Println("Networking: Reason for cmd reject: illigal floor, can't go to floor " + strconv.Itoa(floor))
 		return true
 	} else {
 		return false
@@ -247,7 +246,7 @@ func command_deadlockDetector(ch_quit chan bool, timout time.Duration, msg strin
 			t.Stop()
 			goto Exit
 		case <-t.C:
-			panic("Networking: sending command took too long. Possible deadlock")
+			panic(msg)
 		}
 	}
 Exit:

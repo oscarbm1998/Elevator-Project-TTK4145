@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net"
 	"os"
+
+	//"os"
 	"strconv"
 	"syscall"
 	"time"
@@ -156,7 +158,7 @@ func printError(str string, err error) {
 	}
 }
 
-//Function that gathers heartbeat messages from curtain threads to determine deadlocks, and the panics.
+//Function that gathers heartbeat messages from curtain threads to determine deadlocks, and then panics.
 func deadLockDetector(ch_hb_trans, ch_hb_rec, ch_cmd_rec, ch_datahandler <-chan bool) {
 	var timeOut time.Duration = time.Minute
 	var timers [4]*time.Timer
