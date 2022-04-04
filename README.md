@@ -24,6 +24,7 @@ The ordering package is responsible for effective execution of said elevator req
 - Direction
 - Number of hallcalls 
 
+There is also some functionality that will kill the program if a deadlock is detected
 ### Topological overview
 ![plot](./Fat_presentasjon/oversikt.drawio.png)
 
