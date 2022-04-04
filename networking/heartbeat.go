@@ -29,6 +29,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 	//Routine
 	for {
 		<-timer.C //Loop every second
+		timer.Reset(config.HEARTBEAT_TIME)
 		//Sampling date and time, and making it nice european style
 		year, month, day := time.Now().Date()
 		date = strconv.Itoa(day) + "/" + month.String() + "/" + strconv.Itoa(year)
@@ -61,7 +62,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 			fmt.Println("Networking: sending HB message " + msg)
 		}
 		con.Write([]byte(msg)) //Sending the message
-		timer.Reset(config.HEARTBEAT_TIME)
+
 		ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
 		ch_hb_trans <- true
 	}
@@ -145,7 +146,7 @@ func heartBeathandler(
 
 			ch_timerStop[msg_ID-1] <- true //Stop the timer of the dead elevator
 
-			//Timer has run out, update status
+			//Update status
 
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data) //Get the latest data to avoid overwrite
 			node_data.ID = msg_ID                                     //ID
