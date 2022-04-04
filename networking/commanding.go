@@ -187,9 +187,15 @@ func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
 			} else {
+			ReadAgain:
 				rbc_con.Write([]byte(rbc))      //Accept the command by reading it back
 				n, _, _ = cmd_con.ReadFrom(buf) //Wait for OK
 				msg = string(buf[0:n])
+				data := strings.Split(msg, "_")
+				ID, _ := strconv.Atoi(data[0])
+				if ID != config.ELEVATOR_ID {
+					goto ReadAgain
+				}
 
 				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
 					//Pass the command to the elevator
