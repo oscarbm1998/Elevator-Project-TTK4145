@@ -137,6 +137,7 @@ func master_tournament(floor int, direction int, placement [config.NUMBER_OF_ELE
 	}
 	//filters out the nonworking and scores them
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //cycles shafts
+		placement[i].elevator_number = i
 		if !(lighthouse[i].Status != 0) { //if the elevator is nunfunctional it is ignored from the algo
 			placement[i].score = master_tournament_v2(placement, lighthouse[i]) //sives the score based upon postioning
 			if (floor == lighthouse[i].Floor) && (lighthouse[i].Direction == 0) || (lighthouse[i].Direction == direction) {
@@ -207,39 +208,23 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 //a sorting algorithm responsible for updating the placement struct from highest to lowest score
 func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 	var final_placement [config.NUMBER_OF_ELEVATORS]score_tracker
-	//var bestscore int = 10
-	//var bestindex int
-	/*for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
-			if placement[j].score < bestscore && !existence(placement[j].elevator_number, placement) {
-				bestscore = placement[j].score
-				bestindex = placement[j].elevator_number
-			}
-			final_placement[i].score = bestscore
-			final_placement[i].elevator_number = bestindex
-		}
-	}*/
-
-	temp_placements := [config.NUMBER_OF_ELEVATORS]int{0, 0, 0}
+	var temp_placements_1 [3]int
+	map_1 := make(map[int]int)
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		temp_placements[i] = placement[i].score
-		final_placement[i].elevator_number = 10
+		map_1[placement[i].score] = placement[i].elevator_number
+		temp_placements_1[i] = placement[i].score
 	}
-	sort.Ints(temp_placements[:])
+	sort.Ints(temp_placements_1[:])
 	for j := 0; j < config.NUMBER_OF_ELEVATORS; j++ {
-		for k := 0; k < config.NUMBER_OF_ELEVATORS; k++ {
-			if temp_placements[j] == placement[k].score && !existence(placement[j].elevator_number, final_placement) {
-				final_placement[j].elevator_number = k
-				final_placement[k].score = temp_placements[j]
-			}
-		}
+		final_placement[j].score = temp_placements_1[j]
+		final_placement[j].elevator_number = map_1[temp_placements_1[j]]
+		delete(map_1, temp_placements_1[j])
 	}
-	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
-		fmt.Println(placement[i])
-	}
-	return placement
 
-	//return final_placement
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
+		fmt.Println(final_placement[i])
+	}
+	return final_placement
 }
 
 func existence(index int, placement [config.NUMBER_OF_ELEVATORS]score_tracker) (existence bool) {
