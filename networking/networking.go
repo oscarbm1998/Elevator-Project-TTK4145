@@ -3,9 +3,9 @@ package networking
 import (
 	config "PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
+	"context"
 	"fmt"
 	"net"
-	"os"
 	"strconv"
 	"syscall"
 	"time"
@@ -33,7 +33,7 @@ func Main(
 	ch_req_ID [3]chan int,
 	ch_new_data, ch_take_calls chan int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
-	ch_net_command chan elevio.ButtonEvent,
+	ch_command_elev chan elevio.ButtonEvent,
 	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) {
 	ch_ext_dead := make(chan int)
 	ch_deadlock_hb_trans := make(chan bool)
@@ -52,7 +52,7 @@ func Main(
 	go node_data_handler(ch_req_ID, ch_req_data, ch_write_data, ch_deadlock_datahandler)
 	go heartBeathandler(ch_req_ID[0], ch_ext_dead, ch_new_data, ch_take_calls, ch_req_data[0], ch_write_data[0], ch_hallCallsTot_updated, ch_deadlock_hb_rec)
 	go heartBeatTransmitter(ch_req_ID[0], ch_req_data[0], ch_hallCallsTot_updated, ch_deadlock_hb_trans)
-	go command_listener(ch_net_command, ch_ext_dead, ch_deadlock_cmd_rec)
+	go command_listener(ch_command_elev, ch_ext_dead, ch_deadlock_cmd_rec)
 	go deadLockDetector(ch_deadlock_hb_trans, ch_deadlock_hb_rec, ch_deadlock_cmd_rec, ch_deadlock_datahandler)
 }
 
@@ -103,36 +103,35 @@ func Node_get_data(ID int, ch_req_ID chan<- int, ch_req_data <-chan Elevator_nod
 }
 
 //Linux version
-func DialBroadcastUDP(port int) net.PacketConn {
-	s, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
-	if err != nil {
-		fmt.Println("Error: Socket:", err)
-	}
-	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
-	if err != nil {
-		fmt.Println("Error: SetSockOpt REUSEADDR:", err)
-	}
-	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_BROADCAST, 1)
-	if err != nil {
-		fmt.Println("Error: SetSockOpt BROADCAST:", err)
-	}
-	syscall.Bind(s, &syscall.SockaddrInet4{Port: port})
-	if err != nil {
-		fmt.Println("Error: Bind:", err)
-	}
+// func DialBroadcastUDP(port int) net.PacketConn {
+// 	s, err := syscall.Socket(syscall.AF_INET, syscall.SOCK_DGRAM, syscall.IPPROTO_UDP)
+// 	if err != nil {
+// 		fmt.Println("Error: Socket:", err)
+// 	}
+// 	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 1)
+// 	if err != nil {
+// 		fmt.Println("Error: SetSockOpt REUSEADDR:", err)
+// 	}
+// 	syscall.SetsockoptInt(s, syscall.SOL_SOCKET, syscall.SO_BROADCAST, 1)
+// 	if err != nil {
+// 		fmt.Println("Error: SetSockOpt BROADCAST:", err)
+// 	}
+// 	syscall.Bind(s, &syscall.SockaddrInet4{Port: port})
+// 	if err != nil {
+// 		fmt.Println("Error: Bind:", err)
+// 	}
 
-	f := os.NewFile(uintptr(s), "")
-	conn, err := net.FilePacketConn(f)
-	if err != nil {
-		fmt.Println("Error: FilePacketConn:", err)
-	}
-	f.Close()
+// 	f := os.NewFile(uintptr(s), "")
+// 	conn, err := net.FilePacketConn(f)
+// 	if err != nil {
+// 		fmt.Println("Error: FilePacketConn:", err)
+// 	}
+// 	f.Close()
 
-	return conn
-}
+// 	return conn
+// }
 
 //Windows version
-/*
 func DialBroadcastUDP(port int) net.PacketConn {
 	config := &net.ListenConfig{Control: func(network, address string, conn syscall.RawConn) error {
 		return conn.Control(func(descriptor uintptr) {
@@ -146,7 +145,7 @@ func DialBroadcastUDP(port int) net.PacketConn {
 	fmt.Println(err)
 
 	return conn
-}*/
+}
 
 func deadLockDetector(ch_deadlock_hb_trans, ch_deadlock_hb_rec, ch_deadlock_cmd_rec, ch_deadlock_datahandler <-chan bool) {
 	var timeOut time.Duration = time.Minute

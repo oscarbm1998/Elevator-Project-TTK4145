@@ -9,7 +9,7 @@ import (
 
 type elevator_status struct {
 	floor     int
-	direction int //1 up -1 down 0 idle
+	direction int
 }
 
 type floor_info struct {
@@ -25,36 +25,15 @@ var elevator_command elevator_status
 func Hall_order(
 	ch_new_order chan bool,
 	ch_elevator_has_arrived chan bool,
-	ch_net_command chan elevio.ButtonEvent,
-	ch_self_command chan elevio.ButtonEvent,
+	ch_command_elev chan elevio.ButtonEvent,
 	ch_update_elevator_node_order chan update_elevator_node,
 	ch_remove_elevator_node_order chan update_elevator_node,
 ) {
 	for {
 		select {
-		case a := <-ch_net_command:
-			if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
-				ch_elevator_has_arrived <- true
-			} else {
-				switch a.Button {
-				case elevio.BT_HallUp: //opp
-					floor[a.Floor].up = true
-					add_order_to_node.command = "update order up"
-					add_order_to_node.update_value = a.Floor
-					ch_update_elevator_node_order <- add_order_to_node
-				case elevio.BT_HallDown: //ned
-					floor[a.Floor].down = true
-					add_order_to_node.command = "update order down"
-					add_order_to_node.update_value = a.Floor
-					ch_update_elevator_node_order <- add_order_to_node
-				}
-				if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
-					ch_new_order <- true //forteller at en ny order er tilgjengelig
-				}
-			}
-		case a := <-ch_self_command:
-			if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
-				ch_elevator_has_arrived <- true
+		case a := <-ch_command_elev:
+			if current_state == idle && a.Floor == elevator.floor {
+				ch_elevator_has_arrived <- true //Elevator has arrived if elevator already standing still at correct floor
 			} else {
 				switch a.Button {
 				case elevio.BT_HallUp:
@@ -79,8 +58,8 @@ func Hall_order(
 					file.WriteAt(bytes, 0)
 					file.Close()
 				}
-				if ((floor[a.Floor].up && a.Button == 0) || (floor[a.Floor].down && a.Button == 1) || floor[a.Floor].cab || (a.Floor == elevator.floor)) && current_state != moving {
-					ch_new_order <- true
+				if current_state == idle {
+				ch_new_order <- true //If not moving, tell it that a new order is ready
 				}
 			}
 		}

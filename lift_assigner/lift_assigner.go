@@ -46,7 +46,7 @@ func Pass_to_network(
 	ch_drv_buttons chan elevio.ButtonEvent,
 	ch_new_order chan bool,
 	ch_take_calls chan int,
-	ch_self_command chan elevio.ButtonEvent,
+	ch_command_elev chan elevio.ButtonEvent,
 	ch_new_data chan int,
 	ch_req_ID chan int,
 	ch_req_data chan networking.Elevator_node,
@@ -60,7 +60,7 @@ func Pass_to_network(
 	for {
 		select {
 		case a := <-ch_drv_buttons: //Assigns a thread for each incomming call
-			go call_hander(ch_self_command, a, elev_overview)
+			go call_hander(ch_command_elev, a, elev_overview)
 		case death_id := <-ch_take_calls: //Assigns a thread for each redistributed call from dead elevator
 			for floor := 0; floor < config.NUMBER_OF_FLOORS; floor++ {
 				if elev_overview[death_id-1].HallCalls[floor].Up {
@@ -74,19 +74,19 @@ func Pass_to_network(
 	}
 }
 
-func call_hander(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
+func call_hander(ch_command_elev chan elevio.ButtonEvent, a elevio.ButtonEvent, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node) {
 	var placement [config.NUMBER_OF_ELEVATORS]score_tracker
 	switch a.Button {
 	case elevio.BT_HallUp:
 		placement := master_tournament(a.Floor, int(elevio.MD_Up), placement, lighthouse)
 		dir := int(elevio.MD_Up)
-		Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
+		Send_to_best_elevator(ch_command_elev, a, dir, lighthouse, placement)
 	case elevio.BT_HallDown:
 		placement := master_tournament(a.Floor, elevio.MD_Down, placement, lighthouse)
 		dir := int(elevio.MD_Down)
-		Send_to_best_elevator(ch_self_command, a, dir, lighthouse, placement)
+		Send_to_best_elevator(ch_command_elev, a, dir, lighthouse, placement)
 	case elevio.BT_Cab:
-		ch_self_command <- a
+		ch_command_elev <- a
 	}
 }
 
@@ -139,13 +139,13 @@ func calculate_score(placement [config.NUMBER_OF_ELEVATORS]score_tracker, lighth
 	}
 }
 
-func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
+func Send_to_best_elevator(ch_command_elev chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 
 	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement)
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //Cycle the scoreboard and attempt to send from best to worst
 		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID && lighthouse[temporary_placement[i].elevator_number].Status == 0 {
 			fmt.Printf("Own elevator won\n")
-			ch_self_command <- a
+			ch_command_elev <- a
 			break
 		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 {
 			fmt.Printf("Trying to send to elevator %d\n", placement[i].elevator_number)
@@ -158,7 +158,7 @@ func Send_to_best_elevator(ch_self_command chan elevio.ButtonEvent, a elevio.But
 			}
 		}
 		if i == config.NUMBER_OF_ELEVATORS-1 { //Send to self if no one is avaliable
-			ch_self_command <- a
+			ch_command_elev <- a
 		}
 	}
 }

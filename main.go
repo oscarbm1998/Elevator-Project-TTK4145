@@ -25,8 +25,7 @@ func main() {
 	ch_obstr_detected := make(chan bool)
 	ch_drv_stop := make(chan bool)
 	ch_elevator_has_arrived := make(chan bool)
-	ch_net_command := make(chan elevio.ButtonEvent, 6)
-	ch_self_command := make(chan elevio.ButtonEvent, 10)
+	ch_command_elev := make(chan elevio.ButtonEvent, 10)
 
 	//Networking
 	ch_new_order := make(chan bool)
@@ -57,14 +56,13 @@ func main() {
 		ch_req_data[1],
 		ch_write_data[1],
 		ch_hallCallsTot_updated,
-		ch_net_command,
-		ch_self_command,
+		ch_command_elev,
 		ch_take_calls)
 	go lift_assigner.Pass_to_network(
 		ch_drv_buttons,
 		ch_new_order,
 		ch_take_calls,
-		ch_self_command,
+		ch_command_elev,
 		ch_new_data,
 		ch_req_ID[2],
 		ch_req_data[2],
@@ -75,7 +73,7 @@ func main() {
 		ch_take_calls,
 		ch_req_data,
 		ch_write_data,
-		ch_net_command,
+		ch_command_elev,
 		ch_hallCallsTot_updated)
 	select {}
 }

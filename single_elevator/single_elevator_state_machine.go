@@ -39,8 +39,7 @@ func SingleElevatorFSM(
 	ch_req_data chan networking.Elevator_node, //Should be write only
 	ch_write_data chan networking.Elevator_node,
 	ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall,
-	ch_net_command chan elevio.ButtonEvent,
-	ch_self_command chan elevio.ButtonEvent,
+	ch_command_elev chan elevio.ButtonEvent,
 	ch_take_calls chan int,
 ) {
 	ch_door_timer_out := make(chan bool)
@@ -52,7 +51,7 @@ func SingleElevatorFSM(
 	ch_update_elevator_node_order := make(chan update_elevator_node, 2)
 	ch_remove_elevator_node_order := make(chan update_elevator_node, 2)
 	init_elevator()
-	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_net_command, ch_self_command, ch_update_elevator_node_order, ch_remove_elevator_node_order)
+	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_command_elev, ch_update_elevator_node_order, ch_remove_elevator_node_order)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
 	go MoveNearestFloor()
@@ -110,13 +109,13 @@ func SingleElevatorFSM(
 						elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 						ch_update_elevator_node_placement <- "direction"
 						fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
-						ch_elev_stuck_timer_start <- true
 						if elevator_command.floor == elevator.floor {
 							current_state = doorOpen
 							elevio.SetDoorOpenLamp(true)
 							Update_position(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order)
 							ch_door_timer_reset <- true
 						} else {
+							ch_elev_stuck_timer_start <- true
 							current_state = moving
 						}
 					} else {

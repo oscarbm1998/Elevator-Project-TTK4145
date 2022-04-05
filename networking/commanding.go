@@ -117,7 +117,7 @@ func command_readback_listener(ch_msg chan<- string, ch_rbc_close, ch_rbc_listen
 			}
 
 			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
-			con.SetReadDeadline(time.Now().Add(time.Second)) 
+			con.SetReadDeadline(time.Now().Add(time.Second))
 			n, _, err := con.ReadFrom(buf)
 
 			if err != nil {
@@ -156,7 +156,7 @@ Exit:
 	}
 }
 
-func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan<- int, ch_dl_timer_cmd_rec chan<- bool) {
+func command_listener(ch_command_elev chan<- elevio.ButtonEvent, ch_ext_dead chan<- int, ch_dl_timer_cmd_rec chan<- bool) {
 	var button_command elevio.ButtonEvent
 	var rbc string
 	buf := make([]byte, 1024)
@@ -182,7 +182,7 @@ func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan
 			if commandLogger {
 				fmt.Println("Networking CMDL: got command")
 			}
-			if reject_command(floor, direction) { 
+			if reject_command(floor, direction) {
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
 			} else {
@@ -203,13 +203,13 @@ func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan
 						button_command.Button = elevio.BT_HallUp
 					}
 					button_command.Floor = floor
-					ch_net_command <- button_command
+					ch_command_elev <- button_command
 					fmt.Println("Networking: got a command from elevator " + strconv.Itoa(from_ID))
 				}
 			}
 		} else if ID == 98 { //Announcement to everyone from someone
 			code := data[2]
-			if code == "DEAD" { 
+			if code == "DEAD" {
 				dead_ID, _ := strconv.Atoi(data[1])
 				reportedBy_ID, _ := strconv.Atoi(data[3])
 				if reportedBy_ID != config.ELEVATOR_ID {
