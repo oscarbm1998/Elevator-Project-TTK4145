@@ -39,8 +39,8 @@ func SingleElevatorFSM(
 	ch_req_data chan networking.Elevator_node, //Should be write only
 	ch_write_data chan networking.Elevator_node,
 	ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall,
-	ch_command_elev chan elevio.ButtonEvent,
-	ch_take_calls chan int,
+	ch_command_elev <-chan elevio.ButtonEvent,
+	ch_take_calls chan<- int,
 ) {
 	ch_door_timer_out := make(chan bool)
 	ch_door_timer_reset := make(chan bool)
@@ -156,8 +156,9 @@ func SingleElevatorFSM(
 }
 
 func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
-	ch_elevator_has_arrived chan bool,
-	ch_update_elevator_node_placement chan string, ch_new_order chan bool) {
+	ch_elevator_has_arrived chan<- bool,
+	ch_update_elevator_node_placement chan<- string,
+	ch_new_order chan<- bool) {
 	for {
 		msg := <-ch_drv_floors
 		elevator.floor = msg

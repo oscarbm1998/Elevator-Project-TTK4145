@@ -23,11 +23,11 @@ var elevator elevator_status
 var elevator_command elevator_status
 
 func Hall_order(
-	ch_new_order chan bool,
-	ch_elevator_has_arrived chan bool,
-	ch_command_elev chan elevio.ButtonEvent,
-	ch_update_elevator_node_order chan update_elevator_node,
-	ch_remove_elevator_node_order chan update_elevator_node,
+	ch_new_order chan<- bool,
+	ch_elevator_has_arrived chan<- bool,
+	ch_command_elev <-chan elevio.ButtonEvent,
+	ch_update_elevator_node_order chan<- update_elevator_node,
+	ch_remove_elevator_node_order chan<- update_elevator_node,
 ) {
 	for {
 		select {
@@ -58,15 +58,15 @@ func Hall_order(
 					file.WriteAt(bytes, 0)
 					file.Close()
 				}
-				if current_state == idle {
-				ch_new_order <- true //If not moving, tell it that a new order is ready
+				if current_state != moving {
+					ch_new_order <- true //If not moving, tell it that a new order is ready
 				}
 			}
 		}
 	}
 }
 
-func Remove_order(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) {
+func Remove_order(level int, direction int, ch_remove_elevator_node_order chan<- update_elevator_node) {
 	floor[level].cab = false
 	elevio.SetButtonLamp(2, level, false)
 	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
@@ -122,7 +122,14 @@ func Remove_order(level int, direction int, ch_remove_elevator_node_order chan u
 
 func request_above() bool {
 	for i := elevator.floor + 1; i < config.NUMBER_OF_FLOORS; i++ {
-		if floor[i].up || floor[i].down || floor[i].cab {
+		if floor[i].up || floor[i].cab {
+			elevator_command.floor = i
+			elevator_command.direction = int(elevio.MD_Up)
+			return true
+		}
+	}
+	for i := 3; i > elevator.floor; i-- {
+		if floor[i].down {
 			elevator_command.floor = i
 			elevator_command.direction = int(elevio.MD_Up)
 			return true
@@ -134,7 +141,7 @@ func request_above() bool {
 func request_here() bool {
 	if floor[elevator.floor].up || floor[elevator.floor].down || floor[elevator.floor].cab {
 		elevator_command.floor = elevator.floor
-		elevator_command.direction = 0
+		elevator_command.direction = int(elevio.MD_Stop)
 		return true
 	}
 	return false
@@ -142,7 +149,14 @@ func request_here() bool {
 
 func request_below() bool {
 	for i := elevator.floor - 1; i >= 0; i-- {
-		if floor[i].down || floor[i].up || floor[i].cab {
+		if floor[i].down || floor[i].cab {
+			elevator_command.floor = i
+			elevator_command.direction = int(elevio.MD_Down)
+			return true
+		}
+	}
+	for i := 0; i < elevator.floor; i++ {
+		if floor[i].up {
 			elevator_command.floor = i
 			elevator_command.direction = int(elevio.MD_Down)
 			return true
@@ -183,7 +197,7 @@ func Request_next_action(direction int) bool {
 	return false
 }
 
-func Update_position(level int, direction int, ch_remove_elevator_node_order chan update_elevator_node) {
+func Update_position(level int, direction int, ch_remove_elevator_node_order chan<- update_elevator_node) {
 	elevator.floor = level
 	elevator.direction = direction
 	Remove_order(level, direction, ch_remove_elevator_node_order)
