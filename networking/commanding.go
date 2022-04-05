@@ -46,50 +46,42 @@ func SendCommand(ID, floor, direction int) (success bool) {
 	printError("Networking: Error sending command: ", err)
 
 	//Starting a timer for timeout
-	timOut := time.Second
-	timer := time.NewTimer(timOut)
 	ch_deadlock_quit := make(chan bool)
 	go commandDeadlockDetector(ch_deadlock_quit, time.Minute, "Networking: sending command took too long. Possible deadlock")
 	for {
-		select {
-		case msg := <-ch_rbc_msg:
-			data := strings.Split(msg, "_")
-			if commandLogger {
-				fmt.Println("Readback: " + msg + " expected: " + rbc)
-			}
-			rbc_id, _ := strconv.Atoi(data[0])
-			if rbc_id == config.ELEVATOR_ID {
-				timer.Reset(timOut)
-				if msg == rbc {
-					fmt.Println("Networking: readback OK")
-					cmd_con.Write([]byte(strconv.Itoa(ID) + "_CMD_OK"))
-					success = true
-					goto Exit
-				} else if rbc == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_REJECT" {
-					fmt.Printf("Networking: elevator rejected the command")
-					success = false
-					goto Exit
-				} else if msg == strconv.Itoa(config.ELEVATOR_ID)+"_ERROR" {
-					goto ErrorExit
-				} else {
-					fmt.Println("Networking: bad readback, sending command again")
-					_, err = cmd_con.Write([]byte(cmd))
-					ch_rbc_listen <- true
-					printError("Networking: Error sending command: ", err)
-					attempts++
-				}
-				if attempts > 3 {
-					fmt.Println("Networking: too many command readback attemps")
-					success = false
-					goto Exit
-				}
-			}
-		case <-timer.C:
-			fmt.Println("Networking: sending command timed out, no readback")
-			timer.Stop()
-			success = false
-			goto Exit
+		msg := <-ch_rbc_msg
+		data := strings.Split(msg, "_")
+		if commandLogger {
+			fmt.Println("Readback: " + msg + " expected: " + rbc)
 		}
+		rbc_id, _ := strconv.Atoi(data[0])
+		if rbc_id == config.ELEVATOR_ID {
+			if msg == rbc {
+				fmt.Println("Networking: readback OK")
+				cmd_con.Write([]byte(strconv.Itoa(ID) + "_CMD_OK"))
+				success = true
+				goto Exit
+			} else if rbc == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_REJECT" {
+				fmt.Printf("Networking: elevator rejected the command")
+				success = false
+				goto Exit
+			} else if msg == strconv.Itoa(config.ELEVATOR_ID)+"_ERROR" {
+				success = false
+				goto ErrorExit
+			} else {
+				fmt.Println("Networking: bad readback, sending command again")
+				_, err = cmd_con.Write([]byte(cmd))
+				ch_rbc_listen <- true
+				printError("Networking: Error sending command: ", err)
+				attempts++
+			}
+			if attempts > 3 {
+				fmt.Println("Networking: too many command readback attemps")
+				success = false
+				goto Exit
+			}
+		}
+
 	}
 Exit:
 	if commandLogger {
