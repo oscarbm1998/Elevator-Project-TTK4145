@@ -24,7 +24,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 	con, _ := net.DialUDP("udp", nil, network)
 
 	fmt.Println("Networking: starting heartbeat transmision")
-	ch_hallCallsTot_updated <- Update_HallCallsTot(ch_req_ID, ch_req_data)
+	ch_hallCallsTot_updated <- UpdateHallCallsTot(ch_req_ID, ch_req_data)
 	timer := time.NewTimer(config.HEARTBEAT_TIME)
 	for {
 		<-timer.C
@@ -36,7 +36,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 		clock = strconv.Itoa(hour) + ":" + strconv.Itoa(minute) + ":" + strconv.Itoa(second)
 		msg = date + " " + clock + "_"
 
-		node = Node_get_data(ID, ch_req_ID, ch_req_data)
+		node = NodeGetData(ID, ch_req_ID, ch_req_data)
 
 		//Generating the heartbeat message
 		msg = msg + strconv.Itoa(ID) + "_"
@@ -62,7 +62,7 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 		}
 		con.Write([]byte(msg))
 
-		ch_hallCallsTot_updated <- Update_HallCallsTot(ch_req_ID, ch_req_data)
+		ch_hallCallsTot_updated <- UpdateHallCallsTot(ch_req_ID, ch_req_data)
 		ch_hb_trans <- true
 	}
 }
@@ -79,7 +79,7 @@ func heartBeathandler(
 	ch_found_dead := make(chan int)
 
 	fmt.Println("Networking: HB starting listening thread")
-	go heartbeat_UDPListener(ch_heartbeatmsg)
+	go heartbeatUDPListener(ch_heartbeatmsg)
 
 	//Initiate heartbeat timers and channels for each elevator except for myself
 	fmt.Println("Networking: HB starting timers")
@@ -136,14 +136,14 @@ func heartBeathandler(
 
 			ch_write_data <- node_data
 			ch_timerReset[node_data.ID-1] <- true
-			ch_hallCallsTot_updated <- Update_HallCallsTot(ch_req_ID, ch_req_data)
+			ch_hallCallsTot_updated <- UpdateHallCallsTot(ch_req_ID, ch_req_data)
 			ch_new_data <- node_data.ID
 
 		case msg_ID := <-ch_found_dead: //I found a dead elevator
 			var msg, broadcast string
 
 			ch_timerStop[msg_ID-1] <- true
-			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
+			node_data = NodeGetData(msg_ID, ch_req_ID, ch_req_data)
 			node_data.ID = msg_ID
 			node_data.Status = 404
 			ch_write_data <- node_data
@@ -158,14 +158,14 @@ func heartBeathandler(
 			ch_new_data <- msg_ID
 			ch_take_calls <- msg_ID
 			fmt.Println("Networking: Elevator " + strconv.Itoa(msg_ID) + " is dead, redistributing his/her hall calls")
-			ch_hallCallsTot_updated <- Update_HallCallsTot(ch_req_ID, ch_req_data)
+			ch_hallCallsTot_updated <- UpdateHallCallsTot(ch_req_ID, ch_req_data)
 		case msg_ID := <-ch_ext_dead: //Set status to 404 and stop the timer
-			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
+			node_data = NodeGetData(msg_ID, ch_req_ID, ch_req_data)
 			node_data.Status = 404
 			ch_write_data <- node_data
 			ch_new_data <- msg_ID
 			ch_timerStop[msg_ID-1] <- true
-			ch_hallCallsTot_updated <- Update_HallCallsTot(ch_req_ID, ch_req_data)
+			ch_hallCallsTot_updated <- UpdateHallCallsTot(ch_req_ID, ch_req_data)
 
 		}
 	}
@@ -190,7 +190,7 @@ func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timerStop c
 	}
 }
 
-func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) {
+func heartbeatUDPListener(ch_heartbeatmsg chan<- string) {
 	buf := make([]byte, 1024)
 	var msg string
 	var port string = ":" + strconv.Itoa(config.HEARTBEAT_PORT)
@@ -215,9 +215,9 @@ func heartbeat_UDPListener(ch_heartbeatmsg chan<- string) {
 }
 
 //Returns an array of all the hallcalls currently being served
-func Update_HallCallsTot(ch_req_ID chan int, ch_req_data chan Elevator_node) (HallCallsTot [config.NUMBER_OF_FLOORS]HallCall) {
+func UpdateHallCallsTot(ch_req_ID chan int, ch_req_data chan Elevator_node) (HallCallsTot [config.NUMBER_OF_FLOORS]HallCall) {
 	for i := 1; i <= config.NUMBER_OF_ELEVATORS; i++ {
-		Elevator := Node_get_data(i, ch_req_ID, ch_req_data)
+		Elevator := NodeGetData(i, ch_req_ID, ch_req_data)
 		if Elevator.Status == 0 { //Ignore elevators with error
 			for k := range Elevator.HallCalls {
 				if Elevator.HallCalls[k].Up {

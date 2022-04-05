@@ -13,7 +13,7 @@ import (
 var commandLogger bool = false
 
 //Commands and elevator with ID, to service a specified hallcall command. Returns true if successfull
-func Send_command(ID, floor, direction int) (success bool) {
+func SendCommand(ID, floor, direction int) (success bool) {
 	var attempts int = 1
 	var cmd, rbc, broadcast string
 	if ID == config.ELEVATOR_ID {
@@ -37,7 +37,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 	ch_rbc_msg := make(chan string, 5)
 	ch_rbc_listen := make(chan bool)
 	ch_rbc_close := make(chan bool)
-	go command_readback_listener(ch_rbc_msg, ch_rbc_close, ch_rbc_listen)
+	go commandReadbackListener(ch_rbc_msg, ch_rbc_close, ch_rbc_listen)
 
 	//Send command
 	fmt.Println("Network: sending command to elevator " + strconv.Itoa(ID))
@@ -49,7 +49,7 @@ func Send_command(ID, floor, direction int) (success bool) {
 	timOut := time.Second
 	timer := time.NewTimer(timOut)
 	ch_deadlock_quit := make(chan bool)
-	go command_deadlockDetector(ch_deadlock_quit, time.Minute, "Networking: sending command took too long. Possible deadlock")
+	go commandDeadlockDetector(ch_deadlock_quit, time.Minute, "Networking: sending command took too long. Possible deadlock")
 	for {
 		select {
 		case msg := <-ch_rbc_msg:
@@ -104,10 +104,10 @@ Exit:
 	return success
 }
 
-func command_readback_listener(ch_msg chan<- string, ch_rbc_close, ch_rbc_listen chan bool) {
+func commandReadbackListener(ch_msg chan<- string, ch_rbc_close, ch_rbc_listen chan bool) {
 	buf := make([]byte, 1024)
 	ch_deadlock_quit := make(chan bool)
-	go command_deadlockDetector(ch_deadlock_quit, time.Minute, "Networking: possible deadlock on readback listener")
+	go commandDeadlockDetector(ch_deadlock_quit, time.Minute, "Networking: possible deadlock on readback listener")
 	for {
 		select {
 		case <-ch_rbc_listen:
@@ -156,7 +156,7 @@ Exit:
 	}
 }
 
-func command_listener(ch_command_elev chan<- elevio.ButtonEvent, ch_ext_dead chan<- int, ch_dl_timer_cmd_rec chan<- bool) {
+func commandListener(ch_command_elev chan<- elevio.ButtonEvent, ch_ext_dead chan<- int, ch_dl_timer_cmd_rec chan<- bool) {
 	var button_command elevio.ButtonEvent
 	var rbc string
 	buf := make([]byte, 1024)
@@ -182,7 +182,7 @@ func command_listener(ch_command_elev chan<- elevio.ButtonEvent, ch_ext_dead cha
 			if commandLogger {
 				fmt.Println("Networking CMDL: got command")
 			}
-			if reject_command(floor, direction) {
+			if rejectCommand(floor, direction) {
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
 			} else {
@@ -222,7 +222,7 @@ func command_listener(ch_command_elev chan<- elevio.ButtonEvent, ch_ext_dead cha
 	}
 }
 
-func reject_command(floor, direction int) (reject bool) {
+func rejectCommand(floor, direction int) (reject bool) {
 	if Elevator_nodes[config.ELEVATOR_ID-1].Status != 0 {
 		fmt.Println("Networking: Reason for cmd reject: my status is not 0")
 		return true
@@ -234,7 +234,7 @@ func reject_command(floor, direction int) (reject bool) {
 	}
 }
 
-func command_deadlockDetector(ch_quit chan bool, timout time.Duration, msg string) {
+func commandDeadlockDetector(ch_quit chan bool, timout time.Duration, msg string) {
 	t := time.NewTimer(timout)
 	t.Reset(timout)
 	for {
