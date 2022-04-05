@@ -60,7 +60,7 @@ Main requirements
    - Normal circumstances mean when there are no active failures and no packet loss
    - Under circumstances with packet loss, at least one light must work as expected
  - The cab button lights should not be shared between workspaces
- - The cab and hall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 button lights should turn on as soon as is reasonable after the button has been pressed
+ - The cab and hall button lights should turn on as soon as is reasonable after the button has been pressed
    - Not ever turning on the button lights because "no guarantee is offered" is not a valid solution
    - You are allowed to expect the user to press the button again if it does not light up
  - The cab and hall button lights should turn off when the corresponding call has been serviced
