@@ -23,7 +23,7 @@ var floor [config.NUMBER_OF_FLOORS]floor_info
 var elevator elevator_status
 var elevator_command elevator_status
 
-func Hall_order(
+func HallOrder(
 	ch_new_order chan<- bool,
 	ch_elevator_has_arrived chan<- bool,
 	ch_command_elev <-chan elevio.ButtonEvent,
@@ -35,7 +35,7 @@ func Hall_order(
 	for {
 		select {
 		case a := <-ch_command_elev:
-			tot_hall_calls := networking.Update_HallCallsTot(ch_req_ID, ch_req_data)
+			tot_hall_calls := networking.UpdateHallCallsTot(ch_req_ID, ch_req_data)
 			if tot_hall_calls[a.Floor].Up && a.Button == elevio.BT_HallUp || tot_hall_calls[a.Floor].Down && a.Button == elevio.BT_HallDown {
 				//If order already exists somewhere, decline it
 			} else if current_state == idle && a.Floor == elevator.floor {
@@ -67,7 +67,7 @@ func Hall_order(
 	}
 }
 
-func Remove_order(level int, direction int, ch_remove_elevator_node_order chan<- update_elevator_node) {
+func RemoveOrder(level int, direction int, ch_remove_elevator_node_order chan<- update_elevator_node) {
 	floor[level].cab = false
 	elevio.SetButtonLamp(2, level, false)
 	UpdateCabCallJson(false, level)
@@ -119,7 +119,7 @@ func UpdateCabCallJson(command bool, floor int) {
 	file.Close()
 }
 
-func request_above() bool {
+func requestAbove() bool {
 	for i := elevator.floor + 1; i < config.NUMBER_OF_FLOORS; i++ {
 		if floor[i].up || floor[i].cab {
 			elevator_command.floor = i
@@ -137,7 +137,7 @@ func request_above() bool {
 	return false
 }
 
-func request_here() bool {
+func requestHere() bool {
 	if floor[elevator.floor].up || floor[elevator.floor].down || floor[elevator.floor].cab {
 		elevator_command.floor = elevator.floor
 		elevator_command.direction = int(elevio.MD_Stop)
@@ -146,7 +146,7 @@ func request_here() bool {
 	return false
 }
 
-func request_below() bool {
+func requestBelow() bool {
 	for i := elevator.floor - 1; i >= 0; i-- {
 		if floor[i].down || floor[i].cab {
 			elevator_command.floor = i
@@ -164,42 +164,40 @@ func request_below() bool {
 	return false
 }
 
-func Request_next_action(direction int) bool {
+func RequestNextAction(direction int) bool {
 	switch direction {
 	case int(elevio.MD_Up):
-		if request_above() {
+		if requestAbove() {
 			return true
-		} else if request_here() {
+		} else if requestHere() {
 			return true
-		} else if request_below() {
+		} else if requestBelow() {
 			return true
 		}
 
 	case int(elevio.MD_Down):
-		if request_below() {
+		if requestBelow() {
 			return true
-		} else if request_here() {
+		} else if requestHere() {
 			return true
-		} else if request_above() {
+		} else if requestAbove() {
 			return true
 		}
 
 	case int(elevio.MD_Stop):
-		if request_above() {
+		if requestAbove() {
 			return true
-		} else if request_here() {
+		} else if requestHere() {
 			return true
-		} else if request_below() {
+		} else if requestBelow() {
 			return true
 		}
 	}
 	return false
 }
 
-func Update_position(level int, direction int, ch_remove_elevator_node_order chan<- update_elevator_node) {
+func UpdatePosition(level int, direction int, ch_remove_elevator_node_order chan<- update_elevator_node) {
 	elevator.floor = level
 	elevator.direction = direction
-	Remove_order(level, direction, ch_remove_elevator_node_order)
+	RemoveOrder(level, direction, ch_remove_elevator_node_order)
 }
-
-//Update cab call jason

@@ -58,7 +58,7 @@ func main() {
 		ch_hallCallsTot_updated,
 		ch_command_elev,
 		ch_take_calls)
-	go lift_assigner.Pass_to_network(
+	go lift_assigner.PassToNetwork(
 		ch_drv_buttons,
 		ch_new_order,
 		ch_take_calls,

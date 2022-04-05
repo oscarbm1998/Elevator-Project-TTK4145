@@ -50,20 +50,20 @@ func SingleElevatorFSM(
 	ch_update_elevator_node_placement := make(chan string, 4)
 	ch_update_elevator_node_order := make(chan update_elevator_node, 2)
 	ch_remove_elevator_node_order := make(chan update_elevator_node, 2)
-	init_elevator()
-	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_command_elev, ch_update_elevator_node_order, ch_remove_elevator_node_order, ch_req_ID, ch_req_data)
+	initElevator()
+	go HallOrder(ch_new_order, ch_elevator_has_arrived, ch_command_elev, ch_update_elevator_node_order, ch_remove_elevator_node_order, ch_req_ID, ch_req_data)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
 	go MoveNearestFloor()
 	go CheckIfElevatorHasArrived(ch_drv_floors, ch_elevator_has_arrived, ch_update_elevator_node_placement, ch_new_order)
-	go Update_hall_lights(ch_hallCallsTot_updated)
+	go UpdateHallLights(ch_hallCallsTot_updated)
 	go Update_elevator_node(ch_req_ID, ch_req_data, ch_write_data, ch_update_elevator_node_placement, ch_update_elevator_node_order, ch_remove_elevator_node_order)
 	for {
 		select {
 		case <-ch_new_order:
 			switch current_state {
 			case idle:
-				if Request_next_action(elevator.direction) {
+				if RequestNextAction(elevator.direction) {
 					elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 					fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 					ch_update_elevator_node_placement <- "direction"
@@ -76,7 +76,7 @@ func SingleElevatorFSM(
 				}
 			case moving:
 				fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
-				Request_next_action(elevator.direction)
+				RequestNextAction(elevator.direction)
 			case doorOpen:
 			}
 		case <-ch_elevator_has_arrived:
@@ -93,7 +93,7 @@ func SingleElevatorFSM(
 				elevio.SetDoorOpenLamp(true)
 				ch_door_timer_reset <- true
 				ch_elev_stuck_timer_stop <- true
-				Update_position(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order)
+				UpdatePosition(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order)
 				current_state = doorOpen
 			}
 		case <-ch_door_timer_out:
@@ -105,14 +105,14 @@ func SingleElevatorFSM(
 					ch_door_timer_reset <- true
 				} else {
 					elevio.SetDoorOpenLamp(false)
-					if Request_next_action(elevator_command.direction) {
+					if RequestNextAction(elevator_command.direction) {
 						elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 						ch_update_elevator_node_placement <- "direction"
 						fmt.Printf("Moving to floor %+v\n", elevator_command.floor)
 						if elevator_command.floor == elevator.floor {
 							current_state = doorOpen
 							elevio.SetDoorOpenLamp(true)
-							Update_position(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order)
+							UpdatePosition(elevator_command.floor, elevator_command.direction, ch_remove_elevator_node_order)
 							ch_door_timer_reset <- true
 						} else {
 							ch_elev_stuck_timer_start <- true
@@ -179,7 +179,7 @@ func CheckIfElevatorHasArrived(ch_drv_floors <-chan int,
 	}
 }
 
-func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) {
+func UpdateHallLights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall) {
 	for {
 		msg := <-ch_hallCallsTot_updated
 		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
@@ -197,7 +197,7 @@ func Update_elevator_node(
 	ch_remove_elevator_node_order chan update_elevator_node,
 ) {
 	for {
-		updated_elevator_node := networking.Node_get_data(
+		updated_elevator_node := networking.NodeGetData(
 			config.ELEVATOR_ID,
 			ch_req_ID,
 			ch_req_data)
@@ -246,7 +246,7 @@ func Update_elevator_node(
 	}
 }
 
-func init_elevator() {
+func initElevator() {
 	for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
 		elevio.SetButtonLamp(0, i, false)
 		elevio.SetButtonLamp(1, i, false)
