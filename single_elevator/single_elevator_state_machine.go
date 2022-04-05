@@ -27,7 +27,7 @@ var add_order_to_node, remove_order_from_node update_elevator_node
 var current_state elevator_state
 var last_floor int
 var elevator_stuck, restoring_cab_calls, elevator_door_blocked bool
-var cabCalls [4]bool
+var cab_calls [4]bool
 
 func SingleElevatorFSM(
 	ch_drv_floors <-chan int,
@@ -261,9 +261,9 @@ func initElevator() {
 	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
 	bytes := make([]byte, 50)
 	n, _ := file.ReadAt(bytes, 0)
-	_ = json.Unmarshal(bytes[:n], &cabCalls)
+	_ = json.Unmarshal(bytes[:n], &cab_calls)
 	for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
-		if cabCalls[i] {
+		if cab_calls[i] {
 			floor[i].cab = true
 			elevio.SetButtonLamp(2, i, true)
 			restoring_cab_calls = true

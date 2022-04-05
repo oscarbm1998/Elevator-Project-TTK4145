@@ -112,8 +112,8 @@ func SendRemoveOrder(command string, level int, ch_remove_elevator_node_order ch
 
 func UpdateCabCallJson(command bool, floor int) {
 	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
-	cabCalls[floor] = command
-	bytes, _ := json.Marshal(cabCalls)
+	cab_calls[floor] = command
+	bytes, _ := json.Marshal(cab_calls)
 	file.Truncate(0)
 	file.WriteAt(bytes, 0)
 	file.Close()
