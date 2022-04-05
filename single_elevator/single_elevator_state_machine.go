@@ -36,7 +36,7 @@ func SingleElevatorFSM(
 	ch_new_order chan bool,
 	ch_drv_stop <-chan bool,
 	ch_req_ID chan int,
-	ch_req_data chan networking.Elevator_node, //Should be write only
+	ch_req_data chan networking.Elevator_node,
 	ch_write_data chan networking.Elevator_node,
 	ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]networking.HallCall,
 	ch_command_elev <-chan elevio.ButtonEvent,
