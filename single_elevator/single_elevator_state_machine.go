@@ -145,7 +145,7 @@ func SingleElevatorFSM(
 				ch_update_elevator_node_placement <- "reset error"
 			}
 		case <-ch_elev_stuck_timer_out:
-			fmt.Println("Elevator: I'm stuck, please call Vakt & Service")
+			fmt.Println("Elevator: I'm stuck, sending calls to someone else")
 			ch_take_calls <- config.ELEVATOR_ID
 			ch_update_elevator_node_placement <- "set error"
 			remove_order_from_node.command = "wipe orders"
