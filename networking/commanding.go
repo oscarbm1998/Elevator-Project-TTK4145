@@ -69,6 +69,8 @@ func SendCommand(ID, floor, direction int) (success bool) {
 					fmt.Printf("Networking: elevator rejected the command")
 					success = false
 					goto Exit
+				} else if msg == strconv.Itoa(config.ELEVATOR_ID)+"_ERROR" {
+					goto ErrorExit
 				} else {
 					fmt.Println("Networking: bad readback, sending command again")
 					_, err = cmd_con.Write([]byte(cmd))
@@ -93,8 +95,9 @@ Exit:
 	if commandLogger {
 		fmt.Println("Networking: trying to exit")
 	}
-
 	ch_rbc_close <- true
+
+ErrorExit:
 	ch_deadlock_quit <- true
 
 	if commandLogger {
@@ -127,6 +130,7 @@ func commandReadbackListener(ch_msg chan<- string, ch_rbc_close, ch_rbc_listen <
 					fmt.Println("Networking: Getting nothing on readback channel, so quitting")
 				}
 				ch_msg <- strconv.Itoa(config.ELEVATOR_ID) + "_ERROR"
+				goto Exit
 			} else {
 				msg := string(buf[0:n])
 				data := strings.Split(msg, "_")
@@ -186,18 +190,10 @@ func commandListener(ch_command_elev chan<- elevio.ButtonEvent, ch_ext_dead chan
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
 			} else {
-				var attempts int = 0
-			ReadAgain:
 				rbc_con.Write([]byte(rbc))      //Accept the command by reading it back
 				n, _, _ = cmd_con.ReadFrom(buf) //Wait for OK
 				msg = string(buf[0:n])
-				data := strings.Split(msg, "_")
-				ID, _ := strconv.Atoi(data[0])
-				if ID != config.ELEVATOR_ID && attempts < 1 {
-					attempts++
-					goto ReadAgain
-				}
-				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" || attempts > 0 { //some good will in case of loss of CMD OK
+				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
 					switch direction {
 					case int(elevio.MD_Down):
 						button_command.Button = elevio.BT_HallDown
