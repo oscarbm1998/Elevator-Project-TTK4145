@@ -51,7 +51,7 @@ func SingleElevatorFSM(
 	ch_update_elevator_node_order := make(chan update_elevator_node, 2)
 	ch_remove_elevator_node_order := make(chan update_elevator_node, 2)
 	init_elevator()
-	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_command_elev, ch_update_elevator_node_order, ch_remove_elevator_node_order)
+	go Hall_order(ch_new_order, ch_elevator_has_arrived, ch_command_elev, ch_update_elevator_node_order, ch_remove_elevator_node_order, ch_req_ID, ch_req_data)
 	go OpenAndCloseDoorsTimer(ch_door_timer_out, ch_door_timer_reset)
 	go ElevatorStuckTimer(ch_elev_stuck_timer_out, ch_elev_stuck_timer_start, ch_elev_stuck_timer_stop)
 	go MoveNearestFloor()

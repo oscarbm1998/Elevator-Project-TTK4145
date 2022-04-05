@@ -12,8 +12,8 @@ Legg til buffer size 1 on channels so if 2 commands arrive at the same time it d
 
 Forslag til endring på fredag, gjøre self-command og net-command til samme tingen siden de gjør 100% det samme (Penere ifølge anders)
 
-Skriv en readme fil på førstesiden av report
+Skriv en readme fil på førstesiden av report (Fikset=)
 
-Hvordan få en heis som døde til å gjennopta sine egne cabcalls (Skriv hallcalls til fil, ved boot up, sjekk fil)
+Hvordan få en heis som døde til å gjennopta sine egne cabcalls (Skriv hallcalls til fil, ved boot up, sjekk fil) (Fikset)
 
 Fiks slik at hvis heisen går ned og det er bare opp calls at den stopper går til nederste up callen (if som sjekker om det kun er opp calls?)

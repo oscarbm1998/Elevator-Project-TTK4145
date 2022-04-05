@@ -3,6 +3,7 @@ package singleElevator
 import (
 	"PROJECT-GROUP-10/config"
 	"PROJECT-GROUP-10/elevio"
+	"PROJECT-GROUP-10/networking"
 	"encoding/json"
 	"os"
 )
@@ -28,11 +29,16 @@ func Hall_order(
 	ch_command_elev <-chan elevio.ButtonEvent,
 	ch_update_elevator_node_order chan<- update_elevator_node,
 	ch_remove_elevator_node_order chan<- update_elevator_node,
+	ch_req_ID chan int,
+	ch_req_data chan networking.Elevator_node,
 ) {
 	for {
 		select {
 		case a := <-ch_command_elev:
-			if current_state == idle && a.Floor == elevator.floor {
+			tot_hall_calls := networking.Update_HallCallsTot(ch_req_ID, ch_req_data)
+			if tot_hall_calls[a.Floor].Up && a.Button == elevio.BT_HallUp || tot_hall_calls[a.Floor].Down && a.Button == elevio.BT_HallDown {
+				//If order already exists somewhere, decline it
+			} else if current_state == idle && a.Floor == elevator.floor {
 				ch_elevator_has_arrived <- true //Elevator has arrived if elevator already standing still at correct floor
 			} else {
 				switch a.Button {
@@ -59,7 +65,7 @@ func Hall_order(
 					file.Close()
 				}
 				if current_state != moving {
-					ch_new_order <- true //If not moving, tell it that a new order is ready
+					ch_new_order <- true
 				}
 			}
 		}
