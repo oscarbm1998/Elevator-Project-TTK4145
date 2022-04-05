@@ -31,7 +31,7 @@ var Elevator_nodes [config.NUMBER_OF_ELEVATORS]Elevator_node
 
 func Main(
 	ch_req_ID [3]chan int,
-	ch_new_data, ch_take_calls chan int,
+	ch_new_data, ch_take_calls chan<- int,
 	ch_req_data, ch_write_data [3]chan Elevator_node,
 	ch_command_elev chan elevio.ButtonEvent,
 	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall) {

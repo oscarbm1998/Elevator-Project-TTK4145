@@ -12,8 +12,8 @@ import (
 var HeartBeatLogger bool = false
 
 func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
-	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall,
-	ch_hb_trans chan<- bool) {
+	ch_hallCallsTot_updated chan<- [config.NUMBER_OF_FLOORS]HallCall,
+	ch_deadlock_hb_trans chan<- bool) {
 
 	var msg, date, clock, broadcast string
 	var ID int = config.ELEVATOR_ID
@@ -63,15 +63,16 @@ func heartBeatTransmitter(ch_req_ID chan int, ch_req_data chan Elevator_node,
 		con.Write([]byte(msg))
 
 		ch_hallCallsTot_updated <- UpdateHallCallsTot(ch_req_ID, ch_req_data)
-		ch_hb_trans <- true
+		ch_deadlock_hb_trans <- true
 	}
 }
 
 func heartBeathandler(
-	ch_req_ID, ch_ext_dead, ch_new_data, ch_take_calls chan int,
+	ch_req_ID, ch_ext_dead chan int,
+	ch_new_data, ch_take_calls chan<- int,
 	ch_req_data, ch_write_data chan Elevator_node,
-	ch_hallCallsTot_updated chan [config.NUMBER_OF_FLOORS]HallCall,
-	ch_hb_rec chan<- bool) {
+	ch_hallCallsTot_updated chan<- [config.NUMBER_OF_FLOORS]HallCall,
+	ch_deadlock_hb_rec chan<- bool) {
 	var node_data Elevator_node
 	var ch_timerReset, ch_timerStop [config.NUMBER_OF_ELEVATORS]chan bool
 
@@ -97,7 +98,7 @@ func heartBeathandler(
 		select {
 		case <-t.C:
 			t.Reset(time.Second)
-			ch_hb_rec <- true
+			ch_deadlock_hb_rec <- true
 		case msg := <-ch_heartbeatmsg:
 
 			//Parsing/translating the received heartbeat message
@@ -171,7 +172,7 @@ func heartBeathandler(
 	}
 }
 
-func heartbeatTimer(ID int, ch_foundDead chan int, ch_timerReset, ch_timerStop chan bool) {
+func heartbeatTimer(ID int, ch_foundDead chan<- int, ch_timerReset, ch_timerStop <-chan bool) {
 	//Offset timeout based on elevator ID
 	var time_TIMEOUT = config.HEARTBEAT_TIMEOUT + 100*time.Millisecond*time.Duration(config.ELEVATOR_ID)
 
