@@ -75,8 +75,8 @@ func heartBeathandler(
 	var node_data Elevator_node
 	var ch_timerReset, ch_timerStop [config.NUMBER_OF_ELEVATORS]chan bool
 
-	ch_heartbeatmsg := make(chan string) //Channel for received heartbeat messages
-	ch_found_dead := make(chan int)      //A timer that runs out will send it's ID here
+	ch_heartbeatmsg := make(chan string) 
+	ch_found_dead := make(chan int)     
 
 	fmt.Println("Networking: HB starting listening thread")
 	go heartbeat_UDPListener(ch_heartbeatmsg)
@@ -137,13 +137,12 @@ func heartBeathandler(
 			ch_write_data <- node_data
 			ch_timerReset[node_data.ID-1] <- true
 			ch_hallCallsTot_updated <- update_HallCallsTot(ch_req_ID, ch_req_data)
-			ch_new_data <- node_data.ID //Tell ordering that there is new data on this ID
+			ch_new_data <- node_data.ID 
 
 		case msg_ID := <-ch_found_dead: //I found a dead elevator
 			var msg, broadcast string
 
 			ch_timerStop[msg_ID-1] <- true
-			//Update status
 			node_data = Node_get_data(msg_ID, ch_req_ID, ch_req_data)
 			node_data.ID = msg_ID
 			node_data.Status = 404

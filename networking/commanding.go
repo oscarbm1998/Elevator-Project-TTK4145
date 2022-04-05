@@ -117,7 +117,7 @@ func command_readback_listener(ch_msg chan<- string, ch_rbc_close, ch_rbc_listen
 			}
 
 			con := DialBroadcastUDP(config.COMMAND_RBC_PORT)
-			con.SetReadDeadline(time.Now().Add(time.Second)) //Will only wait for a response for 1 second
+			con.SetReadDeadline(time.Now().Add(time.Second)) 
 			n, _, err := con.ReadFrom(buf)
 
 			if err != nil {
@@ -182,7 +182,7 @@ func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan
 			if commandLogger {
 				fmt.Println("Networking CMDL: got command")
 			}
-			if reject_command(floor, direction) { //Check if i can perfrom the task
+			if reject_command(floor, direction) { 
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
 			} else {
@@ -209,7 +209,7 @@ func command_listener(ch_net_command chan<- elevio.ButtonEvent, ch_ext_dead chan
 			}
 		} else if ID == 98 { //Announcement to everyone from someone
 			code := data[2]
-			if code == "DEAD" { //Someone is announced dead, update status
+			if code == "DEAD" { 
 				dead_ID, _ := strconv.Atoi(data[1])
 				reportedBy_ID, _ := strconv.Atoi(data[3])
 				if reportedBy_ID != config.ELEVATOR_ID {
