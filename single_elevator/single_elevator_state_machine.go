@@ -183,16 +183,8 @@ func Update_hall_lights(ch_hallCallsTot_updated <-chan [config.NUMBER_OF_FLOORS]
 	for {
 		msg := <-ch_hallCallsTot_updated
 		for i := 0; i < config.NUMBER_OF_FLOORS; i++ {
-			if msg[i].Up {
-				elevio.SetButtonLamp(elevio.BT_HallUp, i, true)
-			} else {
-				elevio.SetButtonLamp(elevio.BT_HallUp, i, false)
-			}
-			if msg[i].Down {
-				elevio.SetButtonLamp(elevio.BT_HallDown, i, true)
-			} else {
-				elevio.SetButtonLamp(elevio.BT_HallDown, i, false)
-			}
+			elevio.SetButtonLamp(elevio.BT_HallUp, i, msg[i].Up)
+			elevio.SetButtonLamp(elevio.BT_HallDown, i, msg[i].Down)
 		}
 	}
 }

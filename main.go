@@ -65,8 +65,7 @@ func main() {
 		ch_command_elev,
 		ch_new_data,
 		ch_req_ID[2],
-		ch_req_data[2],
-	)
+		ch_req_data[2],)
 	go networking.Main(
 		ch_req_ID,
 		ch_new_data,
