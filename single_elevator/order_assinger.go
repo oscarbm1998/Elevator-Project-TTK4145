@@ -57,7 +57,7 @@ func HallOrder(
 				case elevio.BT_Cab:
 					floor[a.Floor].cab = true
 					elevio.SetButtonLamp(elevio.BT_Cab, a.Floor, true)
-					UpdateCabCallJson(true, a.Floor)
+					updateCabCallJson(true, a.Floor)
 				}
 				if current_state != moving {
 					ch_new_order <- true
@@ -70,47 +70,47 @@ func HallOrder(
 func RemoveOrder(level int, direction int, ch_remove_elevator_node_order chan<- update_elevator_node) {
 	floor[level].cab = false
 	elevio.SetButtonLamp(2, level, false)
-	UpdateCabCallJson(false, level)
+	updateCabCallJson(false, level)
 	if direction == int(elevio.MD_Up) {
 		if !floor[level].up {
 			floor[level].down = false
-			SendRemoveOrder("remove order down", level, ch_remove_elevator_node_order)
+			sendRemoveOrder("remove order down", level, ch_remove_elevator_node_order)
 			elevio.SetButtonLamp(elevio.BT_HallDown, level, false)
 		} else {
 			floor[level].up = false
-			SendRemoveOrder("remove order up", level, ch_remove_elevator_node_order)
+			sendRemoveOrder("remove order up", level, ch_remove_elevator_node_order)
 			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
 		}
 	} else if direction == int(elevio.MD_Down) {
 		if !floor[level].down {
 			floor[level].up = false
-			SendRemoveOrder("remove order up", level, ch_remove_elevator_node_order)
+			sendRemoveOrder("remove order up", level, ch_remove_elevator_node_order)
 			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
 		} else {
 			floor[level].down = false
-			SendRemoveOrder("remove order down", level, ch_remove_elevator_node_order)
+			sendRemoveOrder("remove order down", level, ch_remove_elevator_node_order)
 			elevio.SetButtonLamp(elevio.BT_HallDown, level, false)
 		}
 	} else if direction == int(elevio.MD_Stop) {
 		if !floor[level].down {
 			floor[level].up = false
-			SendRemoveOrder("remove order up", level, ch_remove_elevator_node_order)
+			sendRemoveOrder("remove order up", level, ch_remove_elevator_node_order)
 			elevio.SetButtonLamp(elevio.BT_HallUp, level, false)
 		} else {
 			floor[level].down = false
-			SendRemoveOrder("remove order down", level, ch_remove_elevator_node_order)
+			sendRemoveOrder("remove order down", level, ch_remove_elevator_node_order)
 			elevio.SetButtonLamp(elevio.BT_HallDown, level, false)
 		}
 	}
 }
 
-func SendRemoveOrder(command string, level int, ch_remove_elevator_node_order chan<- update_elevator_node) {
+func sendRemoveOrder(command string, level int, ch_remove_elevator_node_order chan<- update_elevator_node) {
 	remove_order_from_node.command = command
 	remove_order_from_node.update_value = level
 	ch_remove_elevator_node_order <- remove_order_from_node
 }
 
-func UpdateCabCallJson(command bool, floor int) {
+func updateCabCallJson(command bool, floor int) {
 	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
 	cab_calls[floor] = command
 	bytes, _ := json.Marshal(cab_calls)
