@@ -141,14 +141,13 @@ func calculateScore(placement [config.NUMBER_OF_ELEVATORS]score_tracker, lightho
 
 func SendToBestElevator(ch_command_elev chan elevio.ButtonEvent, a elevio.ButtonEvent, dir int, lighthouse [config.NUMBER_OF_ELEVATORS]networking.Elevator_node, placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
 
-	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement)
+	var temporary_placement [config.NUMBER_OF_ELEVATORS]score_tracker = sorting(placement, a)
 	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //Cycle the scoreboard and attempt to send from best to worst
 		if lighthouse[temporary_placement[i].elevator_number].ID == config.ELEVATOR_ID && lighthouse[temporary_placement[i].elevator_number].Status == 0 {
 			fmt.Printf("Own elevator won\n")
 			ch_command_elev <- a
 			break
 		} else if lighthouse[temporary_placement[i].elevator_number].Status == 0 {
-			fmt.Printf("Trying to send to elevator %d\n", placement[i].elevator_number)
 			m.Lock()
 			success := networking.SendCommand(lighthouse[temporary_placement[i].elevator_number].ID, a.Floor, dir)
 			m.Unlock()
@@ -163,9 +162,33 @@ func SendToBestElevator(ch_command_elev chan elevio.ButtonEvent, a elevio.Button
 	}
 }
 
-//Quicksort for struct
-func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
-	sort.Sort(score_tracker_list(placement[:]))
+func sorting(placement [config.NUMBER_OF_ELEVATORS]score_tracker, a elevio.ButtonEvent) (return_placement [config.NUMBER_OF_ELEVATORS]score_tracker) {
+	idle_elevators := 0
+	elevator_present := false
+	temp_score := 0
+	closest_elev := 10
+	closest_elev_index := 0
+	sort.Sort(score_tracker_list(placement[:]))       //Quicksort for struct
+	for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ { //If more than one is idle, check which is closest
+		if placement[i].score == -1 {
+			elevator_present = true
+		}
+		if placement[i].score == 0 {
+			idle_elevators++
+		}
+	}
+	if idle_elevators > 1 && elevator_present == false {
+		for i := 0; i < config.NUMBER_OF_ELEVATORS; i++ {
+			temp_score = int(math.Abs(float64(elev_overview[i].Floor - a.Floor)))
+			if temp_score < closest_elev {
+				closest_elev = temp_score
+				closest_elev_index = i
+			}
+		}
+		if closest_elev_index != 0 {
+			placement[0].score, placement[0].elevator_number = placement[closest_elev].score, placement[closest_elev_index].elevator_number
+		}
+	}
 	return placement
 }
 
