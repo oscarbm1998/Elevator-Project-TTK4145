@@ -104,7 +104,7 @@ Exit:
 	return success
 }
 
-func commandReadbackListener(ch_msg chan<- string, ch_rbc_close, ch_rbc_listen chan bool) {
+func commandReadbackListener(ch_msg chan<- string, ch_rbc_close, ch_rbc_listen <-chan bool) {
 	buf := make([]byte, 1024)
 	ch_deadlock_quit := make(chan bool)
 	go commandDeadlockDetector(ch_deadlock_quit, time.Minute, "Networking: possible deadlock on readback listener")
@@ -168,7 +168,7 @@ func commandListener(ch_command_elev chan<- elevio.ButtonEvent, ch_ext_dead chan
 	for {
 		//Listen for incomming commands on command reception port
 		n, _, err := cmd_con.ReadFrom(buf)
-		ch_dl_timer_cmd_rec <- true
+		ch_dl_timer_cmd_rec <- true //Deadlock timer start
 		printError("Networking: error from command listener: ", err)
 		msg := string(buf[0:n])
 		data := strings.Split(msg, "_")
@@ -186,16 +186,18 @@ func commandListener(ch_command_elev chan<- elevio.ButtonEvent, ch_ext_dead chan
 				fmt.Println("Networking: incomming command from elevator " + strconv.Itoa(from_ID) + " rejected")
 				rbc_con.Write([]byte(strconv.Itoa(from_ID) + "_CMD_REJECT"))
 			} else {
+				var attempts int = 0
 			ReadAgain:
 				rbc_con.Write([]byte(rbc))      //Accept the command by reading it back
 				n, _, _ = cmd_con.ReadFrom(buf) //Wait for OK
 				msg = string(buf[0:n])
 				data := strings.Split(msg, "_")
 				ID, _ := strconv.Atoi(data[0])
-				if ID != config.ELEVATOR_ID {
+				if ID != config.ELEVATOR_ID && attempts < 1 {
+					attempts++
 					goto ReadAgain
 				}
-				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" {
+				if msg == strconv.Itoa(config.ELEVATOR_ID)+"_CMD_OK" || attempts > 0 { //some good will in case of loss of CMD OK
 					switch direction {
 					case int(elevio.MD_Down):
 						button_command.Button = elevio.BT_HallDown
@@ -234,7 +236,7 @@ func rejectCommand(floor, direction int) (reject bool) {
 	}
 }
 
-func commandDeadlockDetector(ch_quit chan bool, timout time.Duration, msg string) {
+func commandDeadlockDetector(ch_quit <-chan bool, timout time.Duration, msg string) {
 	t := time.NewTimer(timout)
 	t.Reset(timout)
 	for {
