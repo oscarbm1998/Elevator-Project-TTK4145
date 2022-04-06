@@ -18,7 +18,6 @@ type score_tracker struct {
 type score_tracker_list []score_tracker
 
 var elev_overview [config.NUMBER_OF_ELEVATORS]networking.Elevator_node
-var number_of_alive_elevs int
 var m sync.Mutex
 
 //Checks and alerts the system whenever a heartbeat ping occurs
