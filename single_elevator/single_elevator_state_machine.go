@@ -28,6 +28,7 @@ var current_state elevator_state
 var last_floor int
 var elevator_stuck, restoring_cab_calls, elevator_door_blocked bool
 var cab_calls [4]bool
+var obstr_detected bool
 
 func SingleElevatorFSM(
 	ch_drv_floors <-chan int,
@@ -103,8 +104,14 @@ func SingleElevatorFSM(
 					fmt.Printf("Door blocked by obstruction, can't close door\n")
 					fmt.Printf("Waiting 3 more seconds\n")
 					ch_door_timer_reset <- true
+					if !obstr_detected {
+						ch_elev_stuck_timer_start <- true
+						obstr_detected = true
+					}
 				} else {
 					elevio.SetDoorOpenLamp(false)
+					obstr_detected = false
+					ch_elev_stuck_timer_stop <- true
 					if RequestNextAction(elevator_command.direction) {
 						elevio.SetMotorDirection(elevio.MotorDirection(elevator_command.direction))
 						ch_update_elevator_node_placement <- "direction"
@@ -258,6 +265,7 @@ func initElevator() {
 	last_floor = -1
 	restoring_cab_calls = false
 	elevator_stuck = true
+	obstr_detected = false
 	file, _ := os.OpenFile("cabcalls.json", os.O_RDWR|os.O_CREATE, 0666)
 	bytes := make([]byte, 50)
 	n, _ := file.ReadAt(bytes, 0)

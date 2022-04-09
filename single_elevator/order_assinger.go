@@ -35,10 +35,10 @@ func HallOrder(
 	for {
 		select {
 		case a := <-ch_command_elev:
-			tot_hall_calls := networking.UpdateHallCallsTot(ch_req_ID, ch_req_data)
-			if tot_hall_calls[a.Floor].Up && a.Button == elevio.BT_HallUp || tot_hall_calls[a.Floor].Down && a.Button == elevio.BT_HallDown {
-				//If order already exists somewhere, decline it
-			} else if current_state == idle && a.Floor == elevator.floor {
+			//tot_hall_calls := networking.UpdateHallCallsTot(ch_req_ID, ch_req_data)
+			// if tot_hall_calls[a.Floor].Up && a.Button == elevio.BT_HallUp || tot_hall_calls[a.Floor].Down && a.Button == elevio.BT_HallDown {
+			// 	//If order already exists somewhere, decline it}
+			if current_state == idle && a.Floor == elevator.floor {
 				ch_elevator_has_arrived <- true //Elevator has arrived if elevator already standing still at correct floor
 			} else {
 				switch a.Button {
